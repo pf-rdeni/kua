@@ -1,0 +1,20 @@
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/u1525344/bantu-kua
+    - export PUBLICPATH=/home/u1525344/public_html/bantu-kua
+    
+    # 1. Copy Core Files to Private Directory
+    - /bin/cp -R app $DEPLOYPATH
+    - /bin/cp composer.json $DEPLOYPATH
+    - /bin/cp spark $DEPLOYPATH
+    
+    # 2. Copy Public Assets to Public Directory
+    - /bin/cp -R public/assets $PUBLICPATH
+    - /bin/cp public/index.php $PUBLICPATH
+    - /bin/cp public/.htaccess $PUBLICPATH
+    - /bin/cp public/favicon.ico $PUBLICPATH
+    - /bin/cp public/robots.txt $PUBLICPATH
+
+    # 3. Install Dependencies 
+    # - cd $DEPLOYPATH && /usr/bin/composer install --no-dev
+  
