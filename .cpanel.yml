@@ -1,6 +1,6 @@
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/u1525344/bantu-kua
+    - export DEPLOYPATH=/home/u1525344/kua
     - export PUBLICPATH=/home/u1525344/public_html/bantu-kua
     
     # 1. Copy Core Files to Private Directory
