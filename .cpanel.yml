@@ -5,11 +5,14 @@ deployment:
     
     # 1. Copy Core Files to Private Directory
     - /bin/cp -R app $DEPLOYPATH
+    - /bin/cp -R vendor $DEPLOYPATH
+    - /bin/cp -R writable $DEPLOYPATH
     - /bin/cp composer.json $DEPLOYPATH
     - /bin/cp spark $DEPLOYPATH
     
     # 2. Copy Public Assets to Public Directory
-    - /bin/cp -R public/assets $PUBLICPATH
+    - /bin/cp -R public/* $PUBLICPATH
+    - /bin/cp public/.htaccess $PUBLICPATH
 
 
   

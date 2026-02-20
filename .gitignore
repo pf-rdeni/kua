@@ -84,7 +84,7 @@ phpunit
 #-------------------------
 # Composer
 #-------------------------
-vendor/
+# vendor/
 
 #-------------------------
 # IDE / Development Files
@@ -126,4 +126,4 @@ _modules/*
 /phpunit*.xml
 
 # AdminLTE Assets (Managed by Spark Command)
-public/template/backend/
+# public/template/backend/
