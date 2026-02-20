@@ -12,9 +12,9 @@ use CodeIgniter\Filters\InvalidChars;
 use CodeIgniter\Filters\PageCache;
 use CodeIgniter\Filters\PerformanceMetrics;
 use CodeIgniter\Filters\SecureHeaders;
-use App\Filters\LoginFilter;
-use App\Filters\RoleFilter;
-use App\Filters\PermissionFilter;
+use Myth\Auth\Filters\LoginFilter;
+use Myth\Auth\Filters\RoleFilter;
+use Myth\Auth\Filters\PermissionFilter;
 
 class Filters extends BaseFilters
 {
