@@ -114,6 +114,20 @@
             color: #333;
         }
 
+        .password-container {
+            position: relative;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #6c757d;
+            z-index: 10;
+        }
+
         .btn-custom {
             background: #145A32;
             color: white;
@@ -221,8 +235,9 @@
                     </div>
                 <?php endif; ?>
 
-                <div class="form-group">
-                    <input type="password" name="password" class="form-control form-control-custom <?php if (session('errors.password')) : ?>is-invalid<?php endif ?>" placeholder="<?=lang('Auth.password')?>">
+                <div class="form-group password-container">
+                    <input type="password" name="password" id="password" class="form-control form-control-custom <?php if (session('errors.password')) : ?>is-invalid<?php endif ?>" placeholder="<?=lang('Auth.password')?>">
+                    <i class="fas fa-eye toggle-password" id="togglePasswordBtn" onclick="togglePassword()"></i>
                     <div class="invalid-feedback">
                         <?= session('errors.password') ?>
                     </div>
@@ -255,6 +270,21 @@
         </div>
     </div>
 </div>
+
+<script>
+function togglePassword() {
+    const constToggle = document.getElementById('togglePasswordBtn');
+    const password = document.getElementById('password');
+    
+    // Toggle the type attribute
+    const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+    password.setAttribute('type', type);
+    
+    // Toggle the eye / eye slash icon
+    constToggle.classList.toggle('fa-eye');
+    constToggle.classList.toggle('fa-eye-slash');
+}
+</script>
 
 </body>
 </html>
