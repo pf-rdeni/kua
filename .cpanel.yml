@@ -3,18 +3,26 @@ deployment:
     - export DEPLOYPATH=/home/u1525344/bantu-kua
     - export PUBLICPATH=/home/u1525344/public_html/bantu-kua
     
-    # 1. Copy Core Files to Private Directory
+    # 1. Prepare Directory
+    - /bin/mkdir -p $DEPLOYPATH
+    - /bin/mkdir -p $PUBLICPATH
+
+    # 2. Copy Core Files (Project Root)
+    # This places 'app' folder inside 'bantu-kua', resulting in /home/u1525344/bantu-kua/app
     - /bin/cp -R app $DEPLOYPATH
     - /bin/cp composer.json $DEPLOYPATH
     - /bin/cp spark $DEPLOYPATH
     
-    # 2. Copy Public Assets to Public Directory
+    # 3. Copy Public Assets
     - /bin/cp -R public/assets $PUBLICPATH
     - /bin/cp public/index.php $PUBLICPATH
     - /bin/cp public/.htaccess $PUBLICPATH
     - /bin/cp public/favicon.ico $PUBLICPATH
     - /bin/cp public/robots.txt $PUBLICPATH
 
-    # 3. Install Dependencies 
+    # 4. Adjust Paths in index.php (Server Side Only)
+    # Changes '../app/Config/Paths.php' to Absolute Path on Server
+    - sed -i "s|../app/Config/Paths.php|/home/u1525344/bantu-kua/app/Config/Paths.php|g" $PUBLICPATH/index.php
+
+    # 5. Install Dependencies (Optional)
     # - cd $DEPLOYPATH && /usr/bin/composer install --no-dev
-  
