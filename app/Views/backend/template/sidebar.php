@@ -56,12 +56,29 @@
                 <li class="nav-header">PENDATAAN</li>
 
                 <?php if (in_array('SuperAdmin', $userGroups) || in_array('Admin', $userGroups) || in_array('OperatorMubaligh', $userGroups)): ?>
-                <!-- Mubaligh -->
-                <li class="nav-item">
-                    <a href="<?= base_url('admin/mubaligh') ?>" class="nav-link <?= strpos(uri_string(), 'admin/mubaligh') !== false ? 'active' : '' ?>">
+                <!-- Mubaligh (Treeview) -->
+                <li class="nav-item has-treeview <?= strpos(uri_string(), 'admin/mubaligh') !== false ? 'menu-open' : '' ?>">
+                    <a href="#" class="nav-link <?= strpos(uri_string(), 'admin/mubaligh') !== false ? 'active' : '' ?>">
                         <i class="nav-icon fas fa-user-tie"></i>
-                        <p>Mubaligh</p>
+                        <p>
+                            Mubaligh
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
                     </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="<?= base_url('admin/mubaligh') ?>" class="nav-link <?= uri_string() == 'admin/mubaligh' || (strpos(uri_string(), 'admin/mubaligh') !== false && strpos(uri_string(), 'berkas-lampiran') === false) ? 'active' : '' ?>">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Data Mubaligh</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="<?= base_url('admin/mubaligh/berkas-lampiran') ?>" class="nav-link <?= strpos(uri_string(), 'admin/mubaligh/berkas-lampiran') !== false ? 'active' : '' ?>">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Berkas Lampiran</p>
+                            </a>
+                        </li>
+                    </ul>
                 </li>
                 <?php endif; ?>
 

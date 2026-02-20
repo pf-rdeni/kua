@@ -217,4 +217,39 @@ class MubalighController extends BaseController
 
         return view('backend/mubaligh/show', $data);
     }
+
+    /**
+     * Tampilkan halaman berkas lampiran mubaligh
+     */
+    public function showBerkasLampiran()
+    {
+        $berkasModel = new \App\Models\BerkasModel();
+
+        // Query semua mubaligh
+        $mubalighList = $this->mubalighModel->findAll();
+
+        // Ambil data berkas untuk setiap mubaligh
+        $mubalighWithBerkas = [];
+        foreach ($mubalighList as $m) {
+            $berkasAktif = $berkasModel->getBerkasAktif('mubaligh', $m['id_mubaligh']);
+
+            // Organize berkas by type
+            $berkasByType = [];
+            foreach ($berkasAktif as $berkas) {
+                $berkasByType[$berkas['nama_berkas']] = $berkas;
+            }
+
+            $mubalighWithBerkas[] = [
+                'mubaligh' => $m,
+                'berkas'   => $berkasByType,
+            ];
+        }
+
+        $data = [
+            'page_title'        => 'Berkas Lampiran Mubaligh',
+            'mubalighWithBerkas' => $mubalighWithBerkas,
+        ];
+
+        return view('backend/mubaligh/berkasLampiran', $data);
+    }
 }

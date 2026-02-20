@@ -57,10 +57,20 @@ $routes->get('logout', '\App\Controllers\Auth\AuthController::logout');
 // BACKEND ROUTES (Area Admin - memerlukan login + role)
 // ============================================================
 $routes->group('admin', ['filter' => 'login'], function ($routes) {
-
+    // -- General --
     // --- Dashboard ---
     $routes->get('dashboard', 'Backend\DashboardController::index');
 
+    // --- Berkas Lampiran (Shared AJAX Routes) ---
+    $routes->group('berkas', function ($routes) {
+        $routes->post('upload', 'Backend\BerkasController::upload');
+        $routes->post('delete/(:num)', 'Backend\BerkasController::delete/$1');
+        $routes->get('get/(:num)', 'Backend\BerkasController::getById/$1');
+        $routes->post('upload-profil', 'Backend\BerkasController::uploadProfil');
+        $routes->post('delete-profil', 'Backend\BerkasController::deleteProfil');
+    });
+
+    // --- Berdasarkan Role ---
     // --- Mubaligh (SuperAdmin, Admin, OperatorMubaligh) ---
     $routes->group('mubaligh', ['filter' => 'role:SuperAdmin,Admin,OperatorMubaligh'], function ($routes) {
         $routes->get('/', 'Backend\MubalighController::index');
@@ -70,6 +80,7 @@ $routes->group('admin', ['filter' => 'login'], function ($routes) {
         $routes->post('update/(:num)', 'Backend\MubalighController::update/$1');
         $routes->get('delete/(:num)', 'Backend\MubalighController::delete/$1');
         $routes->get('show/(:num)', 'Backend\MubalighController::show/$1');
+        $routes->get('berkas-lampiran', 'Backend\MubalighController::showBerkasLampiran');
     });
 
     // --- Masjid & Mushola (SuperAdmin, Admin, OperatorMasjidMushola) ---

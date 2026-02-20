@@ -125,5 +125,6 @@ _modules/*
 /results/
 /phpunit*.xml
 
-# AdminLTE Assets (Managed by Spark Command)
-# public/template/backend/
+# Public Uploads
+public/uploads/*
+
