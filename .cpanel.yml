@@ -11,8 +11,7 @@ deployment:
     # 2. Copy Public Assets to Public Directory
     - /bin/cp -R public/assets $PUBLICPATH
 
-    # 3. Install Dependencies 
-    # - cd $DEPLOYPATH && /usr/bin/composer install --no-dev
+
   
 
   
