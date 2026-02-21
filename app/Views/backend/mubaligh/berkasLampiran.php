@@ -28,8 +28,9 @@ $breadcrumb = [
                                 <th style="width: 40px;">No</th>
                                 <th>NIK / Nama</th>
                                 <th style="width: 130px; text-align: center;">Profil</th>
-                                <th style="width: 160px; text-align: center;">KTP</th>
-                                <th style="width: 160px; text-align: center;">KK</th>
+                                <?php foreach ($settingBerkas as $sb): ?>
+                                    <th style="width: 160px; text-align: center;"><?= esc($sb['nama_berkas']) ?></th>
+                                <?php endforeach; ?>
                             </tr>
                         </thead>
                         <tbody>
@@ -40,6 +41,12 @@ $breadcrumb = [
                                     $m = $item['mubaligh'];
                                     $berkas = $item['berkas'];
                                     $fotoUrl = !empty($m['foto']) ? base_url('uploads/mubaligh/' . $m['foto']) : null;
+                                    
+                                    // Use thumbnail if available
+                                    $fotoThumbUrl = $fotoUrl;
+                                    if (!empty($m['foto']) && file_exists(FCPATH . 'uploads/mubaligh/thumbs/' . $m['foto'])) {
+                                        $fotoThumbUrl = base_url('uploads/mubaligh/thumbs/' . $m['foto']);
+                                    }
                                     ?>
                                     <tr>
                                         <td><?= $no++ ?></td>
@@ -51,7 +58,7 @@ $breadcrumb = [
                                         <td class="text-center" style="vertical-align: middle;">
                                             <?php if ($fotoUrl): ?>
                                                 <div class="mb-1">
-                                                    <img src="<?= $fotoUrl ?>" alt="Profil" class="img-thumbnail preview-image"
+                                                    <img src="<?= $fotoThumbUrl ?>" alt="Profil" class="img-thumbnail preview-image"
                                                          style="max-width: 80px; max-height: 100px; cursor: pointer; object-fit: cover;"
                                                          data-image-url="<?= $fotoUrl ?>">
                                                 </div>
@@ -72,65 +79,56 @@ $breadcrumb = [
                                                 </button>
                                             <?php endif; ?>
                                         </td>
-                                        <!-- KTP -->
-                                        <td class="text-center" style="vertical-align: middle;">
-                                            <?php if (isset($berkas['KTP'])): ?>
-                                                <?php $ktp = $berkas['KTP']; ?>
-                                                <div class="mb-1">
-                                                    <img src="<?= base_url('uploads/berkas/' . $ktp['nama_file']) ?>" alt="KTP"
-                                                         class="img-thumbnail preview-image"
-                                                         style="max-width: 120px; max-height: 80px; cursor: pointer; object-fit: cover;"
-                                                         data-image-url="<?= base_url('uploads/berkas/' . $ktp['nama_file']) ?>">
-                                                </div>
-                                                <div>
-                                                    <button type="button" class="btn btn-warning btn-xs" title="Edit KTP"
-                                                            onclick="berkasHelper.editBerkas(<?= $ktp['id'] ?>, <?= $m['id_mubaligh'] ?>, '<?= esc($m['nama_lengkap'], 'js') ?>', 'KTP')">
-                                                        <i class="fas fa-edit"></i>
+                                        <!-- Berkas Dinamis -->
+                                        <?php foreach ($settingBerkas as $sb): ?>
+                                            <td class="text-center" style="vertical-align: middle;">
+                                                <?php 
+                                                    $nb = $sb['nama_berkas']; 
+                                                    $w = $sb['aspect_ratio_width'] ? $sb['aspect_ratio_width'] : 'null';
+                                                    $h = $sb['aspect_ratio_height'] ? $sb['aspect_ratio_height'] : 'null';
+                                                ?>
+                                                <?php if (isset($berkas[$nb])): ?>
+                                                    <?php 
+                                                        $fileBerkas = $berkas[$nb]; 
+                                                        $berkasFileName = $fileBerkas['nama_file'];
+                                                        $berkasFullUrl = base_url('uploads/berkas/' . $berkasFileName);
+                                                        
+                                                        // Use thumbnail if available
+                                                        $berkasThumbUrl = $berkasFullUrl;
+                                                        if (file_exists(FCPATH . 'uploads/berkas/thumbs/' . $berkasFileName)) {
+                                                            $berkasThumbUrl = base_url('uploads/berkas/thumbs/' . $berkasFileName);
+                                                        }
+                                                    ?>
+                                                    <div class="mb-2" style="display: flex; justify-content: center; align-items: center; height: 100px;">
+                                                        <img src="<?= $berkasThumbUrl ?>" alt="<?= $nb ?>"
+                                                             class="img-thumbnail preview-image shadow-sm"
+                                                             style="max-width: 130px; max-height: 100%; cursor: pointer; object-fit: contain; padding: 2px;"
+                                                             data-image-url="<?= $berkasFullUrl ?>">
+                                                    </div>
+                                                    <div>
+                                                        <button type="button" class="btn btn-warning btn-xs" title="Edit <?= $nb ?>"
+                                                                onclick="berkasHelper.editBerkas(<?= $fileBerkas['id'] ?>, <?= $m['id_mubaligh'] ?>, '<?= esc($m['nama_lengkap'], 'js') ?>', '<?= $nb ?>', <?= $w ?>, <?= $h ?>)">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-danger btn-xs" title="Hapus <?= $nb ?>"
+                                                                onclick="berkasHelper.deleteBerkas(<?= $fileBerkas['id'] ?>)">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                <?php else: ?>
+                                                    <button type="button" class="btn btn-outline-primary btn-sm"
+                                                            onclick="berkasHelper.openUploadModal(<?= $m['id_mubaligh'] ?>, '<?= esc($m['nama_lengkap'], 'js') ?>', '<?= $nb ?>', <?= $w ?>, <?= $h ?>)">
+                                                        <i class="fas fa-upload"></i> Upload
                                                     </button>
-                                                    <button type="button" class="btn btn-danger btn-xs" title="Hapus KTP"
-                                                            onclick="berkasHelper.deleteBerkas(<?= $ktp['id'] ?>)">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </div>
-                                            <?php else: ?>
-                                                <button type="button" class="btn btn-outline-primary btn-sm"
-                                                        onclick="berkasHelper.openUploadModal(<?= $m['id_mubaligh'] ?>, '<?= esc($m['nama_lengkap'], 'js') ?>', 'KTP')">
-                                                    <i class="fas fa-upload"></i> Upload
-                                                </button>
-                                            <?php endif; ?>
-                                        </td>
-                                        <!-- KK -->
-                                        <td class="text-center" style="vertical-align: middle;">
-                                            <?php if (isset($berkas['KK'])): ?>
-                                                <?php $kk = $berkas['KK']; ?>
-                                                <div class="mb-1">
-                                                    <img src="<?= base_url('uploads/berkas/' . $kk['nama_file']) ?>" alt="KK"
-                                                         class="img-thumbnail preview-image"
-                                                         style="max-width: 120px; max-height: 80px; cursor: pointer; object-fit: cover;"
-                                                         data-image-url="<?= base_url('uploads/berkas/' . $kk['nama_file']) ?>">
-                                                </div>
-                                                <div>
-                                                    <button type="button" class="btn btn-warning btn-xs" title="Edit KK"
-                                                            onclick="berkasHelper.editBerkas(<?= $kk['id'] ?>, <?= $m['id_mubaligh'] ?>, '<?= esc($m['nama_lengkap'], 'js') ?>', 'KK')">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                    <button type="button" class="btn btn-danger btn-xs" title="Hapus KK"
-                                                            onclick="berkasHelper.deleteBerkas(<?= $kk['id'] ?>)">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </div>
-                                            <?php else: ?>
-                                                <button type="button" class="btn btn-outline-primary btn-sm"
-                                                        onclick="berkasHelper.openUploadModal(<?= $m['id_mubaligh'] ?>, '<?= esc($m['nama_lengkap'], 'js') ?>', 'KK')">
-                                                    <i class="fas fa-upload"></i> Upload
-                                                </button>
-                                            <?php endif; ?>
-                                        </td>
+                                                <?php endif; ?>
+                                            </td>
+                                        <?php endforeach; ?>
                                     </tr>
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="5" class="text-center text-muted">Belum ada data mubaligh.</td>
+                                    <?php $colspan = 3 + count($settingBerkas); ?>
+                                    <td colspan="<?= $colspan ?>" class="text-center text-muted">Belum ada data mubaligh.</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
@@ -143,9 +141,10 @@ $breadcrumb = [
 
 <!-- Include Berkas Helper (Modals + CSS + Cropper.js CDN) -->
 <?php
+$tipeBerkasArr = !empty($settingBerkas) ? array_column($settingBerkas, 'nama_berkas') : [];
 $berkasConfig = [
     'entitasType'  => 'mubaligh',
-    'tipeBerkas'   => ['KTP', 'KK'],
+    'tipeBerkas'   => $tipeBerkasArr,
     'labelEntitas' => 'Mubaligh',
 ];
 ?>
@@ -160,7 +159,7 @@ $berkasConfig = [
     // Initialize BerkasHelper for Mubaligh
     const berkasHelper = new BerkasHelper({
         entitasType: 'mubaligh',
-        tipeBerkas: ['KTP', 'KK'],
+        tipeBerkas: <?= json_encode($tipeBerkasArr) ?>,
         uploadUrl: baseUrl + '/admin/berkas/upload',
         deleteUrl: baseUrl + '/admin/berkas/delete',
         getUrl: baseUrl + '/admin/berkas/get',

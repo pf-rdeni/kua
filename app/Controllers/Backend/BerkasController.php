@@ -10,6 +10,7 @@ use App\Models\FarduKifayahModel;
 use App\Models\PenggaliKuburModel;
 use App\Models\MajelisTaklimModel;
 use App\Models\TpqMdtaModel;
+use App\Models\SettingBerkasModel;
 
 /**
  * BerkasController — Shared AJAX controller untuk upload/edit/delete berkas lampiran.
@@ -121,7 +122,11 @@ class BerkasController extends BaseController
             }
 
             // Validasi nama_berkas
-            if (empty($namaBerkas) || !in_array($namaBerkas, ['KTP', 'KK'])) {
+            $settingBerkasModel = new SettingBerkasModel();
+            $allowedSettings = $settingBerkasModel->getSettingByEntitas($entitasType);
+            $allowedTipeBerkas = array_column($allowedSettings, 'nama_berkas');
+
+            if (empty($namaBerkas) || !in_array($namaBerkas, $allowedTipeBerkas)) {
                 return $this->response->setJSON(['success' => false, 'message' => 'Tipe berkas tidak valid']);
             }
 
@@ -135,6 +140,10 @@ class BerkasController extends BaseController
             $uploadPath = FCPATH . 'uploads/berkas/';
             if (!is_dir($uploadPath)) {
                 mkdir($uploadPath, 0755, true);
+            }
+            $thumbPath = $uploadPath . 'thumbs/';
+            if (!is_dir($thumbPath)) {
+                mkdir($thumbPath, 0755, true);
             }
 
             // Tentukan mode: edit atau upload baru
@@ -181,11 +190,25 @@ class BerkasController extends BaseController
                         return $this->response->setJSON(['success' => false, 'message' => 'Gagal menyimpan file']);
                     }
 
+                    // Generate Thumbnail
+                    try {
+                        $image = \Config\Services::image();
+                        $image->withFile($filePath)
+                              ->resize(300, 300, true, 'auto')
+                              ->save($thumbPath . $fileName, 75);
+                    } catch (\Exception $e) {
+                        log_message('error', 'Gagal generate thumb berkas: ' . $e->getMessage());
+                    }
+
                     if ($isEditMode && $berkasToUpdate) {
                         // Hapus file lama
                         $oldFilePath = $uploadPath . $berkasToUpdate['nama_file'];
                         if (file_exists($oldFilePath)) {
                             @unlink($oldFilePath);
+                        }
+                        $oldThumbPath = $thumbPath . $berkasToUpdate['nama_file'];
+                        if (file_exists($oldThumbPath)) {
+                            @unlink($oldThumbPath);
                         }
 
                         // Update record
@@ -258,6 +281,10 @@ class BerkasController extends BaseController
             if (file_exists($filePath)) {
                 @unlink($filePath);
             }
+            $thumbPath = FCPATH . 'uploads/berkas/thumbs/' . $berkas['nama_file'];
+            if (file_exists($thumbPath)) {
+                @unlink($thumbPath);
+            }
 
             // Delete record
             $this->berkasModel->delete($id);
@@ -328,6 +355,10 @@ class BerkasController extends BaseController
             if (!is_dir($uploadDir)) {
                 mkdir($uploadDir, 0755, true);
             }
+            $thumbDir = $uploadDir . 'thumbs/';
+            if (!is_dir($thumbDir)) {
+                mkdir($thumbDir, 0755, true);
+            }
 
             if (!empty($profilCropped)) {
                 if (preg_match('/^data:image\/(\w+);base64,/', $profilCropped, $type)) {
@@ -353,10 +384,23 @@ class BerkasController extends BaseController
                     if ($oldFoto && file_exists($uploadDir . $oldFoto)) {
                         @unlink($uploadDir . $oldFoto);
                     }
+                    if ($oldFoto && file_exists($thumbDir . $oldFoto)) {
+                        @unlink($thumbDir . $oldFoto);
+                    }
 
                     // Simpan file baru
                     if (!file_put_contents($filePath, $profilCropped)) {
                         return $this->response->setJSON(['success' => false, 'message' => 'Gagal menyimpan file']);
+                    }
+
+                    // Generate Thumbnail
+                    try {
+                        $image = \Config\Services::image();
+                        $image->withFile($filePath)
+                              ->resize(300, 300, true, 'auto')
+                              ->save($thumbDir . $fileName, 75);
+                    } catch (\Exception $e) {
+                        log_message('error', 'Gagal generate thumb profil: ' . $e->getMessage());
                     }
 
                     // Update kolom foto di tabel entitas
@@ -416,6 +460,10 @@ class BerkasController extends BaseController
                 $filePath = FCPATH . $config['fotoDir'] . '/' . $oldFoto;
                 if (file_exists($filePath)) {
                     @unlink($filePath);
+                }
+                $thumbPath = FCPATH . $config['fotoDir'] . '/thumbs/' . $oldFoto;
+                if (file_exists($thumbPath)) {
+                    @unlink($thumbPath);
                 }
             }
 

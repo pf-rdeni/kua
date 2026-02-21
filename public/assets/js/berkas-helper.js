@@ -197,13 +197,20 @@ class BerkasHelper {
     /**
      * Open upload modal with a specific berkas type pre-selected
      */
-    openUploadModal(entitasId, namaEntitas, namaBerkas) {
+    openUploadModal(entitasId, namaEntitas, namaBerkas, argAspectRatioWidth = null, argAspectRatioHeight = null) {
         this.currentEntitasId = entitasId;
         this.currentEditBerkasData = null;
         this.savedCropNamaBerkas = namaBerkas;
+        this.currentAspectRatio = (argAspectRatioWidth && argAspectRatioHeight) ? argAspectRatioWidth / argAspectRatioHeight : NaN;
 
         $('#berkasUploadEntitasId').val(entitasId);
         $('#berkasUploadNamaEntitas').val(namaEntitas);
+
+        // Dynamically add the option if it doesn't exist
+        if ($('#berkasUploadNamaBerkas option').filter(function () { return $(this).val() == namaBerkas; }).length === 0) {
+            $('#berkasUploadNamaBerkas').append(new Option(namaBerkas, namaBerkas));
+        }
+
         $('#berkasUploadNamaBerkas').val(namaBerkas);
         $('#berkasUploadNamaBerkas').prop('disabled', true);
 
@@ -227,10 +234,11 @@ class BerkasHelper {
     /**
      * Open edit modal for existing berkas
      */
-    editBerkas(berkasId, entitasId, namaEntitas, namaBerkas) {
+    editBerkas(berkasId, entitasId, namaEntitas, namaBerkas, argAspectRatioWidth = null, argAspectRatioHeight = null) {
         const self = this;
         this.currentEntitasId = entitasId;
         this.savedCropNamaBerkas = namaBerkas;
+        this.currentAspectRatio = (argAspectRatioWidth && argAspectRatioHeight) ? argAspectRatioWidth / argAspectRatioHeight : NaN;
 
         // Fetch berkas data
         $.ajax({
@@ -543,14 +551,6 @@ class BerkasHelper {
     // Private Methods — Crop modals
     // ============================================================
 
-    _getAspectRatio(namaBerkas) {
-        switch (namaBerkas) {
-            case 'KTP': return 85.6 / 53.98;   // KTP Indonesia
-            case 'KK': return 297 / 210;        // A4 Landscape
-            default: return NaN;              // Free
-        }
-    }
-
     _showCropModal(imageUrl, namaBerkas) {
         const self = this;
         const imageElement = document.getElementById('berkasImageToCrop');
@@ -613,7 +613,7 @@ class BerkasHelper {
                             cropContainer.style.height = maxHeight + 'px';
                         }
 
-                        const aspectRatio = self._getAspectRatio(namaBerkas);
+                        const aspectRatio = self.currentAspectRatio !== undefined ? self.currentAspectRatio : NaN;
                         window._berkasCurrentAspectRatio = aspectRatio;
 
                         self.cropperBerkas = new Cropper(imageElement, {

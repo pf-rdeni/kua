@@ -70,6 +70,16 @@ $routes->group('admin', ['filter' => 'login'], function ($routes) {
         $routes->post('delete-profil', 'Backend\BerkasController::deleteProfil');
     });
 
+    // --- Setting Berkas Lampiran (SuperAdmin, Admin) ---
+    $routes->group('setting-berkas', ['filter' => 'role:SuperAdmin,Admin'], function ($routes) {
+        $routes->get('/', 'Backend\SettingBerkasController::index');
+        $routes->get('create', 'Backend\SettingBerkasController::create');
+        $routes->post('store', 'Backend\SettingBerkasController::store');
+        $routes->get('edit/(:num)', 'Backend\SettingBerkasController::edit/$1');
+        $routes->post('update/(:num)', 'Backend\SettingBerkasController::update/$1');
+        $routes->post('delete/(:num)', 'Backend\SettingBerkasController::delete/$1');
+    });
+
     // --- Berdasarkan Role ---
     // --- Mubaligh (SuperAdmin, Admin, OperatorMubaligh) ---
     $routes->group('mubaligh', ['filter' => 'role:SuperAdmin,Admin,OperatorMubaligh'], function ($routes) {

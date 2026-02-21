@@ -139,10 +139,19 @@
                 </li>
                 <?php endif; ?>
 
-                <?php if (in_array('SuperAdmin', $userGroups)): ?>
+                <?php if (in_array('SuperAdmin', $userGroups) || in_array('Admin', $userGroups)): ?>
                 <!-- Separator PENGATURAN -->
                 <li class="nav-header">PENGATURAN</li>
 
+                <!-- Setting Berkas Lampiran -->
+                <li class="nav-item">
+                    <a href="<?= base_url('admin/setting-berkas') ?>" class="nav-link <?= strpos(uri_string(), 'admin/setting-berkas') !== false ? 'active' : '' ?>">
+                        <i class="nav-icon fas fa-cogs"></i>
+                        <p>Setting Berkas</p>
+                    </a>
+                </li>
+
+                <?php if (in_array('SuperAdmin', $userGroups)): ?>
                 <!-- Manajemen User (SuperAdmin Only) -->
                 <li class="nav-item">
                     <a href="<?= base_url('admin/users') ?>" class="nav-link <?= strpos(uri_string(), 'admin/users') !== false ? 'active' : '' ?>">
@@ -150,6 +159,7 @@
                         <p>Manajemen User</p>
                     </a>
                 </li>
+                <?php endif; ?>
                 <?php endif; ?>
 
                 <!-- Separator AKUN -->

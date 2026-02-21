@@ -224,6 +224,10 @@ class MubalighController extends BaseController
     public function showBerkasLampiran()
     {
         $berkasModel = new \App\Models\BerkasModel();
+        $settingBerkasModel = new \App\Models\SettingBerkasModel();
+
+        // Get dynamic berkas settings for mubaligh
+        $settingBerkas = $settingBerkasModel->getSettingByEntitas('mubaligh');
 
         // Query semua mubaligh
         $mubalighList = $this->mubalighModel->findAll();
@@ -248,6 +252,7 @@ class MubalighController extends BaseController
         $data = [
             'page_title'        => 'Berkas Lampiran Mubaligh',
             'mubalighWithBerkas' => $mubalighWithBerkas,
+            'settingBerkas'     => $settingBerkas,
         ];
 
         return view('backend/mubaligh/berkasLampiran', $data);
