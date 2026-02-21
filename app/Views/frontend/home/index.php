@@ -30,6 +30,33 @@
         </div>
         <div class="col-md-3 col-6 mb-3">
             <div class="info-box shadow-sm">
+                <span class="info-box-icon bg-primary"><i class="fas fa-user-friends"></i></span>
+                <div class="info-box-content">
+                    <span class="info-box-text">Imam Masjid</span>
+                    <span class="info-box-number"><?= $totalImamMasjid ?? 0 ?></span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="info-box shadow-sm">
+                <span class="info-box-icon bg-danger"><i class="fas fa-hands-helping"></i></span>
+                <div class="info-box-content">
+                    <span class="info-box-text">Fardu Kifayah</span>
+                    <span class="info-box-number"><?= $totalFarduKifayah ?? 0 ?></span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="info-box shadow-sm">
+                <span class="info-box-icon bg-dark"><i class="fas fa-gavel"></i></span>
+                <div class="info-box-content">
+                    <span class="info-box-text">Penggali Kubur</span>
+                    <span class="info-box-number"><?= $totalPenggaliKubur ?? 0 ?></span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="info-box shadow-sm">
                 <span class="info-box-icon bg-warning"><i class="fas fa-school"></i></span>
                 <div class="info-box-content">
                     <span class="info-box-text">TPQ & MDTA</span>
