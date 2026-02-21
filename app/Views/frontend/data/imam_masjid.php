@@ -32,15 +32,15 @@
           <div class="col-lg-3 col-md-4 d-flex align-items-stretch mb-4">
             <div class="card w-100 shadow-sm text-center">
                 <div class="card-body">
-                   <?php if ($imam['foto'] && file_exists('uploads/imam_masjid/' . $imam['foto'])) : ?>
-                        <img src="<?= base_url('uploads/imam_masjid/' . $imam['foto']) ?>" class="rounded-circle mb-3" alt="Foto" style="width: 100px; height: 100px; object-fit: cover;">
+                   <?php if ($imam['foto'] && file_exists('uploads/personil/' . $imam['foto'])) : ?>
+                        <img src="<?= base_url('uploads/personil/' . $imam['foto']) ?>" class="rounded-circle mb-3" alt="Foto" style="width: 100px; height: 100px; object-fit: cover;">
                     <?php else : ?>
                         <img src="<?= base_url('template/backend/dist/img/user2-160x160.jpg') ?>" class="rounded-circle mb-3" alt="No Image" style="width: 100px; height: 100px;">
                     <?php endif; ?>
                     
-                    <h5 class="card-title mb-1"><?= esc($imam['nama']) ?></h5>
+                    <h5 class="card-title mb-1"><?= esc($imam['nama_lengkap']) ?></h5>
                     <p class="text-muted small mb-2"><i class="bi bi-geo-alt-fill"></i> <?= esc($imam['nama_masjid']) ?></p>
-                    <p class="card-text small text-muted">Masa Bakti: <?= esc($imam['masa_bakti']) ?> Tahun</p>
+                    <p class="card-text small text-muted"><?= esc($imam['alamat']) ?></p>
                 </div>
             </div>
           </div>

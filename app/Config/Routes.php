@@ -7,8 +7,12 @@ use CodeIgniter\Router\RouteCollection;
  */
 
 // ============================================================
-// FRONTEND ROUTES (Publik - tanpa autentikasi)
+// AUTH ROUTES (Override Myth/Auth agar redirect ke dashboard)
 // ============================================================
+$routes->get('login', 'AuthController::login', ['as' => 'login']);
+$routes->post('login', 'AuthController::attemptLogin');
+$routes->get('logout', 'AuthController::logout');
+
 // ============================================================
 // FRONTEND ROUTES (Publik - tanpa autentikasi)
 // ============================================================

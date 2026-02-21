@@ -46,14 +46,19 @@ class AuthController extends Controller
         // No need to show a login form if the user
         // is already logged in.
         if ($this->auth->check()) {
-            $redirectURL = session('redirect_url') ?? site_url('/');
+            $redirectURL = session('redirect_url') ?? site_url($this->config->landingRoute);
             unset($_SESSION['redirect_url']);
 
             return redirect()->to($redirectURL);
         }
 
         // Set a return URL if none is specified
-        $_SESSION['redirect_url'] = session('redirect_url') ?? previous_url() ?? site_url('/');
+        // If coming from the homepage, redirect to dashboard instead
+        $previous = previous_url() ?? site_url('/');
+        if (rtrim($previous, '/') === rtrim(site_url(), '/')) {
+            $previous = site_url($this->config->landingRoute);
+        }
+        $_SESSION['redirect_url'] = session('redirect_url') ?? $previous;
 
         return $this->_render($this->config->views['login'], ['config' => $this->config]);
     }
@@ -93,7 +98,13 @@ class AuthController extends Controller
             return redirect()->to(route_to('reset-password') . '?token=' . $this->auth->user()->reset_hash)->withCookies();
         }
 
-        $redirectURL = session('redirect_url') ?? site_url('/');
+        $redirectURL = session('redirect_url') ?? site_url($this->config->landingRoute);
+
+        // If redirect URL is the homepage, force redirect to dashboard
+        if (rtrim($redirectURL, '/') === rtrim(site_url(), '/')) {
+            $redirectURL = site_url($this->config->landingRoute);
+        }
+
         unset($_SESSION['redirect_url']);
 
         return redirect()->to($redirectURL)->withCookies()->with('message', lang('Auth.loginSuccess'));

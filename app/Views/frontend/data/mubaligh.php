@@ -32,14 +32,14 @@
           <div class="col-lg-3 col-md-4 d-flex align-items-stretch mb-4">
             <div class="card w-100 shadow-sm text-center">
                 <div class="card-body">
-                   <?php if ($mubaligh['foto'] && file_exists('uploads/mubaligh/' . $mubaligh['foto'])) : ?>
-                        <img src="<?= base_url('uploads/mubaligh/' . $mubaligh['foto']) ?>" class="rounded-circle mb-3" alt="Foto" style="width: 100px; height: 100px; object-fit: cover;">
+                   <?php if ($mubaligh['foto'] && file_exists('uploads/personil/' . $mubaligh['foto'])) : ?>
+                        <img src="<?= base_url('uploads/personil/' . $mubaligh['foto']) ?>" class="rounded-circle mb-3" alt="Foto" style="width: 100px; height: 100px; object-fit: cover;">
                     <?php else : ?>
                         <img src="<?= base_url('template/backend/dist/img/user2-160x160.jpg') ?>" class="rounded-circle mb-3" alt="No Image" style="width: 100px; height: 100px;">
                     <?php endif; ?>
                     
-                    <h5 class="card-title mb-1"><?= esc($mubaligh['nama']) ?></h5>
-                    <p class="text-muted small mb-2"><?= esc($mubaligh['kompetensi']) ?></p>
+                    <h5 class="card-title mb-1"><?= esc($mubaligh['nama_lengkap']) ?></h5>
+                    <p class="text-muted small mb-2"><?= esc($mubaligh['alamat']) ?></p>
                     <p class="card-text small text-muted"><?= esc($mubaligh['no_hp']) ?></p>
                 </div>
             </div>

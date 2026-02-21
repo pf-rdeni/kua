@@ -20,7 +20,7 @@ $breadcrumb = [
                 <p>Mubaligh</p>
             </div>
             <div class="icon"><i class="fas fa-user-tie"></i></div>
-            <a href="<?= base_url('admin/mubaligh') ?>" class="small-box-footer">
+            <a href="<?= base_url('admin/personil/mubaligh') ?>" class="small-box-footer">
                 Lihat Detail <i class="fas fa-arrow-circle-right"></i>
             </a>
         </div>
@@ -48,7 +48,7 @@ $breadcrumb = [
                 <p>Imam Masjid</p>
             </div>
             <div class="icon"><i class="fas fa-user-check"></i></div>
-            <a href="<?= base_url('admin/imam-masjid') ?>" class="small-box-footer">
+            <a href="<?= base_url('admin/personil/imam_masjid') ?>" class="small-box-footer">
                 Lihat Detail <i class="fas fa-arrow-circle-right"></i>
             </a>
         </div>
@@ -62,7 +62,7 @@ $breadcrumb = [
                 <p>Fardu Kifayah</p>
             </div>
             <div class="icon"><i class="fas fa-hands-helping"></i></div>
-            <a href="<?= base_url('admin/fardu-kifayah') ?>" class="small-box-footer">
+            <a href="<?= base_url('admin/personil/fardu_kifayah') ?>" class="small-box-footer">
                 Lihat Detail <i class="fas fa-arrow-circle-right"></i>
             </a>
         </div>
@@ -78,7 +78,7 @@ $breadcrumb = [
                 <p>Penggali Kubur</p>
             </div>
             <div class="icon"><i class="fas fa-hard-hat"></i></div>
-            <a href="<?= base_url('admin/penggali-kubur') ?>" class="small-box-footer">
+            <a href="<?= base_url('admin/personil/penggali_kubur') ?>" class="small-box-footer">
                 Lihat Detail <i class="fas fa-arrow-circle-right"></i>
             </a>
         </div>
