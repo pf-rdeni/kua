@@ -55,32 +55,51 @@
                 <!-- Separator PENDATAAN -->
                 <li class="nav-header">PENDATAAN</li>
 
-                <?php if (in_array('SuperAdmin', $userGroups) || in_array('Admin', $userGroups) || in_array('OperatorMubaligh', $userGroups)): ?>
-                <!-- Mubaligh (Treeview) -->
-                <li class="nav-item has-treeview <?= strpos(uri_string(), 'admin/mubaligh') !== false ? 'menu-open' : '' ?>">
-                    <a href="#" class="nav-link <?= strpos(uri_string(), 'admin/mubaligh') !== false ? 'active' : '' ?>">
-                        <i class="nav-icon fas fa-user-tie"></i>
+                <?php
+                // Load entitas types dinamis dari database
+                $entitasTypeModel = new \App\Models\EntitasTypeModel();
+                $entitasTypes = $entitasTypeModel->getAccessibleForUser($userGroups);
+                ?>
+                <?php foreach ($entitasTypes as $et): ?>
+                <?php
+                    $personilUrl  = 'admin/personil/' . $et['kode'];
+                    $berkasUrl    = 'admin/personil/' . $et['kode'] . '/berkas-lampiran';
+                    $insentifUrl  = 'admin/pengajuan-insentif/' . $et['kode'];
+                    $isMenuOpen   = strpos(uri_string(), $personilUrl) !== false || strpos(uri_string(), $insentifUrl) !== false;
+                    $isDataActive   = (uri_string() == $personilUrl || (strpos(uri_string(), $personilUrl) !== false && strpos(uri_string(), 'berkas-lampiran') === false));
+                    $isBerkasActive  = strpos(uri_string(), $berkasUrl) !== false;
+                    $isInsentifActive = strpos(uri_string(), $insentifUrl) !== false;
+                ?>
+                <li class="nav-item has-treeview <?= $isMenuOpen ? 'menu-open' : '' ?>">
+                    <a href="#" class="nav-link <?= $isMenuOpen ? 'active' : '' ?>">
+                        <i class="nav-icon <?= esc($et['icon'] ?? 'fas fa-users') ?>"></i>
                         <p>
-                            Mubaligh
+                            <?= esc($et['nama_label']) ?>
                             <i class="right fas fa-angle-left"></i>
                         </p>
                     </a>
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
-                            <a href="<?= base_url('admin/mubaligh') ?>" class="nav-link <?= uri_string() == 'admin/mubaligh' || (strpos(uri_string(), 'admin/mubaligh') !== false && strpos(uri_string(), 'berkas-lampiran') === false) ? 'active' : '' ?>">
+                            <a href="<?= base_url($personilUrl) ?>" class="nav-link <?= $isDataActive ? 'active' : '' ?>">
                                 <i class="far fa-circle nav-icon"></i>
-                                <p>Data Mubaligh</p>
+                                <p>Data <?= esc($et['nama_label']) ?></p>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="<?= base_url('admin/mubaligh/berkas-lampiran') ?>" class="nav-link <?= strpos(uri_string(), 'admin/mubaligh/berkas-lampiran') !== false ? 'active' : '' ?>">
+                            <a href="<?= base_url($berkasUrl) ?>" class="nav-link <?= $isBerkasActive ? 'active' : '' ?>">
                                 <i class="far fa-circle nav-icon"></i>
                                 <p>Berkas Lampiran</p>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a href="<?= base_url($insentifUrl) ?>" class="nav-link <?= $isInsentifActive ? 'active' : '' ?>">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Pengajuan Insentif</p>
+                            </a>
+                        </li>
                     </ul>
                 </li>
-                <?php endif; ?>
+                <?php endforeach; ?>
 
                 <?php if (in_array('SuperAdmin', $userGroups) || in_array('Admin', $userGroups) || in_array('OperatorMasjidMushola', $userGroups)): ?>
                 <!-- Masjid & Mushola -->
@@ -88,33 +107,6 @@
                     <a href="<?= base_url('admin/masjid-mushola') ?>" class="nav-link <?= strpos(uri_string(), 'admin/masjid-mushola') !== false ? 'active' : '' ?>">
                         <i class="nav-icon fas fa-mosque"></i>
                         <p>Masjid & Mushola</p>
-                    </a>
-                </li>
-                <!-- Imam Masjid -->
-                <li class="nav-item">
-                    <a href="<?= base_url('admin/imam-masjid') ?>" class="nav-link <?= strpos(uri_string(), 'admin/imam-masjid') !== false ? 'active' : '' ?>">
-                        <i class="nav-icon fas fa-user-check"></i>
-                        <p>Imam Masjid</p>
-                    </a>
-                </li>
-                <?php endif; ?>
-
-                <?php if (in_array('SuperAdmin', $userGroups) || in_array('Admin', $userGroups) || in_array('OperatorFarduKifayah', $userGroups)): ?>
-                <!-- Pengurus Fardu Kifayah -->
-                <li class="nav-item">
-                    <a href="<?= base_url('admin/fardu-kifayah') ?>" class="nav-link <?= strpos(uri_string(), 'admin/fardu-kifayah') !== false ? 'active' : '' ?>">
-                        <i class="nav-icon fas fa-hands-helping"></i>
-                        <p>Fardu Kifayah</p>
-                    </a>
-                </li>
-                <?php endif; ?>
-
-                <?php if (in_array('SuperAdmin', $userGroups) || in_array('Admin', $userGroups) || in_array('OperatorPenggaliKubur', $userGroups)): ?>
-                <!-- Petugas Penggali Kubur -->
-                <li class="nav-item">
-                    <a href="<?= base_url('admin/penggali-kubur') ?>" class="nav-link <?= strpos(uri_string(), 'admin/penggali-kubur') !== false ? 'active' : '' ?>">
-                        <i class="nav-icon fas fa-hard-hat"></i>
-                        <p>Penggali Kubur</p>
                     </a>
                 </li>
                 <?php endif; ?>

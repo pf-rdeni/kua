@@ -4,10 +4,7 @@ namespace App\Controllers\Backend;
 
 use App\Controllers\BaseController;
 use App\Models\BerkasModel;
-use App\Models\MubalighModel;
-use App\Models\ImamMasjidModel;
-use App\Models\FarduKifayahModel;
-use App\Models\PenggaliKuburModel;
+use App\Models\PersonilModel;
 use App\Models\MajelisTaklimModel;
 use App\Models\TpqMdtaModel;
 use App\Models\SettingBerkasModel;
@@ -28,30 +25,32 @@ class BerkasController extends BaseController
      * 'fotoDir'   => Direktori upload foto profil
      */
     protected $allowedEntitas = [
+        // Unified person-entity types (semua pakai PersonilModel)
         'mubaligh' => [
-            'model'     => MubalighModel::class,
-            'pk'        => 'id_mubaligh',
+            'model'     => PersonilModel::class,
+            'pk'        => 'id',
             'fotoField' => 'foto',
-            'fotoDir'   => 'uploads/mubaligh',
+            'fotoDir'   => 'uploads/personil',
         ],
         'imam_masjid' => [
-            'model'     => ImamMasjidModel::class,
-            'pk'        => 'id_imam_masjid',
+            'model'     => PersonilModel::class,
+            'pk'        => 'id',
             'fotoField' => 'foto',
-            'fotoDir'   => 'uploads/imam_masjid',
+            'fotoDir'   => 'uploads/personil',
         ],
         'fardu_kifayah' => [
-            'model'     => FarduKifayahModel::class,
-            'pk'        => 'id_fardu_kifayah',
+            'model'     => PersonilModel::class,
+            'pk'        => 'id',
             'fotoField' => 'foto',
-            'fotoDir'   => 'uploads/fardu_kifayah',
+            'fotoDir'   => 'uploads/personil',
         ],
         'penggali_kubur' => [
-            'model'     => PenggaliKuburModel::class,
-            'pk'        => 'id_penggali_kubur',
+            'model'     => PersonilModel::class,
+            'pk'        => 'id',
             'fotoField' => 'foto',
-            'fotoDir'   => 'uploads/penggali_kubur',
+            'fotoDir'   => 'uploads/personil',
         ],
+        // Lembaga entities (tetap model terpisah)
         'majelis_taklim' => [
             'model'     => MajelisTaklimModel::class,
             'pk'        => 'id_majelis_taklim',

@@ -4,27 +4,23 @@ namespace App\Controllers\Frontend;
 
 use App\Controllers\BaseController;
 use App\Models\MasjidMusholaModel;
-use App\Models\MubalighModel;
-use App\Models\ImamMasjidModel;
+use App\Models\PersonilModel;
 use App\Models\MajelisTaklimModel;
 use App\Models\TpqMdtaModel;
 
 class DataController extends BaseController
 {
     protected $masjidModel;
-    protected $mubalighModel;
-    protected $imamModel;
+    protected $personilModel;
     protected $mtModel;
     protected $tpqModel;
 
     public function __construct()
     {
-        $this->masjidModel = new MasjidMusholaModel();
-        // Check if models exist, fallback or handle error if not yet created (Mubaligh was step 4)
-        $this->mubalighModel = new MubalighModel();
-        $this->imamModel = new ImamMasjidModel();
-        $this->mtModel = new MajelisTaklimModel();
-        $this->tpqModel = new TpqMdtaModel();
+        $this->masjidModel   = new MasjidMusholaModel();
+        $this->personilModel = new PersonilModel();
+        $this->mtModel       = new MajelisTaklimModel();
+        $this->tpqModel      = new TpqMdtaModel();
     }
 
     public function masjid_mushola()
@@ -56,15 +52,18 @@ class DataController extends BaseController
     public function mubaligh()
     {
         $keyword = $this->request->getGet('keyword');
-        $model = $this->mubalighModel;
+        $model = $this->personilModel->ofType('mubaligh');
         
         if ($keyword) {
-            $model->like('nama', $keyword)->orLike('alamat', $keyword);
+            $model->groupStart()
+                  ->like('nama_lengkap', $keyword)
+                  ->orLike('alamat', $keyword)
+                  ->groupEnd();
         }
 
         $data = [
             'mubalighList' => $model->paginate(12, 'data'),
-            'pager' => $model->pager,
+            'pager' => $this->personilModel->pager,
             'keyword' => $keyword
         ];
         return view('frontend/data/mubaligh', $data);
@@ -73,16 +72,18 @@ class DataController extends BaseController
     public function imam_masjid()
     {
         $keyword = $this->request->getGet('keyword');
-        $model = $this->imamModel->getWithMasjid(); // Uses Join
+        $model = $this->personilModel->getWithMasjid('imam_masjid');
         
         if ($keyword) {
-             $model->like('tbl_imam_masjid.nama', $keyword)
-                   ->orLike('tbl_masjid_mushola.nama', $keyword);
+             $model->groupStart()
+                   ->like('tbl_personil.nama_lengkap', $keyword)
+                   ->orLike('tbl_masjid_mushola.nama', $keyword)
+                   ->groupEnd();
         }
 
         $data = [
             'imamList' => $model->paginate(12, 'data'),
-            'pager' => $this->imamModel->pager,
+            'pager' => $this->personilModel->pager,
             'keyword' => $keyword
         ];
         return view('frontend/data/imam_masjid', $data);

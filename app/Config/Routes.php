@@ -80,17 +80,25 @@ $routes->group('admin', ['filter' => 'login'], function ($routes) {
         $routes->post('delete/(:num)', 'Backend\SettingBerkasController::delete/$1');
     });
 
-    // --- Berdasarkan Role ---
-    // --- Mubaligh (SuperAdmin, Admin, OperatorMubaligh) ---
-    $routes->group('mubaligh', ['filter' => 'role:SuperAdmin,Admin,OperatorMubaligh'], function ($routes) {
-        $routes->get('/', 'Backend\MubalighController::index');
-        $routes->get('create', 'Backend\MubalighController::create');
-        $routes->post('store', 'Backend\MubalighController::store');
-        $routes->get('edit/(:num)', 'Backend\MubalighController::edit/$1');
-        $routes->post('update/(:num)', 'Backend\MubalighController::update/$1');
-        $routes->get('delete/(:num)', 'Backend\MubalighController::delete/$1');
-        $routes->get('show/(:num)', 'Backend\MubalighController::show/$1');
-        $routes->get('berkas-lampiran', 'Backend\MubalighController::showBerkasLampiran');
+    // --- Personil (Unified: mubaligh, imam_masjid, fardu_kifayah, penggali_kubur) ---
+    $routes->group('personil', function ($routes) {
+        $routes->get('(:segment)', 'Backend\PersonilController::index/$1');
+        $routes->get('(:segment)/create', 'Backend\PersonilController::create/$1');
+        $routes->post('(:segment)/store', 'Backend\PersonilController::store/$1');
+        $routes->get('(:segment)/edit/(:num)', 'Backend\PersonilController::edit/$1/$2');
+        $routes->post('(:segment)/update/(:num)', 'Backend\PersonilController::update/$1/$2');
+        $routes->get('(:segment)/delete/(:num)', 'Backend\PersonilController::delete/$1/$2');
+        $routes->get('(:segment)/show/(:num)', 'Backend\PersonilController::show/$1/$2');
+        $routes->get('(:segment)/berkas-lampiran', 'Backend\PersonilController::showBerkasLampiran/$1');
+    });
+
+    // --- Pengajuan Insentif (per entitas type) ---
+    $routes->group('pengajuan-insentif', function ($routes) {
+        $routes->get('(:segment)', 'Backend\PengajuanInsentifController::index/$1');
+        $routes->get('(:segment)/cetak-asn/(:num)', 'Backend\PengajuanInsentifController::cetakSuratAsn/$1/$2');
+        $routes->get('(:segment)/cetak-insentif/(:num)', 'Backend\PengajuanInsentifController::cetakSuratInsentif/$1/$2');
+        $routes->get('(:segment)/cetak-rekomendasi/(:num)', 'Backend\PengajuanInsentifController::cetakSuratRekomendasi/$1/$2');
+        $routes->get('(:segment)/cetak-lampiran/(:num)', 'Backend\PengajuanInsentifController::cetakLampiran/$1/$2');
     });
 
     // --- Masjid & Mushola (SuperAdmin, Admin, OperatorMasjidMushola) ---
@@ -102,39 +110,6 @@ $routes->group('admin', ['filter' => 'login'], function ($routes) {
         $routes->post('update/(:num)', 'Backend\MasjidMusholaController::update/$1');
         $routes->get('delete/(:num)', 'Backend\MasjidMusholaController::delete/$1');
         $routes->get('show/(:num)', 'Backend\MasjidMusholaController::show/$1');
-    });
-
-    // --- Imam Masjid (SuperAdmin, Admin, OperatorMasjidMushola) ---
-    $routes->group('imam-masjid', ['filter' => 'role:SuperAdmin,Admin,OperatorMasjidMushola'], function ($routes) {
-        $routes->get('/', 'Backend\ImamMasjidController::index');
-        $routes->get('create', 'Backend\ImamMasjidController::create');
-        $routes->post('store', 'Backend\ImamMasjidController::store');
-        $routes->get('edit/(:num)', 'Backend\ImamMasjidController::edit/$1');
-        $routes->post('update/(:num)', 'Backend\ImamMasjidController::update/$1');
-        $routes->get('delete/(:num)', 'Backend\ImamMasjidController::delete/$1');
-        $routes->get('show/(:num)', 'Backend\ImamMasjidController::show/$1');
-    });
-
-    // --- Pengurus Fardu Kifayah (SuperAdmin, Admin, OperatorFarduKifayah) ---
-    $routes->group('fardu-kifayah', ['filter' => 'role:SuperAdmin,Admin,OperatorFarduKifayah'], function ($routes) {
-        $routes->get('/', 'Backend\FarduKifayahController::index');
-        $routes->get('create', 'Backend\FarduKifayahController::create');
-        $routes->post('store', 'Backend\FarduKifayahController::store');
-        $routes->get('edit/(:num)', 'Backend\FarduKifayahController::edit/$1');
-        $routes->post('update/(:num)', 'Backend\FarduKifayahController::update/$1');
-        $routes->get('delete/(:num)', 'Backend\FarduKifayahController::delete/$1');
-        $routes->get('show/(:num)', 'Backend\FarduKifayahController::show/$1');
-    });
-
-    // --- Petugas Penggali Kubur (SuperAdmin, Admin, OperatorPenggaliKubur) ---
-    $routes->group('penggali-kubur', ['filter' => 'role:SuperAdmin,Admin,OperatorPenggaliKubur'], function ($routes) {
-        $routes->get('/', 'Backend\PenggaliKuburController::index');
-        $routes->get('create', 'Backend\PenggaliKuburController::create');
-        $routes->post('store', 'Backend\PenggaliKuburController::store');
-        $routes->get('edit/(:num)', 'Backend\PenggaliKuburController::edit/$1');
-        $routes->post('update/(:num)', 'Backend\PenggaliKuburController::update/$1');
-        $routes->get('delete/(:num)', 'Backend\PenggaliKuburController::delete/$1');
-        $routes->get('show/(:num)', 'Backend\PenggaliKuburController::show/$1');
     });
 
     // --- Majelis Taklim (SuperAdmin, Admin, OperatorMajelisTaklim) ---
