@@ -42,7 +42,8 @@ $(document).ready(function() {
     const loader = document.getElementById('loadingOverlay');
     if (loader) {
         setTimeout(function() {
-            $(loader).fadeOut('fast');
+            loader.classList.add('hidden-overlay');
+            setTimeout(() => loader.remove(), 300); // Fully clear it from DOM
         }, 300); 
     }
 

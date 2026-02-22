@@ -49,7 +49,6 @@
             color: #fff !important;
         }
         
-        /* Loading Overlay */
         .loading-overlay {
             position: fixed;
             top: 0;
@@ -57,10 +56,17 @@
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.5);
-            display: none;
+            display: flex; /* Kept display flex to show spinner */
             justify-content: center;
             align-items: center;
             z-index: 9999;
+            transition: opacity 0.3s ease;
+        }
+        
+        .loading-overlay.hidden-overlay {
+            opacity: 0;
+            pointer-events: none; /* Prevents clicks on transparent layer */
+            visibility: hidden;
         }
         
         .loading-spinner {
