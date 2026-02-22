@@ -389,9 +389,68 @@ class BerkasHelper {
     }
 
     /**
+     * Reusable Method: Cek apakah NIK punya entitas kembar sebelum Upload.
+     * Mengembalikan Promise(boolean) -> true jika minta Sync, false jika tidak.
+     */
+    async _checkNikSharingWithPrompt(entitasId) {
+        return new Promise((resolve) => {
+            // Tampilkan loading sebentar selagi checking
+            Swal.fire({
+                title: 'Mengecek Data...',
+                allowOutsideClick: false, allowEscapeKey: false, showConfirmButton: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            $.ajax({
+                url: baseUrl + '/admin/api/personil/check-nik-sharing',
+                type: 'GET',
+                data: {
+                    entitas_type: this.config.entitasType,
+                    entitas_id: entitasId
+                },
+                dataType: 'json',
+                success: function (response) {
+                    if (response.status === 'success' && response.has_siblings) {
+                        // Tutup loading, tampilkan pertanyaan
+                        Swal.fire({
+                            title: 'Entitas Ganda Terdeteksi!',
+                            html: `NIK ini juga terdaftar sebagai: <b>${response.siblingRoles.join(', ')}</b>.<br><br>Apakah Anda ingin file ini ikut dipasang ke entitas tersebut (Sinkronisasi), atau hanya untuk data saat ini saja?`,
+                            icon: 'question',
+                            showCancelButton: true,
+                            showDenyButton: true,
+                            showConfirmButton: true,
+                            confirmButtonText: '<i class="fas fa-sync"></i> Ya, Sinkronkan Semua',
+                            denyButtonText: '<i class="fas fa-file"></i> Hanya Data Ini Saja',
+                            cancelButtonText: 'Batal Upload',
+                            confirmButtonColor: '#28a745',
+                            denyButtonColor: '#17a2b8',
+                            cancelButtonColor: '#6c757d',
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                resolve(true); // User wants to sync_all
+                            } else if (result.isDenied) {
+                                resolve(false); // User only wants this entity
+                            } else {
+                                resolve(null); // User cancelled the upload
+                            }
+                        });
+                    } else {
+                        // Jika tidak ada kembaran, langsung return false (tidak perlu sync_all) tanpa nanya
+                        resolve(false);
+                    }
+                },
+                error: function () {
+                    // Jika API Error, anggap tidak usah sync dan jalan biasa tutup mata
+                    resolve(false);
+                }
+            });
+        });
+    }
+
+    /**
      * Upload berkas from form (after crop)
      */
-    uploadBerkasFromForm() {
+    async uploadBerkasFromForm() {
         const self = this;
         const croppedImageData = $('#berkasCroppedImageData').val();
 
@@ -403,6 +462,14 @@ class BerkasHelper {
         const namaBerkas = $('#berkasUploadNamaBerkas').val();
         if (!namaBerkas) {
             Swal.fire({ icon: 'warning', title: 'Peringatan', text: 'Silakan pilih Tipe Berkas' });
+            return;
+        }
+
+        const entitasIdField = $('#berkasUploadEntitasId').val();
+        const doSyncAll = await this._checkNikSharingWithPrompt(entitasIdField);
+
+        if (doSyncAll === null) {
+            // User aborted during confirmation
             return;
         }
 
@@ -418,9 +485,10 @@ class BerkasHelper {
             type: 'POST',
             data: {
                 entitas_type: self.config.entitasType,
-                entitas_id: $('#berkasUploadEntitasId').val(),
+                entitas_id: entitasIdField,
                 nama_berkas: namaBerkas,
                 berkas_cropped: croppedImageData,
+                sync_all: doSyncAll ? 'true' : 'false'
             },
             dataType: 'json',
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
@@ -444,7 +512,7 @@ class BerkasHelper {
     /**
      * Update berkas from edit form
      */
-    updateBerkasFromForm() {
+    async updateBerkasFromForm() {
         const self = this;
         const croppedImageData = $('#berkasEditCroppedImageData').val();
 
@@ -452,6 +520,11 @@ class BerkasHelper {
             Swal.fire({ icon: 'error', title: 'Error', text: 'Tidak ada perubahan gambar. Silakan pilih file baru atau crop gambar saat ini.' });
             return;
         }
+
+        const entitasIdField = $('#berkasEditEntitasId').val();
+        const doSyncAll = await this._checkNikSharingWithPrompt(entitasIdField);
+
+        if (doSyncAll === null) return;
 
         Swal.fire({
             title: 'Memperbarui berkas...',
@@ -465,10 +538,11 @@ class BerkasHelper {
             type: 'POST',
             data: {
                 entitas_type: self.config.entitasType,
-                entitas_id: $('#berkasEditEntitasId').val(),
+                entitas_id: entitasIdField,
                 nama_berkas: $('#berkasEditNamaBerkas').val(),
                 berkas_cropped: croppedImageData,
                 edit_berkas_id: $('#berkasEditBerkasId').val(),
+                sync_all: doSyncAll ? 'true' : 'false'
             },
             dataType: 'json',
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
@@ -492,7 +566,7 @@ class BerkasHelper {
     /**
      * Upload profil from form
      */
-    uploadProfilFromForm() {
+    async uploadProfilFromForm() {
         const self = this;
         const croppedImageData = $('#berkasProfilCroppedImageData').val();
 
@@ -500,6 +574,11 @@ class BerkasHelper {
             Swal.fire({ icon: 'error', title: 'Error', text: 'Tidak ada gambar. Silakan pilih file dan crop terlebih dahulu.' });
             return;
         }
+
+        const entitasIdField = $('#berkasProfilEntitasId').val();
+        const doSyncAll = await this._checkNikSharingWithPrompt(entitasIdField);
+
+        if (doSyncAll === null) return;
 
         Swal.fire({
             title: 'Mengupload foto profil...',
@@ -512,8 +591,9 @@ class BerkasHelper {
             type: 'POST',
             data: {
                 entitas_type: self.config.entitasType,
-                entitas_id: $('#berkasProfilEntitasId').val(),
+                entitas_id: entitasIdField,
                 profil_cropped: croppedImageData,
+                sync_all: doSyncAll ? 'true' : 'false'
             },
             dataType: 'json',
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
@@ -764,6 +844,8 @@ class BerkasHelper {
             $('#berkasPreviewImage').attr('src', base64Image);
         }
 
+        // Hindari aria-hidden error di console Bootstrap
+        $(':focus').blur();
         $('#modalBerkasCrop').modal('hide');
 
         const self = this;

@@ -77,6 +77,7 @@ $routes->group('admin', ['filter' => 'login'], function ($routes) {
     $routes->group('api', function ($routes) {
         $routes->get('personil/search-nik', 'Backend\PersonilApiController::searchNik');
         $routes->get('personil/get-by-nik', 'Backend\PersonilApiController::getByNik');
+        $routes->get('personil/check-nik-sharing', 'Backend\PersonilApiController::checkNikSharing');
     });
 
     // --- Berkas Lampiran (Shared AJAX Routes) ---

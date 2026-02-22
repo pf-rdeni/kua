@@ -72,4 +72,67 @@ class PersonilApiController extends BaseController
             'message' => 'Data tidak ditemukan'
         ]);
     }
+
+    /**
+     * Endpoint untuk mengecek apakah entitas dengan ID terkait memiliki entitas kembar
+     * berdasarkan NIK. (Dipakai untuk memicu SweetAlert sinkronisasi Berkas Lampiran).
+     */
+    public function checkNikSharing()
+    {
+        $entitasType = $this->request->getGet('entitas_type');
+        $entitasId   = $this->request->getGet('entitas_id');
+
+        if (empty($entitasType) || empty($entitasId)) {
+             return $this->response->setJSON(['status' => 'error', 'message' => 'Parameter tidak lengkap']);
+        }
+
+        // Cari tahu model apa yang dipakai (menggunakan EntitasTypeModel atau manual array)
+        $personilModel = new PersonilModel();
+        
+        // Cari data aslinya dulu untuk menemukan NIK-nya
+        $currentEntity = $personilModel->where('entitas_type', $entitasType)
+                                       ->where('id', $entitasId)
+                                       ->first();
+
+        if (!$currentEntity || empty($currentEntity['nik'])) {
+            return $this->response->setJSON([
+                'status' => 'success',
+                'has_siblings' => false,
+                'siblingRoles' => []
+            ]);
+        }
+
+        // Cari kembaran berdasarkan NIK
+        $siblings = $personilModel->where('nik', $currentEntity['nik'])
+                                  ->where('id !=', $currentEntity['id'])
+                                  ->findAll();
+
+        if (empty($siblings)) {
+             return $this->response->setJSON([
+                 'status' => 'success',
+                 'has_siblings' => false,
+                 'siblingRoles' => []
+             ]);
+        }
+
+        // Mapping role name
+        $db = \Config\Database::connect();
+        $builder = $db->table('tbl_entitas_type');
+        $types = $builder->get()->getResultArray();
+        $typeNames = [];
+        foreach ($types as $t) {
+             $typeNames[$t['kode']] = $t['nama_label'];
+        }
+
+        $rolesArray = [];
+        foreach ($siblings as $s) {
+            $rolesArray[] = $typeNames[$s['entitas_type']] ?? $s['entitas_type'];
+        }
+
+        return $this->response->setJSON([
+             'status' => 'success',
+             'has_siblings' => true,
+             'siblingRoles' => array_unique($rolesArray)
+        ]);
+    }
 }

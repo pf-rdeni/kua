@@ -108,6 +108,7 @@ class BerkasController extends BaseController
             $namaBerkas  = $this->request->getPost('nama_berkas');
             $berkasCropped = $this->request->getPost('berkas_cropped');
             $editBerkasId  = $this->request->getPost('edit_berkas_id');
+            $syncAll       = $this->request->getPost('sync_all'); // <-- Diterima parameter setuju Sinkron dari Dialog
 
             // Validasi entitas_type
             $entitas = $this->resolveEntitas($entitasType);
@@ -200,14 +201,19 @@ class BerkasController extends BaseController
                     }
 
                     if ($isEditMode && $berkasToUpdate) {
-                        // Hapus file lama
-                        $oldFilePath = $uploadPath . $berkasToUpdate['nama_file'];
-                        if (file_exists($oldFilePath)) {
-                            @unlink($oldFilePath);
-                        }
-                        $oldThumbPath = $thumbPath . $berkasToUpdate['nama_file'];
-                        if (file_exists($oldThumbPath)) {
-                            @unlink($oldThumbPath);
+                        // --- [NEW] REFERENCE COUNTING SEBELUM REPLACE FILE LAMA ---
+                        $usageCountOld = $this->berkasModel->where('nama_file', $berkasToUpdate['nama_file'])->countAllResults();
+                        
+                        // Hapus file fisik lama HANYA JIKA cuma dipakai oleh 1 baris
+                        if ($usageCountOld <= 1) {
+                            $oldFilePath = $uploadPath . $berkasToUpdate['nama_file'];
+                            if (file_exists($oldFilePath)) {
+                                @unlink($oldFilePath);
+                            }
+                            $oldThumbPath = $thumbPath . $berkasToUpdate['nama_file'];
+                            if (file_exists($oldThumbPath)) {
+                                @unlink($oldThumbPath);
+                            }
                         }
 
                         // Update record
@@ -215,6 +221,31 @@ class BerkasController extends BaseController
                             'nama_file' => $fileName,
                             'status'    => 1,
                         ]);
+
+                        // --- [NEW] GLOBAL FILE SHARING UPDATE ---
+                        if ($syncAll === 'true' && in_array($entitasType, ['mubaligh', 'imam_masjid', 'fardu_kifayah', 'penggali_kubur']) && !empty($entitasData['nik'])) {
+                            $personilModel = new PersonilModel();
+                            $sameNikEntities = $personilModel->where('nik', $entitasData['nik'])
+                                                             ->where('id !=', $entitasData['id'])
+                                                             ->findAll();
+                            
+                            foreach ($sameNikEntities as $sibling) {
+                                $siblingBerkas = $this->berkasModel->where('entitas_type', $sibling['entitas_type'])
+                                                                   ->where('entitas_id', $sibling['id'])
+                                                                   ->where('nama_berkas', $namaBerkas)
+                                                                   ->first();
+                                if ($siblingBerkas) {
+                                    $this->berkasModel->update($siblingBerkas['id'], ['nama_file' => $fileName]);
+                                } else {
+                                    $this->berkasModel->insert([
+                                        'entitas_type' => $sibling['entitas_type'],
+                                        'entitas_id'   => $sibling['id'],
+                                        'nama_berkas'  => $namaBerkas,
+                                        'nama_file'    => $fileName,
+                                    ]);
+                                }
+                            }
+                        }
 
                         return $this->response->setJSON([
                             'success' => true,
@@ -225,9 +256,10 @@ class BerkasController extends BaseController
                                 'url'       => base_url('uploads/berkas/' . $fileName),
                             ]
                         ]);
-                    } else {
-                        // Insert record baru
-                        $this->berkasModel->insert([
+                    }
+
+                    // Insert record baru
+                    $this->berkasModel->insert([
                             'entitas_type' => $entitasType,
                             'entitas_id'   => $entitasId,
                             'nama_berkas'  => $namaBerkas,
@@ -236,6 +268,36 @@ class BerkasController extends BaseController
                         ]);
 
                         $newId = $this->berkasModel->getInsertID();
+
+                        // --- [NEW] GLOBAL FILE SHARING (KTP, KK, dll) ---
+                        // Khusus untuk personil, sinkronkan file ini ke entitas lain dengan NIK yang sama
+                        if ($syncAll === 'true' && in_array($entitasType, ['mubaligh', 'imam_masjid', 'fardu_kifayah', 'penggali_kubur']) && !empty($entitasData['nik'])) {
+                            $personilModel = new PersonilModel();
+                            $sameNikEntities = $personilModel->where('nik', $entitasData['nik'])
+                                                             ->where('id !=', $entitasData['id'])
+                                                             ->findAll();
+                            
+                            foreach ($sameNikEntities as $sibling) {
+                                // Cek apakah sibling ini sudah punya entri berkas untuk tipe ini ($namaBerkas)
+                                $siblingBerkas = $this->berkasModel->where('entitas_type', $sibling['entitas_type'])
+                                                                   ->where('entitas_id', $sibling['id'])
+                                                                   ->where('nama_berkas', $namaBerkas)
+                                                                   ->first();
+                                if ($siblingBerkas) {
+                                    // Update nama_file agar menunjuk ke file yang baru
+                                    $this->berkasModel->update($siblingBerkas['id'], ['nama_file' => $fileName]);
+                                } else {
+                                    // Insert cross-reference pointer baru
+                                    $this->berkasModel->insert([
+                                        'entitas_type' => $sibling['entitas_type'],
+                                        'entitas_id'   => $sibling['id'],
+                                        'nama_berkas'  => $namaBerkas,
+                                        'nama_file'    => $fileName,
+                                        'status'       => 1,
+                                    ]);
+                                }
+                            }
+                        }
 
                         return $this->response->setJSON([
                             'success' => true,
@@ -246,7 +308,6 @@ class BerkasController extends BaseController
                                 'url'       => base_url('uploads/berkas/' . $fileName),
                             ]
                         ]);
-                    }
                 } else {
                     return $this->response->setJSON(['success' => false, 'message' => 'Format data gambar tidak valid']);
                 }
@@ -275,17 +336,23 @@ class BerkasController extends BaseController
                 return $this->response->setJSON(['success' => false, 'message' => 'Data berkas tidak ditemukan']);
             }
 
-            // Hapus file fisik
-            $filePath = FCPATH . 'uploads/berkas/' . $berkas['nama_file'];
-            if (file_exists($filePath)) {
-                @unlink($filePath);
-            }
-            $thumbPath = FCPATH . 'uploads/berkas/thumbs/' . $berkas['nama_file'];
-            if (file_exists($thumbPath)) {
-                @unlink($thumbPath);
+            // --- [NEW] REFERENCE COUNTING / SAFE UNLINK ---
+            // Cek berapa entitas yang "memakai" file fisik ini
+            $usageCount = $this->berkasModel->where('nama_file', $berkas['nama_file'])->countAllResults();
+
+            if ($usageCount <= 1) {
+                // Hapus file fisik HANYA JIKA ini adalah satu-satunya entri terakhir yang memakai file tersebut
+                $filePath = FCPATH . 'uploads/berkas/' . $berkas['nama_file'];
+                if (file_exists($filePath)) {
+                    @unlink($filePath);
+                }
+                $thumbPath = FCPATH . 'uploads/berkas/thumbs/' . $berkas['nama_file'];
+                if (file_exists($thumbPath)) {
+                    @unlink($thumbPath);
+                }
             }
 
-            // Delete record
+            // Selalu hapus record di DB untuk entitas peminta ini
             $this->berkasModel->delete($id);
 
             return $this->response->setJSON(['success' => true, 'message' => 'Berkas berhasil dihapus']);
@@ -326,9 +393,10 @@ class BerkasController extends BaseController
                 return $this->response->setJSON(['success' => false, 'message' => 'Request harus menggunakan AJAX']);
             }
 
-            $entitasType = $this->request->getPost('entitas_type');
-            $entitasId   = (int) $this->request->getPost('entitas_id');
+            $entitasType   = $this->request->getPost('entitas_type');
+            $entitasId     = (int) $this->request->getPost('entitas_id');
             $profilCropped = $this->request->getPost('profil_cropped');
+            $syncAll       = $this->request->getPost('sync_all');
 
             // Validasi entitas_type
             $entitas = $this->resolveEntitas($entitasType);
@@ -377,14 +445,21 @@ class BerkasController extends BaseController
                     $fileName = $entitasType . '_profil_' . $entitasId . '_' . time() . '.' . $type;
                     $filePath = $uploadDir . $fileName;
 
-                    // Hapus foto lama
+                    // --- [NEW] REFERENCE COUNTING SEBELUM REPLACE FOTO PROFIL LAMA ---
                     $fotoField = $config['fotoField'];
                     $oldFoto = $entitasData[$fotoField] ?? null;
-                    if ($oldFoto && file_exists($uploadDir . $oldFoto)) {
-                        @unlink($uploadDir . $oldFoto);
-                    }
-                    if ($oldFoto && file_exists($thumbDir . $oldFoto)) {
-                        @unlink($thumbDir . $oldFoto);
+                    
+                    if ($oldFoto) {
+                        $usageCountOld = $model->where($fotoField, $oldFoto)->countAllResults();
+                        
+                        if ($usageCountOld <= 1) {
+                            if (file_exists($uploadDir . $oldFoto)) {
+                                @unlink($uploadDir . $oldFoto);
+                            }
+                            if (file_exists($thumbDir . $oldFoto)) {
+                                @unlink($thumbDir . $oldFoto);
+                            }
+                        }
                     }
 
                     // Simpan file baru
@@ -402,8 +477,18 @@ class BerkasController extends BaseController
                         log_message('error', 'Gagal generate thumb profil: ' . $e->getMessage());
                     }
 
-                    // Update kolom foto di tabel entitas
+                    // Update kolom foto di tabel entitas peminta
                     $model->update($entitasId, [$fotoField => $fileName]);
+
+                    // --- [NEW] GLOBAL FILE SHARING UPDATE (FOTO PROFIL) ---
+                    if ($syncAll === 'true' && in_array($entitasType, ['mubaligh', 'imam_masjid', 'fardu_kifayah', 'penggali_kubur']) && !empty($entitasData['nik'])) {
+                        $personilModel = new PersonilModel();
+                        // Broadcast update ke seluruh entitas yang se-NIK
+                        $personilModel->where('nik', $entitasData['nik'])
+                                      ->where('id !=', $entitasData['id'])
+                                      ->set([$fotoField => $fileName])
+                                      ->update();
+                    }
 
                     return $this->response->setJSON([
                         'success' => true,
@@ -456,13 +541,18 @@ class BerkasController extends BaseController
             $oldFoto = $entitasData[$fotoField] ?? null;
 
             if ($oldFoto) {
-                $filePath = FCPATH . $config['fotoDir'] . '/' . $oldFoto;
-                if (file_exists($filePath)) {
-                    @unlink($filePath);
-                }
-                $thumbPath = FCPATH . $config['fotoDir'] . '/thumbs/' . $oldFoto;
-                if (file_exists($thumbPath)) {
-                    @unlink($thumbPath);
+                // --- [NEW] REFERENCE COUNTING / SAFE UNLINK (FOTO PROFIL) ---
+                $usageCount = $model->where($fotoField, $oldFoto)->countAllResults();
+                
+                if ($usageCount <= 1) {
+                    $filePath = FCPATH . $config['fotoDir'] . '/' . $oldFoto;
+                    if (file_exists($filePath)) {
+                        @unlink($filePath);
+                    }
+                    $thumbPath = FCPATH . $config['fotoDir'] . '/thumbs/' . $oldFoto;
+                    if (file_exists($thumbPath)) {
+                        @unlink($thumbPath);
+                    }
                 }
             }
 
