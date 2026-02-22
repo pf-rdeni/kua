@@ -35,19 +35,7 @@
 // Base URL for AJAX requests
 const baseUrl = '<?= rtrim(base_url(), '/') ?>';
 
-// =================================================================
-// LOADING OVERLAY (Vanilla JS to ensure execution regardless of jQuery errors)
-// =================================================================
-document.addEventListener('DOMContentLoaded', function() {
-    const loader = document.getElementById('loadingOverlay');
-    if (loader) {
-        // Fallback safety to remove it gracefully
-        setTimeout(function() {
-            loader.classList.add('hidden-overlay');
-            setTimeout(() => loader.remove(), 300); 
-        }, 300); 
-    }
-});
+
 
 $(document).ready(function() {
 

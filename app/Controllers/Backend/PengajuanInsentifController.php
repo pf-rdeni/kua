@@ -35,6 +35,21 @@ class PengajuanInsentifController extends BaseController
         if (!$config) {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound("Tipe entitas '{$entitasType}' tidak ditemukan.");
         }
+
+        // --- DYNAMIC ROUTE AUTHORIZATION ---
+        $allowedGroups = ['SuperAdmin', 'Admin'];
+        if (!empty($config['operator_group'])) {
+            $allowedGroups[] = $config['operator_group'];
+        }
+
+        if (! function_exists('in_groups')) {
+            helper('auth');
+        }
+
+        if (! \in_groups($allowedGroups)) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound("Akses Ditolak. Anda tidak memiliki izin operasi untuk data " . $config['nama_label']);
+        }
+
         return $config;
     }
 

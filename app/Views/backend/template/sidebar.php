@@ -143,6 +143,18 @@
                     </a>
                 </li>
 
+                <!-- Manajemen Entitas Type -->
+                <?php
+                $settingEntitasUrl = 'admin/entitas-type';
+                $isSettingEntitasActive = strpos(uri_string(), $settingEntitasUrl) !== false;
+                ?>
+                <li class="nav-item">
+                    <a href="<?= base_url($settingEntitasUrl) ?>" class="nav-link <?= $isSettingEntitasActive ? 'active' : '' ?>">
+                        <i class="nav-icon fas fa-list-ul"></i>
+                        <p>Pengaturan Entitas</p>
+                    </a>
+                </li>
+
                 <?php if (in_array('SuperAdmin', $userGroups)): ?>
                 <!-- Manajemen User (SuperAdmin Only) -->
                 <li class="nav-item">
@@ -150,6 +162,56 @@
                         <i class="nav-icon fas fa-users-cog"></i>
                         <p>Manajemen User</p>
                     </a>
+                </li>
+                
+                <!-- Manajemen Grup Akun (SuperAdmin Only) -->
+                <li class="nav-item">
+                    <a href="<?= base_url('admin/groups') ?>" class="nav-link <?= strpos(uri_string(), 'admin/groups') !== false ? 'active' : '' ?>">
+                        <i class="nav-icon fas fa-user-shield"></i>
+                        <p>Manajemen Grup</p>
+                    </a>
+                </li>
+                
+                <!-- Separator DOKUMENTASI -->
+                <li class="nav-header">DOKUMENTASI</li>
+                
+                <?php
+                    $isDokumentasiActive = strpos(uri_string(), 'admin/dokumentasi') !== false;
+                ?>
+                <li class="nav-item has-treeview <?= $isDokumentasiActive ? 'menu-open' : '' ?>">
+                    <a href="#" class="nav-link <?= $isDokumentasiActive ? 'active' : '' ?>">
+                        <i class="nav-icon fas fa-book-open"></i>
+                        <p>
+                            Dokumentasi Sistem
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="<?= base_url('admin/dokumentasi/arsitektur') ?>" class="nav-link <?= url_is('admin/dokumentasi/arsitektur') || url_is('admin/dokumentasi') ? 'active' : '' ?>">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>General System</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="<?= base_url('admin/dokumentasi/auth') ?>" class="nav-link <?= url_is('admin/dokumentasi/auth') ? 'active' : '' ?>">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Input Data Personil</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="<?= base_url('admin/dokumentasi/komponen') ?>" class="nav-link <?= url_is('admin/dokumentasi/komponen') ? 'active' : '' ?>">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Berkas Lampiran</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="<?= base_url('admin/dokumentasi/alur-insentif') ?>" class="nav-link <?= url_is('admin/dokumentasi/alur-insentif') ? 'active' : '' ?>">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Pengajuan Insentif</p>
+                            </a>
+                        </li>
+                    </ul>
                 </li>
                 <?php endif; ?>
                 <?php endif; ?>

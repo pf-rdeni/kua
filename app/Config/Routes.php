@@ -65,6 +65,20 @@ $routes->group('admin', ['filter' => 'login'], function ($routes) {
     // --- Dashboard ---
     $routes->get('dashboard', 'Backend\DashboardController::index');
 
+    // --- Dokumentasi Sistem Aplikasi ---
+    $routes->group('dokumentasi', function ($routes) {
+        $routes->get('/', 'Backend\DokumentasiController::arsitektur');
+        $routes->get('arsitektur', 'Backend\DokumentasiController::arsitektur');
+        $routes->get('auth', 'Backend\DokumentasiController::auth');
+        $routes->get('komponen', 'Backend\DokumentasiController::komponen');
+        $routes->get('alur-insentif', 'Backend\DokumentasiController::alur_insentif');
+    });
+    // --- API & AJAX Endpoints ---
+    $routes->group('api', function ($routes) {
+        $routes->get('personil/search-nik', 'Backend\PersonilApiController::searchNik');
+        $routes->get('personil/get-by-nik', 'Backend\PersonilApiController::getByNik');
+    });
+
     // --- Berkas Lampiran (Shared AJAX Routes) ---
     $routes->group('berkas', function ($routes) {
         $routes->post('upload', 'Backend\BerkasController::upload');
@@ -83,6 +97,29 @@ $routes->group('admin', ['filter' => 'login'], function ($routes) {
         $routes->post('update/(:num)', 'Backend\SettingBerkasController::update/$1');
         $routes->post('delete/(:num)', 'Backend\SettingBerkasController::delete/$1');
     });
+
+    // --- Manajemen Entitas Type (SuperAdmin, Admin) ---
+    $routes->group('entitas-type', ['filter' => 'role:SuperAdmin,Admin'], function ($routes) {
+        $routes->get('/', 'Backend\EntitasTypeController::index');
+        $routes->get('create', 'Backend\EntitasTypeController::create');
+        $routes->post('store', 'Backend\EntitasTypeController::store');
+        $routes->get('edit/(:num)', 'Backend\EntitasTypeController::edit/$1');
+        $routes->post('update/(:num)', 'Backend\EntitasTypeController::update/$1');
+        $routes->post('delete/(:num)', 'Backend\EntitasTypeController::delete/$1');
+    });
+
+    // --- Manajemen Grup Akun (SuperAdmin Only) ---
+    $routes->group('groups', ['filter' => 'role:SuperAdmin'], function ($routes) {
+        $routes->get('/', 'Backend\GroupController::index');
+        $routes->get('create', 'Backend\GroupController::create');
+        $routes->post('store', 'Backend\GroupController::store');
+        $routes->get('edit/(:num)', 'Backend\GroupController::edit/$1');
+        $routes->post('update/(:num)', 'Backend\GroupController::update/$1');
+        $routes->post('delete/(:num)', 'Backend\GroupController::delete/$1');
+    });
+
+    // --- Dokumentasi Internal Sistem (SuperAdmin Only) ---
+    $routes->get('dokumentasi', 'Backend\DokumentasiController::index', ['filter' => 'role:SuperAdmin']);
 
     // --- Personil (Unified: mubaligh, imam_masjid, fardu_kifayah, penggali_kubur) ---
     $routes->group('personil', function ($routes) {

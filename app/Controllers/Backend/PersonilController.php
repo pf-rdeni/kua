@@ -35,6 +35,21 @@ class PersonilController extends BaseController
         if (!$config) {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound("Tipe entitas '{$entitasType}' tidak ditemukan.");
         }
+
+        // --- DYNAMIC ROUTE AUTHORIZATION ---
+        $allowedGroups = ['SuperAdmin', 'Admin'];
+        if (!empty($config['operator_group'])) {
+            $allowedGroups[] = $config['operator_group'];
+        }
+
+        if (! function_exists('in_groups')) {
+            helper('auth');
+        }
+
+        if (! \in_groups($allowedGroups)) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound("Akses Ditolak. Anda tidak memiliki izin operasi untuk data " . $config['nama_label']);
+        }
+
         return $config;
     }
 
@@ -116,16 +131,16 @@ class PersonilController extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        // Handle foto
-        $fotoName = null;
-        $foto = $this->request->getFile('foto');
-        if ($foto && $foto->isValid() && !$foto->hasMoved()) {
-            $fotoName = $foto->getRandomName();
-            $uploadDir = FCPATH . 'uploads/personil';
-            if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0755, true);
+        $nikBaru = $this->request->getPost('nik');
+
+        // [New Validation] Cek Duplikat NIK di Entitas yang Sama (Backend Protection)
+        if (!empty($nikBaru)) {
+            $duplicate = $this->personilModel->where('nik', $nikBaru)
+                                             ->where('entitas_type', $entitasType)
+                                             ->first();
+            if ($duplicate) {
+                return redirect()->back()->withInput()->with('error', 'NIK tersebut sudah didaftarkan pada entitas ini!');
             }
-            $foto->move($uploadDir, $fotoName);
         }
 
         // Handle SK
@@ -145,17 +160,21 @@ class PersonilController extends BaseController
         $saveData = [
             'entitas_type'        => $entitasType,
             'nama_lengkap'        => $this->request->getPost('nama_lengkap'),
-            'nik'                 => $this->request->getPost('nik'),
+            'nik'                 => $nikBaru,
             'tempat_lahir'        => $this->request->getPost('tempat_lahir'),
             'tanggal_lahir'       => $this->request->getPost('tanggal_lahir'),
             'jenis_kelamin'       => $this->request->getPost('jenis_kelamin'),
             'alamat'              => $this->request->getPost('alamat'),
+            'provinsi'            => $this->request->getPost('provinsi'),
+            'kabupaten_kota'      => $this->request->getPost('kabupaten_kota'),
+            'kecamatan'           => $this->request->getPost('kecamatan'),
             'kelurahan_desa'      => $this->request->getPost('kelurahan_desa'),
+            'rt'                  => $this->request->getPost('rt'),
+            'rw'                  => $this->request->getPost('rw'),
             'no_hp'               => $this->request->getPost('no_hp'),
             'pendidikan_terakhir' => $this->request->getPost('pendidikan_terakhir'),
             'pekerjaan'           => $this->request->getPost('pekerjaan'),
             'status_aktif'        => $this->request->getPost('status_aktif') ?? 1,
-            'foto'                => $fotoName,
             'latitude'            => $this->request->getPost('latitude'),
             'longitude'           => $this->request->getPost('longitude'),
         ];
@@ -250,19 +269,17 @@ class PersonilController extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        // Handle foto
-        $fotoName = $personil['foto'];
-        $foto = $this->request->getFile('foto');
-        if ($foto && $foto->isValid() && !$foto->hasMoved()) {
-            if ($personil['foto'] && file_exists(FCPATH . 'uploads/personil/' . $personil['foto'])) {
-                @unlink(FCPATH . 'uploads/personil/' . $personil['foto']);
+        $nikUpdate = $this->request->getPost('nik');
+
+        // [New Validation] Cek Duplikat NIK untuk Edit di entitas sendiri
+        if (!empty($nikUpdate)) {
+            $duplicate = $this->personilModel->where('nik', $nikUpdate)
+                                             ->where('entitas_type', $entitasType)
+                                             ->where('id !=', $id)
+                                             ->first();
+            if ($duplicate) {
+                return redirect()->back()->withInput()->with('error', 'NIK tidak dapat diubah karena telah terpakai oleh ID lain di entitas ini!');
             }
-            $fotoName = $foto->getRandomName();
-            $uploadDir = FCPATH . 'uploads/personil';
-            if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0755, true);
-            }
-            $foto->move($uploadDir, $fotoName);
         }
 
         // Handle SK
@@ -284,17 +301,21 @@ class PersonilController extends BaseController
 
         $updateData = [
             'nama_lengkap'        => $this->request->getPost('nama_lengkap'),
-            'nik'                 => $this->request->getPost('nik'),
+            'nik'                 => $nikUpdate,
             'tempat_lahir'        => $this->request->getPost('tempat_lahir'),
             'tanggal_lahir'       => $this->request->getPost('tanggal_lahir'),
             'jenis_kelamin'       => $this->request->getPost('jenis_kelamin'),
             'alamat'              => $this->request->getPost('alamat'),
+            'provinsi'            => $this->request->getPost('provinsi'),
+            'kabupaten_kota'      => $this->request->getPost('kabupaten_kota'),
+            'kecamatan'           => $this->request->getPost('kecamatan'),
             'kelurahan_desa'      => $this->request->getPost('kelurahan_desa'),
+            'rt'                  => $this->request->getPost('rt'),
+            'rw'                  => $this->request->getPost('rw'),
             'no_hp'               => $this->request->getPost('no_hp'),
             'pendidikan_terakhir' => $this->request->getPost('pendidikan_terakhir'),
             'pekerjaan'           => $this->request->getPost('pekerjaan'),
             'status_aktif'        => $this->request->getPost('status_aktif') ?? 1,
-            'foto'                => $fotoName,
             'latitude'            => $this->request->getPost('latitude'),
             'longitude'           => $this->request->getPost('longitude'),
         ];
@@ -307,7 +328,39 @@ class PersonilController extends BaseController
             $updateData['status'] = $this->request->getPost('status');
         }
 
+        // Process Update Data untuk baris yang bersangkutan
         $this->personilModel->update($id, $updateData);
+
+        // [Global Auto-Sync Flag Check]
+        // Jika sync_all dikirimkan via POST dan NIK tidak kosong
+        if ($this->request->getPost('sync_all') === '1' && !empty($nikUpdate)) {
+            // Ambil semua ID lain yang memiliki NIK sama
+            $otherMates = $this->personilModel->where('nik', $nikUpdate)->where('id !=', $id)->find();
+            if(!empty($otherMates)){
+                // Data dasar yang mutlak sama harus di-sync (tanpa ID, entitas_type, entitas khusus Masjid, form unik dll)
+                $syncData = [
+                    'nama_lengkap' => $updateData['nama_lengkap'],
+                    'tempat_lahir' => $updateData['tempat_lahir'],
+                    'tanggal_lahir' => $updateData['tanggal_lahir'],
+                    'jenis_kelamin' => $updateData['jenis_kelamin'],
+                    'no_hp' => $updateData['no_hp'],
+                    'alamat' => $updateData['alamat'],
+                    'provinsi' => $updateData['provinsi'],
+                    'kabupaten_kota' => $updateData['kabupaten_kota'],
+                    'kecamatan' => $updateData['kecamatan'],
+                    'kelurahan_desa' => $updateData['kelurahan_desa'],
+                    'rt' => $updateData['rt'],
+                    'rw' => $updateData['rw'],
+                    'pendidikan_terakhir' => $updateData['pendidikan_terakhir'],
+                    'pekerjaan' => $updateData['pekerjaan'],
+                    'latitude' => $updateData['latitude'],
+                    'longitude' => $updateData['longitude']
+                ];
+                
+                // Lakukan Update Berantai Serentak
+                $this->personilModel->where('nik', $nikUpdate)->where('id !=', $id)->set($syncData)->update();
+            }
+        }
 
         return redirect()->to('/admin/personil/' . $entitasType)->with('success', 'Data ' . $config['nama_label'] . ' berhasil diperbarui.');
     }

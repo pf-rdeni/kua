@@ -5,10 +5,7 @@
 $bodyClass = 'hold-transition sidebar-mini layout-fixed';
 ?>
 <body class="<?= $bodyClass ?>">
-    <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-spinner"></div>
-    </div>
+
     
     <div class="wrapper">
         <!-- Navbar -->
