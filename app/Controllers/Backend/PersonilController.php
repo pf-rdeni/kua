@@ -59,7 +59,6 @@ class PersonilController extends BaseController
     public function index(string $entitasType)
     {
         $config  = $this->getEntitasConfig($entitasType);
-        $keyword = $this->request->getGet('keyword');
 
         if ($config['has_masjid_link']) {
             $query = $this->personilModel->getWithMasjid($entitasType);
@@ -67,26 +66,14 @@ class PersonilController extends BaseController
             $query = $this->personilModel->ofType($entitasType);
         }
 
-        if ($keyword) {
-            $query->groupStart()
-                  ->like('nama_lengkap', $keyword)
-                  ->orLike('nik', $keyword)
-                  ->orLike('alamat', $keyword)
-                  ->orLike('kelurahan_desa', $keyword)
-                  ->groupEnd();
-        }
-
         $query->orderBy('nama_lengkap', 'ASC');
-        $list = $query->paginate(10, 'personil');
+        $list = $query->findAll();
 
         $data = [
             'title'        => 'Data ' . $config['nama_label'],
             'entitasType'  => $entitasType,
             'entitasConfig' => $config,
             'personilList' => $list,
-            'pager'        => $this->personilModel->pager,
-            'keyword'      => $keyword,
-            'currentPage'  => $this->request->getGet('page_personil') ?? 1,
         ];
 
         return view('backend/personil/index', $data);

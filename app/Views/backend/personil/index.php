@@ -25,26 +25,9 @@ $breadcrumb = [
             </div>
 
             <div class="card-body">
-                <!-- Search Form -->
-                <form action="<?= base_url('admin/personil/' . $entitasType) ?>" method="get" class="mb-3">
-                    <div class="input-group input-group-sm" style="max-width: 350px;">
-                        <input type="text" name="keyword" class="form-control" placeholder="Cari nama, NIK, alamat..." value="<?= esc($keyword ?? '') ?>">
-                        <div class="input-group-append">
-                            <button type="submit" class="btn btn-default">
-                                <i class="fas fa-search"></i>
-                            </button>
-                            <?php if (!empty($keyword)): ?>
-                            <a href="<?= base_url('admin/personil/' . $entitasType) ?>" class="btn btn-default" title="Reset">
-                                <i class="fas fa-times"></i>
-                            </a>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                </form>
-
                 <!-- Table -->
                 <div class="table-responsive">
-                    <table class="table table-bordered table-hover table-sm">
+                    <table class="table table-bordered table-hover table-sm" id="tabelPersonil">
                         <thead class="thead-light">
                             <tr>
                                 <th style="width: 40px;">No</th>
@@ -61,7 +44,7 @@ $breadcrumb = [
                         </thead>
                         <tbody>
                             <?php if (!empty($personilList)): ?>
-                                <?php $no = ($currentPage - 1) * 10 + 1; ?>
+                                <?php $no = 1; ?>
                                 <?php foreach ($personilList as $p): ?>
                                 <tr>
                                     <td><?= $no++ ?></td>
@@ -101,15 +84,43 @@ $breadcrumb = [
                     </table>
                 </div>
 
-                <!-- Pagination -->
-                <?php if (isset($pager)): ?>
-                <div class="mt-3">
-                    <?= $pager->links('personil', 'default_full') ?>
                 </div>
-                <?php endif; ?>
             </div>
         </div>
     </div>
 </div>
 
+<?= $this->endSection(); ?>
+
+<?= $this->section('scripts'); ?>
+<script>
+    $(document).ready(function() {
+        var table = $('#tabelPersonil').DataTable({
+            "responsive": true,
+            "lengthChange": false,
+            "autoWidth": false,
+            "dom": "<'row'<'col-sm-12 col-md-6'B><'col-sm-12 col-md-6'f>>" +
+                   "<'row'<'col-sm-12'tr>>" +
+                   "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+            "buttons": [
+                {
+                    extend: 'excelHtml5',
+                    text: '<i class="fas fa-file-excel"></i> Excel',
+                    className: 'btn btn-success btn-sm'
+                },
+                {
+                    extend: 'pdfHtml5',
+                    text: '<i class="fas fa-file-pdf"></i> PDF',
+                    className: 'btn btn-danger btn-sm'
+                }
+            ],
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/id.json"
+            },
+            "columnDefs": [
+                { "orderable": false, "targets": [0, -1] } // Disable sorting on No and Aksi columns
+            ]
+        });
+    });
+</script>
 <?= $this->endSection(); ?>

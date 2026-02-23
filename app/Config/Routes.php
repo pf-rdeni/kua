@@ -72,6 +72,7 @@ $routes->group('admin', ['filter' => 'login'], function ($routes) {
         $routes->get('auth', 'Backend\DokumentasiController::auth');
         $routes->get('komponen', 'Backend\DokumentasiController::komponen');
         $routes->get('alur-insentif', 'Backend\DokumentasiController::alur_insentif');
+        $routes->get('upload-berkas', 'Backend\DokumentasiController::upload_berkas');
     });
     // --- API & AJAX Endpoints ---
     $routes->group('api', function ($routes) {

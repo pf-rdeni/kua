@@ -211,6 +211,12 @@
                                 <p>Pengajuan Insentif</p>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a href="<?= base_url('admin/dokumentasi/upload-berkas') ?>" class="nav-link <?= url_is('admin/dokumentasi/upload-berkas') ? 'active' : '' ?>">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Panduan Upload Berkas</p>
+                            </a>
+                        </li>
                     </ul>
                 </li>
                 <?php endif; ?>

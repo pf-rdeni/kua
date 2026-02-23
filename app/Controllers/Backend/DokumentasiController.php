@@ -49,4 +49,15 @@ class DokumentasiController extends BaseController
             ]
         ]);
     }
+
+    public function upload_berkas()
+    {
+        return view('backend/dokumentasi/upload_berkas', [
+            'pageTitle' => 'Panduan Upload Berkas',
+            'breadcrumb' => [
+                ['title' => 'Dokumentasi', 'url' => 'admin/dokumentasi/arsitektur'],
+                ['title' => 'Panduan Upload Berkas', 'url' => '']
+            ]
+        ]);
+    }
 }
