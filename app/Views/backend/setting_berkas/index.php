@@ -17,7 +17,7 @@
                     <th width="5%">No</th>
                     <th>Nama Berkas</th>
                     <th>Digunakan Oleh</th>
-                    <th>Rasio Crop (W:H)</th>
+                    <th>Setting</th>
                     <th>Status</th>
                     <th width="15%">Aksi</th>
                 </tr>
@@ -38,11 +38,25 @@
                         ?>
                     </td>
                     <td>
-                        <?php if($row['aspect_ratio_width'] && $row['aspect_ratio_height']): ?>
-                            <?= $row['aspect_ratio_width'] ?> : <?= $row['aspect_ratio_height'] ?>
-                        <?php else: ?>
-                            <span class="badge badge-secondary">Free Crop</span>
-                        <?php endif; ?>
+                        <div class="mb-1">
+                            <small class="text-muted d-block">Crop Ratio:</small>
+                            <?php if($row['aspect_ratio_width'] && $row['aspect_ratio_height']): ?>
+                                <span class="badge badge-dark"><?= $row['aspect_ratio_width'] ?> : <?= $row['aspect_ratio_height'] ?></span>
+                            <?php else: ?>
+                                <span class="badge badge-secondary">Free</span>
+                            <?php endif; ?>
+                        </div>
+                        <div>
+                            <small class="text-muted d-block">Tipe Dokumen:</small>
+                            <?php if (isset($row['is_rekening']) && $row['is_rekening'] == 1): ?>
+                                <span class="badge badge-info"><i class="fas fa-university"></i> Buku Tabungan</span>
+                                <?php if (!empty($row['rekening_digit'])): ?>
+                                    <div class="mt-1"><small class="text-danger"><i class="fas fa-info-circle"></i> Validasi: <?= $row['rekening_digit'] ?> Digit</small></div>
+                                <?php endif; ?>
+                            <?php else: ?>
+                                <span class="badge badge-light border">Berkas Biasa</span>
+                            <?php endif; ?>
+                        </div>
                     </td>
                     <td>
                         <?= $row['status_aktif'] ? '<span class="badge badge-success">Aktif</span>' : '<span class="badge badge-danger">Nonaktif</span>' ?>

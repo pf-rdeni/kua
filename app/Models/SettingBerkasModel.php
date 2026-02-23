@@ -17,6 +17,8 @@ class SettingBerkasModel extends Model
         'entitas_type',
         'aspect_ratio_width',
         'aspect_ratio_height',
+        'is_rekening',
+        'rekening_digit',
         'status_aktif'
     ];
 

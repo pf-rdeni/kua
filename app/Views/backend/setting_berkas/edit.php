@@ -86,7 +86,22 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group border-top pt-3 mt-3">
+                        <label for="is_rekening">Fungsi Berkas Khusus</label>
+                        <select name="is_rekening" id="is_rekening" class="form-control">
+                            <option value="0" <?= old('is_rekening', $setting['is_rekening'] ?? 0) == '0' ? 'selected' : '' ?>>Berkas Biasa (KTP, Ijazah, dll)</option>
+                            <option value="1" <?= old('is_rekening', $setting['is_rekening'] ?? 0) == '1' ? 'selected' : '' ?>>Buku Tabungan / Rekening Bank</option>
+                        </select>
+                        <small class="form-text text-muted">Jika diubah ke Buku Tabungan, saat Admin/Operator mengupload file ini mereka wajib membarenginya dengan menginput Nomor Rekening yang sesuai.</small>
+                    </div>
+
+                    <div class="form-group" id="rekening_digit_group" style="display: <?= old('is_rekening', $setting['is_rekening'] ?? 0) == '1' ? 'block' : 'none' ?>;">
+                        <label for="rekening_digit">Validasi Panjang Nomor Rekening (Digit)</label>
+                        <input type="number" name="rekening_digit" id="rekening_digit" class="form-control" value="<?= old('rekening_digit', $setting['rekening_digit'] ?? '') ?>" placeholder="Misal: 10 atau 15">
+                        <small class="form-text text-muted">Kosongkan jika panjang digit rekening bebas / bervariasi.</small>
+                    </div>
+
+                    <div class="form-group border-top pt-3 mt-3">
                         <label for="status_aktif">Status</label>
                         <select name="status_aktif" id="status_aktif" class="form-control">
                             <option value="1" <?= old('status_aktif', $setting['status_aktif']) == '1' ? 'selected' : '' ?>>Aktif</option>
@@ -161,6 +176,20 @@
         
         presetSelect.val(matchedPreset);
         handlePresetChange();
+
+        // Toggle Input Syarat Rekening
+        $('#is_rekening').change(function() {
+            if ($(this).val() === '1') {
+                $('#rekening_digit_group').slideDown();
+            } else {
+                $('#rekening_digit_group').slideUp();
+            }
+        });
+        
+        // Inisialisasi on-load
+        if ($('#is_rekening').val() === '1') {
+            $('#rekening_digit_group').show();
+        }
     });
 </script>
 <?= $this->endSection() ?>

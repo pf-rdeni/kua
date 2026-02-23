@@ -108,7 +108,8 @@ class BerkasController extends BaseController
             $namaBerkas  = $this->request->getPost('nama_berkas');
             $berkasCropped = $this->request->getPost('berkas_cropped');
             $editBerkasId  = $this->request->getPost('edit_berkas_id');
-            $syncAll       = $this->request->getPost('sync_all'); // <-- Diterima parameter setuju Sinkron dari Dialog
+            $syncAll       = $this->request->getPost('sync_all');
+            $noRekening    = $this->request->getPost('no_rekening'); // <-- Tangkapan nomor rekening bank json
 
             // Validasi entitas_type
             $entitas = $this->resolveEntitas($entitasType);
@@ -247,6 +248,8 @@ class BerkasController extends BaseController
                             }
                         }
 
+                        $this->_updateRekeningBankJson($entitasType, $entitasId, $namaBerkas, $noRekening, $syncAll, $entitasData);
+
                         return $this->response->setJSON([
                             'success' => true,
                             'message' => 'Berkas berhasil diperbarui',
@@ -298,6 +301,8 @@ class BerkasController extends BaseController
                                 }
                             }
                         }
+
+                        $this->_updateRekeningBankJson($entitasType, $entitasId, $namaBerkas, $noRekening, $syncAll, $entitasData);
 
                         return $this->response->setJSON([
                             'success' => true,
@@ -563,6 +568,46 @@ class BerkasController extends BaseController
         } catch (\Exception $e) {
             log_message('error', 'BerkasController::deleteProfil - Error: ' . $e->getMessage());
             return $this->response->setJSON(['success' => false, 'message' => 'Terjadi kesalahan: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Memperbarui kolom rekening_bank (JSON) pada tbl_personil
+     */
+    private function _updateRekeningBankJson($entitasType, $entitasId, $namaBerkas, $noRekening, $syncAll, $entitasData)
+    {
+        // Hanya proses jika entitas adalah kelompok personil dan ada kiriman noRekening
+        $personilTypes = ['mubaligh', 'imam_masjid', 'fardu_kifayah', 'penggali_kubur', 'majelis_taklim'];
+        if (!empty($noRekening) && in_array($entitasType, $personilTypes)) {
+            $personilModel = new PersonilModel();
+            
+            // Siapkan closure untuk membedah & update json per entitas
+            $updateJson = function($pId, $pData) use ($personilModel, $namaBerkas, $noRekening) {
+                // Decode JSON lama (jika ada)
+                $currentJson = !empty($pData['rekening_bank']) ? json_decode($pData['rekening_bank'], true) : [];
+                if (!is_array($currentJson)) $currentJson = [];
+                
+                // Tambahkan key nama berkas = value nomor rekening
+                $currentJson[$namaBerkas] = $noRekening;
+                
+                // Encode kembali dan simpan
+                $personilModel->update($pId, [
+                    'rekening_bank' => json_encode($currentJson, JSON_UNESCAPED_UNICODE)
+                ]);
+            };
+
+            // 1. Update diri sendiri
+            $updateJson($entitasId, $entitasData);
+
+            // 2. Update sibling (kembaran NIK) jika syncAll menyala
+            if ($syncAll === 'true' && !empty($entitasData['nik'])) {
+                $sameNikEntities = $personilModel->where('nik', $entitasData['nik'])
+                                                 ->where('id !=', $entitasData['id'])
+                                                 ->findAll();
+                foreach ($sameNikEntities as $sibling) {
+                    $updateJson($sibling['id'], $sibling);
+                }
+            }
         }
     }
 }

@@ -86,6 +86,16 @@ $breadcrumb = [
                                                     $nb = $sb['nama_berkas']; 
                                                     $w = $sb['aspect_ratio_width'] ? $sb['aspect_ratio_width'] : 'null';
                                                     $h = $sb['aspect_ratio_height'] ? $sb['aspect_ratio_height'] : 'null';
+                                                    $isRek = $sb['is_rekening'] ? 1 : 0;
+                                                    $rekDigit = $sb['rekening_digit'] ? $sb['rekening_digit'] : 'null';
+                                                    
+                                                    $existingRekening = '';
+                                                    if ($isRek && !empty($p['rekening_bank'])) {
+                                                        $rekArr = json_decode($p['rekening_bank'], true);
+                                                        if (is_array($rekArr) && isset($rekArr[$nb])) {
+                                                            $existingRekening = $rekArr[$nb];
+                                                        }
+                                                    }
                                                 ?>
                                                 <?php if (isset($berkas[$nb])): ?>
                                                     <?php 
@@ -106,7 +116,7 @@ $breadcrumb = [
                                                     </div>
                                                     <div>
                                                         <button type="button" class="btn btn-warning btn-xs" title="Edit <?= $nb ?>"
-                                                                onclick="berkasHelper.editBerkas(<?= $fileBerkas['id'] ?>, <?= $p['id'] ?>, '<?= esc($p['nama_lengkap'], 'js') ?>', '<?= $nb ?>', <?= $w ?>, <?= $h ?>)">
+                                                                onclick="berkasHelper.editBerkas(<?= $fileBerkas['id'] ?>, <?= $p['id'] ?>, '<?= esc($p['nama_lengkap'], 'js') ?>', '<?= $nb ?>', <?= $w ?>, <?= $h ?>, <?= $isRek ?>, <?= $rekDigit ?>, '<?= esc($existingRekening, 'js') ?>')">
                                                             <i class="fas fa-edit"></i>
                                                         </button>
                                                         <button type="button" class="btn btn-danger btn-xs" title="Hapus <?= $nb ?>"
@@ -116,7 +126,7 @@ $breadcrumb = [
                                                     </div>
                                                 <?php else: ?>
                                                     <button type="button" class="btn btn-outline-primary btn-sm"
-                                                            onclick="berkasHelper.openUploadModal(<?= $p['id'] ?>, '<?= esc($p['nama_lengkap'], 'js') ?>', '<?= $nb ?>', <?= $w ?>, <?= $h ?>)">
+                                                            onclick="berkasHelper.openUploadModal(<?= $p['id'] ?>, '<?= esc($p['nama_lengkap'], 'js') ?>', '<?= $nb ?>', <?= $w ?>, <?= $h ?>, <?= $isRek ?>, <?= $rekDigit ?>)">
                                                         <i class="fas fa-upload"></i> Upload
                                                     </button>
                                                 <?php endif; ?>

@@ -50,6 +50,8 @@ class SettingBerkasController extends BaseController
             'entitas_type'        => $entitasTypeStr,
             'aspect_ratio_width'  => $this->request->getPost('aspect_ratio_width') ?: null,
             'aspect_ratio_height' => $this->request->getPost('aspect_ratio_height') ?: null,
+            'is_rekening'         => $this->request->getPost('is_rekening') ?? 0,
+            'rekening_digit'      => $this->request->getPost('rekening_digit') ?: null,
             'status_aktif'        => $this->request->getPost('status_aktif') ?? 1,
         ];
 
@@ -94,6 +96,8 @@ class SettingBerkasController extends BaseController
             'entitas_type'        => $entitasTypeStr,
             'aspect_ratio_width'  => $this->request->getPost('aspect_ratio_width') ?: null,
             'aspect_ratio_height' => $this->request->getPost('aspect_ratio_height') ?: null,
+            'is_rekening'         => $this->request->getPost('is_rekening') ?? 0,
+            'rekening_digit'      => $this->request->getPost('rekening_digit') ?: null,
             'status_aktif'        => $this->request->getPost('status_aktif') ?? 1,
         ];
 

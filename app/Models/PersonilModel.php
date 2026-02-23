@@ -33,7 +33,7 @@ class PersonilModel extends Model
         'status_aktif',
         'status',
         'sk_pengangkatan',
-        'no_rek_bpr',
+        'rekening_bank',
         'jenis_penerima_insentif',
         'foto',
         'latitude',

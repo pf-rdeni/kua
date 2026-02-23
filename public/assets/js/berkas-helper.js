@@ -197,11 +197,13 @@ class BerkasHelper {
     /**
      * Open upload modal with a specific berkas type pre-selected
      */
-    openUploadModal(entitasId, namaEntitas, namaBerkas, argAspectRatioWidth = null, argAspectRatioHeight = null) {
+    openUploadModal(entitasId, namaEntitas, namaBerkas, argAspectRatioWidth = null, argAspectRatioHeight = null, isRekening = 0, rekeningDigit = null) {
         this.currentEntitasId = entitasId;
         this.currentEditBerkasData = null;
         this.savedCropNamaBerkas = namaBerkas;
         this.currentAspectRatio = (argAspectRatioWidth && argAspectRatioHeight) ? argAspectRatioWidth / argAspectRatioHeight : NaN;
+        this.currentIsRekening = isRekening;
+        this.currentRekeningDigit = rekeningDigit;
 
         $('#berkasUploadEntitasId').val(entitasId);
         $('#berkasUploadNamaEntitas').val(namaEntitas);
@@ -213,6 +215,20 @@ class BerkasHelper {
 
         $('#berkasUploadNamaBerkas').val(namaBerkas);
         $('#berkasUploadNamaBerkas').prop('disabled', true);
+
+        if (this.currentIsRekening == 1) {
+            $('#berkasUploadRekeningGroup').show();
+            $('#berkasUploadNoRekening').val('');
+            if (this.currentRekeningDigit && this.currentRekeningDigit !== 'null') {
+                $('#berkasUploadNoRekening').attr('maxlength', this.currentRekeningDigit);
+                $('#berkasUploadRekeningHelp').text('Dokumen ini mensyaratkan Nomor Rekening Bank (' + this.currentRekeningDigit + ' digit).');
+            } else {
+                $('#berkasUploadNoRekening').removeAttr('maxlength');
+                $('#berkasUploadRekeningHelp').text('Dokumen ini mensyaratkan Nomor Rekening Bank. Silakan masukkan nomor rekening yang tertera.');
+            }
+        } else {
+            $('#berkasUploadRekeningGroup').hide();
+        }
 
         // Reset
         $('#berkasFileBerkas').val('');
@@ -234,11 +250,13 @@ class BerkasHelper {
     /**
      * Open edit modal for existing berkas
      */
-    editBerkas(berkasId, entitasId, namaEntitas, namaBerkas, argAspectRatioWidth = null, argAspectRatioHeight = null) {
+    editBerkas(berkasId, entitasId, namaEntitas, namaBerkas, argAspectRatioWidth = null, argAspectRatioHeight = null, isRekening = 0, rekeningDigit = null, existingRekening = '') {
         const self = this;
         this.currentEntitasId = entitasId;
         this.savedCropNamaBerkas = namaBerkas;
         this.currentAspectRatio = (argAspectRatioWidth && argAspectRatioHeight) ? argAspectRatioWidth / argAspectRatioHeight : NaN;
+        this.currentIsRekening = isRekening;
+        this.currentRekeningDigit = rekeningDigit;
 
         // Fetch berkas data
         $.ajax({
@@ -253,6 +271,20 @@ class BerkasHelper {
                     $('#berkasEditEntitasId').val(entitasId);
                     $('#berkasEditNamaEntitas').val(namaEntitas);
                     $('#berkasEditNamaBerkas').val(namaBerkas);
+
+                    if (self.currentIsRekening == 1) {
+                        $('#berkasEditRekeningGroup').show();
+                        $('#berkasEditNoRekening').val(existingRekening || '');
+                        if (self.currentRekeningDigit && self.currentRekeningDigit !== 'null') {
+                            $('#berkasEditNoRekening').attr('maxlength', self.currentRekeningDigit);
+                            $('#berkasEditRekeningHelp').text('Dokumen ini mensyaratkan Nomor Rekening Bank (' + self.currentRekeningDigit + ' digit).');
+                        } else {
+                            $('#berkasEditNoRekening').removeAttr('maxlength');
+                            $('#berkasEditRekeningHelp').text('Dokumen ini mensyaratkan Nomor Rekening Bank. Silakan masukkan nomor rekening yang tertera.');
+                        }
+                    } else {
+                        $('#berkasEditRekeningGroup').hide();
+                    }
 
                     // Show existing image
                     $('#berkasEditExistingImage').attr('src', response.data.url);
@@ -466,6 +498,26 @@ class BerkasHelper {
         }
 
         const entitasIdField = $('#berkasUploadEntitasId').val();
+
+        let noRekening = null;
+        if (this.currentIsRekening == 1) {
+            noRekening = $('#berkasUploadNoRekening').val().trim();
+            if (!noRekening) {
+                Swal.fire({ icon: 'warning', title: 'Peringatan', text: 'Nomor rekening tidak boleh kosong!' });
+                return;
+            }
+            if (this.currentRekeningDigit && this.currentRekeningDigit !== 'null') {
+                if (noRekening.length != parseInt(this.currentRekeningDigit)) {
+                    Swal.fire({ icon: 'warning', title: 'Peringatan', text: 'Nomor rekening harus ' + this.currentRekeningDigit + ' digit!' });
+                    return;
+                }
+            }
+            if (!/^\d+$/.test(noRekening)) {
+                Swal.fire({ icon: 'warning', title: 'Peringatan', text: 'Nomor rekening hanya boleh berisi angka!' });
+                return;
+            }
+        }
+
         const doSyncAll = await this._checkNikSharingWithPrompt(entitasIdField);
 
         if (doSyncAll === null) {
@@ -488,7 +540,8 @@ class BerkasHelper {
                 entitas_id: entitasIdField,
                 nama_berkas: namaBerkas,
                 berkas_cropped: croppedImageData,
-                sync_all: doSyncAll ? 'true' : 'false'
+                sync_all: doSyncAll ? 'true' : 'false',
+                no_rekening: noRekening
             },
             dataType: 'json',
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
@@ -522,6 +575,26 @@ class BerkasHelper {
         }
 
         const entitasIdField = $('#berkasEditEntitasId').val();
+
+        let noRekening = null;
+        if (this.currentIsRekening == 1) {
+            noRekening = $('#berkasEditNoRekening').val().trim();
+            if (!noRekening) {
+                Swal.fire({ icon: 'warning', title: 'Peringatan', text: 'Nomor rekening tidak boleh kosong!' });
+                return;
+            }
+            if (this.currentRekeningDigit && this.currentRekeningDigit !== 'null') {
+                if (noRekening.length != parseInt(this.currentRekeningDigit)) {
+                    Swal.fire({ icon: 'warning', title: 'Peringatan', text: 'Nomor rekening harus ' + this.currentRekeningDigit + ' digit!' });
+                    return;
+                }
+            }
+            if (!/^\d+$/.test(noRekening)) {
+                Swal.fire({ icon: 'warning', title: 'Peringatan', text: 'Nomor rekening hanya boleh berisi angka!' });
+                return;
+            }
+        }
+
         const doSyncAll = await this._checkNikSharingWithPrompt(entitasIdField);
 
         if (doSyncAll === null) return;
@@ -542,7 +615,8 @@ class BerkasHelper {
                 nama_berkas: $('#berkasEditNamaBerkas').val(),
                 berkas_cropped: croppedImageData,
                 edit_berkas_id: $('#berkasEditBerkasId').val(),
-                sync_all: doSyncAll ? 'true' : 'false'
+                sync_all: doSyncAll ? 'true' : 'false',
+                no_rekening: noRekening
             },
             dataType: 'json',
             headers: { 'X-Requested-With': 'XMLHttpRequest' },

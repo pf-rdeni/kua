@@ -52,6 +52,11 @@ $labelEntitas = $berkasConfig['labelEntitas'] ?? 'Data';
                             </div>
                         </div>
                     </div>
+                    <div class="form-group" id="berkasUploadRekeningGroup" style="display: none;">
+                        <label for="berkasUploadNoRekening">Nomor Rekening Bank <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="berkasUploadNoRekening" name="no_rekening" placeholder="Misal: 1234567890">
+                        <small class="form-text text-muted" id="berkasUploadRekeningHelp">Dokumen ini mensyaratkan Nomor Rekening Bank. Silakan masukkan nomor rekening yang tertera.</small>
+                    </div>
                     <div class="form-group">
                         <label for="berkasFileBerkas">File Berkas <span class="text-danger">*</span></label>
                         <input type="file" class="form-control-file" id="berkasFileBerkas" accept="image/jpeg,image/jpg,image/png">
@@ -149,6 +154,11 @@ $labelEntitas = $berkasConfig['labelEntitas'] ?? 'Data';
                                 <input type="text" id="berkasEditNamaBerkas" class="form-control" readonly>
                             </div>
                         </div>
+                    </div>
+                    <div class="form-group" id="berkasEditRekeningGroup" style="display: none;">
+                        <label for="berkasEditNoRekening">Nomor Rekening Bank <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="berkasEditNoRekening" name="no_rekening" placeholder="Misal: 1234567890">
+                        <small class="form-text text-muted" id="berkasEditRekeningHelp">Dokumen ini mensyaratkan Nomor Rekening Bank. Silakan masukkan nomor rekening yang tertera.</small>
                     </div>
                     <div class="form-group">
                         <label for="berkasEditFileBerkas">Ganti dengan File Baru</label>
