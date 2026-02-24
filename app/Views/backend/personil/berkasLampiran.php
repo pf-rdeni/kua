@@ -1,16 +1,5 @@
 <?= $this->extend('backend/template/template'); ?>
-
 <?= $this->section('content'); ?>
-
-<?php
-$pageTitle = 'Berkas Lampiran ' . $entitasConfig['nama_label'];
-$breadcrumb = [
-    ['title' => 'Home', 'url' => 'admin/dashboard'],
-    ['title' => $entitasConfig['nama_label'], 'url' => 'admin/personil/' . $entitasType],
-    ['title' => 'Berkas Lampiran', 'url' => ''],
-];
-?>
-
 <div class="row">
     <div class="col-12">
         <div class="card">

@@ -82,6 +82,11 @@ class PengajuanInsentifController extends BaseController
 
         $data = [
             'title'              => 'Pengajuan Insentif - ' . $config['nama_label'],
+            'breadcrumb'         => [
+                ['title' => 'Home', 'url' => 'admin/dashboard'],
+                ['title' => $config['nama_label'], 'url' => 'admin/personil/' . $entitasType],
+                ['title' => 'Pengajuan Insentif', 'url' => ''],
+            ],
             'entitasType'        => $entitasType,
             'entitasConfig'      => $config,
             'personilWithBerkas' => $personilWithBerkas,

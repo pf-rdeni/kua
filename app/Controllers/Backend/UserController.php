@@ -22,6 +22,11 @@ class UserController extends BaseController
     public function index()
     {
         $data = [
+            'title'      => 'Pengaturan User',
+            'breadcrumb' => [
+                ['title' => 'Home', 'url' => 'admin/dashboard'],
+                ['title' => 'Pengaturan User', 'url' => ''],
+            ],
             'users' => $this->userModel->findAll(),
         ];
         return view('backend/user/index', $data);

@@ -411,7 +411,12 @@ class PersonilController extends BaseController
         }
 
         $data = [
-            'page_title'         => 'Berkas Lampiran ' . $config['nama_label'],
+            'title'              => 'Berkas Lampiran ' . $config['nama_label'],
+            'breadcrumb'         => [
+                ['title' => 'Home', 'url' => 'admin/dashboard'],
+                ['title' => $config['nama_label'], 'url' => 'admin/personil/' . $entitasType],
+                ['title' => 'Berkas Lampiran', 'url' => ''],
+            ],
             'entitasType'        => $entitasType,
             'entitasConfig'      => $config,
             'personilWithBerkas' => $personilWithBerkas,

@@ -2,13 +2,8 @@
 
 <?= $this->section('content'); ?>
 
-<?php
-$pageTitle = 'Manajemen User';
-$breadcrumb = [
-    ['title' => 'Home', 'url' => 'admin/dashboard'],
-    ['title' => 'Manajemen User', 'url' => ''],
-];
-?>
+
+
 
 <div class="row">
     <div class="col-12">

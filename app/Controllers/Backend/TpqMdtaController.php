@@ -20,6 +20,11 @@ class TpqMdtaController extends BaseController
     public function index()
     {
         $data = [
+            'title'      => 'Data TPQ/MDTA',
+            'breadcrumb' => [
+                ['title' => 'Home', 'url' => 'admin/dashboard'],
+                ['title' => 'TPQ/MDTA', 'url' => ''],
+            ],
             'tpqList' => $this->tpqModel->getWithMasjid()->findAll(),
         ];
 

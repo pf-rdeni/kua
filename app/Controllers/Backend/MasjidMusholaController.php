@@ -17,6 +17,11 @@ class MasjidMusholaController extends BaseController
     public function index()
     {
         $data = [
+            'title'      => 'Data Masjid dan Mushola',
+            'breadcrumb' => [
+                ['title' => 'Home', 'url' => 'admin/dashboard'],
+                ['title' => 'Masjid dan Mushola', 'url' => ''],
+            ],
             'masjidList' => $this->masjidModel->findAll(),
         ];
 

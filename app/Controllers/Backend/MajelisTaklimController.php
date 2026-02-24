@@ -20,6 +20,11 @@ class MajelisTaklimController extends BaseController
     public function index()
     {
         $data = [
+            'title'      => 'Data Majelis Taklim',
+            'breadcrumb' => [
+                ['title' => 'Home', 'url' => 'admin/dashboard'],
+                ['title' => 'Majelis Taklim', 'url' => ''],
+            ],
             'mtList'  => $this->mtModel->getWithMasjid()->findAll(),
         ];
 

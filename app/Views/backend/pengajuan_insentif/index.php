@@ -2,14 +2,8 @@
 
 <?= $this->section('content'); ?>
 
-<?php
-$pageTitle = 'Pengajuan Insentif - ' . $entitasConfig['nama_label'];
-$breadcrumb = [
-    ['title' => 'Home', 'url' => 'admin/dashboard'],
-    ['title' => $entitasConfig['nama_label'], 'url' => 'admin/personil/' . $entitasType],
-    ['title' => 'Pengajuan Insentif', 'url' => ''],
-];
-?>
+
+
 
 <div class="row">
     <div class="col-12">
