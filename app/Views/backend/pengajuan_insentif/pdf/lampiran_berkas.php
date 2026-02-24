@@ -7,11 +7,14 @@
         h2 { text-align: center; margin-bottom: 20px; font-size: 14pt; }
         .info { margin-bottom: 20px; }
         .info table td { padding: 2px 8px; vertical-align: top; }
-        .foto-section { text-align: center; margin: 20px 0; }
-        .foto-section img { max-width: 200px; max-height: 250px; border: 1px solid #ccc; }
-        .berkas-section { margin-top: 20px; page-break-inside: avoid; }
-        .berkas-section h4 { margin: 10px 0 5px; font-size: 12pt; border-bottom: 1px solid #999; padding-bottom: 3px; }
-        .berkas-section img { max-width: 100%; max-height: 400px; border: 1px solid #ccc; display: block; margin: 5px auto; }
+        .berkas-small-group { text-align: center; margin-top: 20px; font-size: 0; }
+        .berkas-item-small { display: inline-block; margin: 10px 1%; vertical-align: top; text-align: center; page-break-inside: avoid; font-size: 12pt; }
+        .berkas-item-small h4 { margin: 0 0 5px; font-size: 11pt; border-bottom: 1px solid #999; padding-bottom: 3px; }
+        .berkas-item-small img { width: 100%; border: 1px solid #ccc; }
+        
+        .berkas-section { text-align: center; margin-top: 10px; page-break-inside: avoid; width: 100%; clear: both; }
+        .berkas-title { margin: 0 auto 10px auto; font-size: 14pt; border-bottom: 2px solid #666; padding-bottom: 5px; display: inline-block; font-weight: bold; }
+        .berkas-img-large { border: 1px solid #ccc; display: inline-block; max-height: 980px; }
         .page-break { page-break-before: always; }
     </style>
 </head>
@@ -38,22 +41,35 @@
         </table>
     </div>
 
-    <?php if ($fotoBase64): ?>
-    <div class="foto-section">
-        <h4>Pas Foto</h4>
-        <img src="<?= $fotoBase64 ?>" alt="Foto">
-    </div>
-    <?php endif; ?>
+    <div class="berkas-small-group">
+        <?php if ($fotoBase64): ?>
+        <div class="berkas-item-small" style="width: 30%;">
+            <h4>Pas Foto</h4>
+            <img src="<?= $fotoBase64 ?>" alt="Foto">
+        </div>
+        <?php endif; ?>
 
-    <?php if (!empty($berkasImages)): ?>
-        <?php foreach ($berkasImages as $idx => $bi): ?>
-        <div class="berkas-section<?= $idx > 0 ? ' page-break' : '' ?>">
-            <h4><?= esc($bi['nama']) ?></h4>
-            <img src="<?= $bi['base64'] ?>" alt="<?= esc($bi['nama']) ?>">
+        <?php if (!empty($smallBerkas)): ?>
+            <?php foreach ($smallBerkas as $bi): ?>
+            <div class="berkas-item-small" style="width: <?= esc($bi['lebar'] - 2) ?>%;">
+                <h4><?= esc($bi['nama']) ?></h4>
+                <img src="<?= $bi['base64'] ?>" alt="<?= esc($bi['nama']) ?>">
+            </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
+    </div>
+
+    <?php if (!empty($largeBerkas)): ?>
+        <?php foreach ($largeBerkas as $idx => $bi): ?>
+        <div class="berkas-section <?= (!empty($smallBerkas) || $fotoBase64 || $idx > 0) ? 'page-break' : '' ?>">
+            <div class="berkas-title"><?= esc($bi['nama']) ?></div><br>
+            <img src="<?= $bi['base64'] ?>" alt="<?= esc($bi['nama']) ?>" class="berkas-img-large" style="width: <?= esc($bi['lebar']) ?>%; max-width: <?= esc($bi['lebar']) ?>%;">
         </div>
         <?php endforeach; ?>
-    <?php else: ?>
-        <p style="text-align: center; color: #999;">Belum ada berkas lampiran.</p>
+    <?php endif; ?>
+
+    <?php if (empty($smallBerkas) && empty($largeBerkas) && !$fotoBase64): ?>
+        <p style="text-align: center; color: #999;">Belum ada lampiran.</p>
     <?php endif; ?>
 </body>
 </html>

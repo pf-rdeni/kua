@@ -52,6 +52,8 @@ class SettingBerkasController extends BaseController
             'aspect_ratio_height' => $this->request->getPost('aspect_ratio_height') ?: null,
             'is_rekening'         => $this->request->getPost('is_rekening') ?? 0,
             'rekening_digit'      => $this->request->getPost('rekening_digit') ?: null,
+            'cetak_tipe'          => $this->request->getPost('cetak_tipe') ?? 'gabung',
+            'cetak_lebar'         => $this->request->getPost('cetak_lebar') ?? 100,
             'status_aktif'        => $this->request->getPost('status_aktif') ?? 1,
         ];
 
@@ -98,8 +100,19 @@ class SettingBerkasController extends BaseController
             'aspect_ratio_height' => $this->request->getPost('aspect_ratio_height') ?: null,
             'is_rekening'         => $this->request->getPost('is_rekening') ?? 0,
             'rekening_digit'      => $this->request->getPost('rekening_digit') ?: null,
+            'cetak_tipe'          => $this->request->getPost('cetak_tipe') ?? 'gabung',
+            'cetak_lebar'         => $this->request->getPost('cetak_lebar') ?? 100,
             'status_aktif'        => $this->request->getPost('status_aktif') ?? 1,
         ];
+
+        // Jika Nama Berkas dirubah oleh Admin, kita harus mengupdate seluruh histori tabel berkas yang lama 
+        // agar sinkron dengan template setting yang baru (sehingga PDF layout tidak rusak)
+        if ($setting['nama_berkas'] !== $data['nama_berkas']) {
+            $berkasModel = new \App\Models\BerkasModel();
+            $berkasModel->where('nama_berkas', $setting['nama_berkas'])
+                        ->set(['nama_berkas' => $data['nama_berkas']])
+                        ->update();
+        }
 
         $this->settingBerkasModel->update($id, $data);
         return redirect()->to(base_url('admin/setting-berkas'))->with('success', 'Setting berkas berhasil diperbarui.');

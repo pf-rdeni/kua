@@ -188,14 +188,63 @@ class PengajuanInsentifController extends BaseController
             }
         }
 
-        $berkasImages = [];
+        $largeBerkas = [];
+        $smallBerkas = [];
+        
         foreach ($berkasAktif as $berkas) {
             $filePath = FCPATH . 'uploads/berkas/' . $berkas['nama_file'];
             if (file_exists($filePath)) {
-                $berkasImages[] = [
+                // Get physical dimensions
+                list($width, $height) = getimagesize($filePath);
+                
+                // Tentukan layout dari setting database
+                $isLarge = false;
+                $cetakLebar = 100; // default width %
+                
+                foreach ($settingBerkas as $sb) {
+                    if ($sb['nama_berkas'] === $berkas['nama_berkas']) {
+                        if (isset($sb['cetak_tipe']) && $sb['cetak_tipe'] === 'full_page') {
+                            $isLarge = true;
+                        }
+                        if (isset($sb['cetak_lebar'])) {
+                            $cetakLebar = (int) $sb['cetak_lebar'];
+                        }
+                        break;
+                    }
+                }
+                
+                $imgData = null;
+                // If Large and Landscape, physically rotate it for the PDF so it fits the A4 Portrait nicely
+                if ($isLarge && $width > $height) {
+                    try {
+                        $imageService = \Config\Services::image();
+                        $tempPath = WRITEPATH . 'uploads/tmp_rotate_' . time() . '_' . rand(100, 999) . '_' . $berkas['nama_file'];
+                        
+                        $imageService->withFile($filePath)
+                                     ->rotate(270) // Rotate -90 degrees
+                                     ->save($tempPath);
+                        
+                        $imgData = base64_encode(file_get_contents($tempPath));
+                        @unlink($tempPath); // Cleanup temp file
+                    } catch (\Exception $e) {
+                        // Fallback safely if library fails
+                        $imgData = base64_encode(file_get_contents($filePath));
+                    }
+                } else {
+                    $imgData = base64_encode(file_get_contents($filePath));
+                }
+
+                $item = [
                     'nama'   => $berkas['nama_berkas'],
-                    'base64' => 'data:image/' . pathinfo($filePath, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($filePath)),
+                    'base64' => 'data:image/' . pathinfo($filePath, PATHINFO_EXTENSION) . ';base64,' . $imgData,
+                    'lebar'  => $cetakLebar
                 ];
+                
+                if ($isLarge) {
+                    $largeBerkas[] = $item;
+                } else {
+                    $smallBerkas[] = $item;
+                }
             }
         }
 
@@ -203,7 +252,8 @@ class PengajuanInsentifController extends BaseController
             'personil'      => $personil,
             'entitasConfig' => $config,
             'fotoBase64'    => $fotoBase64,
-            'berkasImages'  => $berkasImages,
+            'largeBerkas'   => $largeBerkas,
+            'smallBerkas'   => $smallBerkas,
             'settingBerkas' => $settingBerkas,
             'tanggalCetak'  => tanggal_indo(date('Y-m-d')),
         ];

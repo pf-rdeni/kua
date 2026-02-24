@@ -6,6 +6,13 @@ use App\Controllers\BaseController;
 
 class DokumentasiController extends BaseController
 {
+    protected $entitasTypeModel;
+
+    public function __construct()
+    {
+        $this->entitasTypeModel = new \App\Models\EntitasTypeModel();
+    }
+
     public function arsitektur()
     {
         return view('backend/dokumentasi/arsitektur', [
@@ -39,7 +46,7 @@ class DokumentasiController extends BaseController
         ]);
     }
 
-    public function alur_insentif()
+    public function alurInsentif()
     {
         return view('backend/dokumentasi/alur_insentif', [
             'pageTitle' => 'Proses Pengajuan Insentif',
@@ -50,7 +57,7 @@ class DokumentasiController extends BaseController
         ]);
     }
 
-    public function upload_berkas()
+    public function uploadBerkas()
     {
         return view('backend/dokumentasi/upload_berkas', [
             'pageTitle' => 'Panduan Upload Berkas',
@@ -59,5 +66,15 @@ class DokumentasiController extends BaseController
                 ['title' => 'Panduan Upload Berkas', 'url' => '']
             ]
         ]);
+    }
+
+    public function settingBerkas()
+    {
+        $data = [
+            'title' => 'Panduan Setting Berkas',
+            'entitas_type' => $this->entitasTypeModel->where('is_active', 1)->findAll()
+        ];
+        
+        return view('backend/dokumentasi/setting_berkas', $data);
     }
 }

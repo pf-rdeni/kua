@@ -65,14 +65,15 @@ $routes->group('admin', ['filter' => 'login'], function ($routes) {
     // --- Dashboard ---
     $routes->get('dashboard', 'Backend\DashboardController::index');
 
-    // --- Dokumentasi Sistem Aplikasi ---
-    $routes->group('dokumentasi', function ($routes) {
-        $routes->get('/', 'Backend\DokumentasiController::arsitektur');
+    // Grup Dokumentasi Developer (Khusus SuperAdmin)
+    $routes->group('dokumentasi', ['filter' => 'role:SuperAdmin'], static function ($routes) {
+        $routes->get('/', 'Backend\DokumentasiController::index');
         $routes->get('arsitektur', 'Backend\DokumentasiController::arsitektur');
-        $routes->get('auth', 'Backend\DokumentasiController::auth');
         $routes->get('komponen', 'Backend\DokumentasiController::komponen');
-        $routes->get('alur-insentif', 'Backend\DokumentasiController::alur_insentif');
-        $routes->get('upload-berkas', 'Backend\DokumentasiController::upload_berkas');
+        $routes->get('auth', 'Backend\DokumentasiController::auth');
+        $routes->get('alur-insentif', 'Backend\DokumentasiController::alurInsentif');
+        $routes->get('upload-berkas', 'Backend\DokumentasiController::uploadBerkas');
+        $routes->get('setting-berkas', 'Backend\DokumentasiController::settingBerkas');
     });
     // --- API & AJAX Endpoints ---
     $routes->group('api', function ($routes) {

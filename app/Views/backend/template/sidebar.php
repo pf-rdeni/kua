@@ -217,6 +217,12 @@
                                 <p>Panduan Upload Berkas</p>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a href="<?= base_url('admin/dokumentasi/setting-berkas') ?>" class="nav-link <?= url_is('admin/dokumentasi/setting-berkas') ? 'active' : '' ?>">
+                                <i class="far fa-circle nav-icon text-warning"></i>
+                                <p>Panduan Setting Berkas</p>
+                            </a>
+                        </li>
                     </ul>
                 </li>
                 <?php endif; ?>

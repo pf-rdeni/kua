@@ -19,6 +19,8 @@ class SettingBerkasModel extends Model
         'aspect_ratio_height',
         'is_rekening',
         'rekening_digit',
+        'cetak_tipe',
+        'cetak_lebar',
         'status_aktif'
     ];
 

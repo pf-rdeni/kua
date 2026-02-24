@@ -91,6 +91,21 @@
                     </div>
 
                     <div class="form-group border-top pt-3 mt-3">
+                        <label for="cetak_tipe">Tipe Cetak Lampiran (PDF)</label>
+                        <select name="cetak_tipe" id="cetak_tipe" class="form-control">
+                            <option value="gabung" <?= old('cetak_tipe') == 'gabung' ? 'selected' : '' ?>>Gabungkan Sebaris / Kolase (KTP, Buku Rekening, Foto)</option>
+                            <option value="full_page" <?= old('cetak_tipe') == 'full_page' ? 'selected' : '' ?>>Satu Halaman Penuh Berdiri Sendiri (KK, Ijazah, SK)</option>
+                        </select>
+                        <small class="form-text text-muted">Halaman penuh akan disisipkan di halaman baru (page-break) dan bisa berputar otomatis (auto-rotate).</small>
+                    </div>
+
+                    <div class="form-group" id="cetak_lebar_group">
+                        <label for="cetak_lebar">Ukuran/Lebar Tampil (%)</label>
+                        <input type="number" min="10" max="500" name="cetak_lebar" id="cetak_lebar" class="form-control" value="<?= old('cetak_lebar', 100) ?>">
+                        <small class="form-text text-muted">Persentase lebar gambar saat dicetak di PDF. Default: 100. (Anda bisa mengisi di atas 100% untuk memaksa gambar membesar dari aslinya).</small>
+                    </div>
+
+                    <div class="form-group border-top pt-3 mt-3">
                         <label for="status_aktif">Status</label>
                         <select name="status_aktif" id="status_aktif" class="form-control">
                             <option value="1" <?= old('status_aktif') == '1' ? 'selected' : '' ?>>Aktif</option>

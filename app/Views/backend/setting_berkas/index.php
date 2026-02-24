@@ -57,6 +57,15 @@
                                 <span class="badge badge-light border">Berkas Biasa</span>
                             <?php endif; ?>
                         </div>
+                        <div class="mt-2">
+                            <small class="text-muted d-block">Format Cetak PDF:</small>
+                            <?php if(isset($row['cetak_tipe']) && $row['cetak_tipe'] == 'full_page'): ?>
+                                <span class="badge badge-dark"><i class="fas fa-file-pdf"></i> Full Page</span>
+                            <?php else: ?>
+                                <span class="badge badge-secondary"><i class="fas fa-th-large"></i> Kolase/Gabung</span>
+                            <?php endif; ?>
+                            <span class="badge badge-light border ml-1">Lebar <?= esc($row['cetak_lebar'] ?? 100) ?>%</span>
+                        </div>
                     </td>
                     <td>
                         <?= $row['status_aktif'] ? '<span class="badge badge-success">Aktif</span>' : '<span class="badge badge-danger">Nonaktif</span>' ?>
