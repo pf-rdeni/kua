@@ -293,6 +293,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 <p style="margin: 0; font-size: 13px; color: #666; max-height: 55px; overflow-y: hidden; line-height: 1.2;">
                    ${loc.alamat || '<i class="text-muted">Alamat kosong</i>'}
                 </p>
+                <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank" class="btn btn-sm btn-info btn-block mt-2" style="font-size: 12px; border-radius: 4px;">
+                    <i class="fas fa-directions mr-1"></i> Rute ke Lokasi
+                </a>
             </div>
         `;
 
