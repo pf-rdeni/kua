@@ -146,6 +146,8 @@ $routes->group('admin', ['filter' => 'login'], function ($routes) {
         $routes->get('(:segment)/cetak-insentif/(:num)', 'Backend\PengajuanInsentifController::cetakSuratInsentif/$1/$2');
         $routes->get('(:segment)/cetak-rekomendasi/(:num)', 'Backend\PengajuanInsentifController::cetakSuratRekomendasi/$1/$2');
         $routes->get('(:segment)/cetak-lampiran/(:num)', 'Backend\PengajuanInsentifController::cetakLampiran/$1/$2');
+        $routes->get('(:segment)/cetak-gabungan/(:num)', 'Backend\PengajuanInsentifController::cetakGabungan/$1/$2');
+        $routes->get('(:segment)/cetak-bulk-zip', 'Backend\PengajuanInsentifController::cetakBulkZip/$1');
     });
 
     // --- Masjid & Mushola (SuperAdmin, Admin, OperatorMasjidMushola) ---

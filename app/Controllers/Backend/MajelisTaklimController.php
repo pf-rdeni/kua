@@ -65,10 +65,14 @@ class MajelisTaklimController extends BaseController
         $kecamatan = $this->request->getPost('kecamatan');
         $kelurahan = $this->request->getPost('kelurahan_desa');
 
-        if ($provinsi && strpos($provinsi, '|') !== false) $provinsi = explode('|', $provinsi)[1];
-        if ($kabupaten && strpos($kabupaten, '|') !== false) $kabupaten = explode('|', $kabupaten)[1];
-        if ($kecamatan && strpos($kecamatan, '|') !== false) $kecamatan = explode('|', $kecamatan)[1];
-        if ($kelurahan && strpos($kelurahan, '|') !== false) $kelurahan = explode('|', $kelurahan)[1];
+        if ($provinsi && strpos($provinsi, '|') !== false) $provinsi = ucwords(strtolower(explode('|', $provinsi)[1]));
+        elseif ($provinsi) $provinsi = ucwords(strtolower($provinsi));
+        if ($kabupaten && strpos($kabupaten, '|') !== false) $kabupaten = ucwords(strtolower(explode('|', $kabupaten)[1]));
+        elseif ($kabupaten) $kabupaten = ucwords(strtolower($kabupaten));
+        if ($kecamatan && strpos($kecamatan, '|') !== false) $kecamatan = ucwords(strtolower(explode('|', $kecamatan)[1]));
+        elseif ($kecamatan) $kecamatan = ucwords(strtolower($kecamatan));
+        if ($kelurahan && strpos($kelurahan, '|') !== false) $kelurahan = ucwords(strtolower(explode('|', $kelurahan)[1]));
+        elseif ($kelurahan) $kelurahan = ucwords(strtolower($kelurahan));
 
         $this->mtModel->save([
             'id_masjid_mushola'     => $this->request->getPost('id_masjid_mushola') ?: null,
@@ -127,16 +131,37 @@ class MajelisTaklimController extends BaseController
 
         $mtLama = $this->mtModel->find($id);
 
+        // Handle Foto
+        $foto = $this->request->getFile('foto');
+        $namaFoto = $mtLama['foto'];
+        if ($foto && $foto->isValid() && !$foto->hasMoved()) {
+            if ($namaFoto && file_exists('uploads/majelis_taklim/' . $namaFoto)) {
+                @unlink('uploads/majelis_taklim/' . $namaFoto);
+            }
+            $namaFoto = $foto->getRandomName();
+            $foto->move('uploads/majelis_taklim', $namaFoto);
+
+            // Resize compress
+            \Config\Services::image()
+                ->withFile('uploads/majelis_taklim/' . $namaFoto)
+                ->resize(800, 800, true, 'height')
+                ->save('uploads/majelis_taklim/' . $namaFoto, 70);
+        }
+
         // Parsing JSON Wilayah dari Emsifa
         $provinsi = $this->request->getPost('provinsi');
         $kabupaten = $this->request->getPost('kabupaten_kota');
         $kecamatan = $this->request->getPost('kecamatan');
         $kelurahan = $this->request->getPost('kelurahan_desa');
 
-        if ($provinsi && strpos($provinsi, '|') !== false) $provinsi = explode('|', $provinsi)[1];
-        if ($kabupaten && strpos($kabupaten, '|') !== false) $kabupaten = explode('|', $kabupaten)[1];
-        if ($kecamatan && strpos($kecamatan, '|') !== false) $kecamatan = explode('|', $kecamatan)[1];
-        if ($kelurahan && strpos($kelurahan, '|') !== false) $kelurahan = explode('|', $kelurahan)[1];
+        if ($provinsi && strpos($provinsi, '|') !== false) $provinsi = ucwords(strtolower(explode('|', $provinsi)[1]));
+        elseif ($provinsi) $provinsi = ucwords(strtolower($provinsi));
+        if ($kabupaten && strpos($kabupaten, '|') !== false) $kabupaten = ucwords(strtolower(explode('|', $kabupaten)[1]));
+        elseif ($kabupaten) $kabupaten = ucwords(strtolower($kabupaten));
+        if ($kecamatan && strpos($kecamatan, '|') !== false) $kecamatan = ucwords(strtolower(explode('|', $kecamatan)[1]));
+        elseif ($kecamatan) $kecamatan = ucwords(strtolower($kecamatan));
+        if ($kelurahan && strpos($kelurahan, '|') !== false) $kelurahan = ucwords(strtolower(explode('|', $kelurahan)[1]));
+        elseif ($kelurahan) $kelurahan = ucwords(strtolower($kelurahan));
 
         $this->mtModel->update($id, [
             'id_masjid_mushola'     => $this->request->getPost('id_masjid_mushola') ?: null,

@@ -113,6 +113,124 @@ $breadcrumb = [
     </div>
 </div>
 
+<!-- Statistics Section -->
+<div class="row mt-4">
+    <!-- Tabel Statistik Jenis Kelamin -->
+    <div class="col-md-5">
+        <div class="card card-outline card-info">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-venus-mars mr-1"></i>
+                    Statistik Jenis Kelamin
+                </h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover table-sm m-0">
+                        <thead>
+                            <tr>
+                                <th>Entitas</th>
+                                <th class="text-center">Laki-laki</th>
+                                <th class="text-center">Perempuan</th>
+                                <th class="text-center">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (!empty($statsGender)): ?>
+                                <?php foreach ($statsGender as $entitas => $stats): ?>
+                                    <tr>
+                                        <td><?= esc($entitas) ?></td>
+                                        <td class="text-center"><?= esc($stats['L']) ?></td>
+                                        <td class="text-center"><?= esc($stats['P']) ?></td>
+                                        <td class="text-center font-weight-bold"><?= esc($stats['Total']) ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">Belum ada data tersedia.</td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabel Statistik Kelurahan/Desa -->
+    <div class="col-md-7">
+        <div class="card card-outline card-success">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-map mr-1"></i>
+                    Persebaran Kelurahan/Desa
+                </h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0" style="max-height: 400px; overflow-y: auto;">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover table-sm m-0 table-head-fixed text-nowrap">
+                        <thead>
+                            <tr>
+                                <th>Kelurahan/Desa</th>
+                                <?php foreach ($headerEntitasKelurahan as $entitas): ?>
+                                    <th class="text-center" title="<?= esc($entitas) ?>">
+                                        <?= esc(strlen($entitas) > 15 ? substr($entitas, 0, 15) . '...' : $entitas) ?>
+                                    </th>
+                                <?php endforeach; ?>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (!empty($statsKelurahan)): ?>
+                                <?php 
+                                // Inisialisasi total per kolom entitas
+                                $colTotals = [];
+                                foreach ($headerEntitasKelurahan as $entitas) {
+                                    $colTotals[$entitas] = 0;
+                                }
+                                ?>
+                                <?php foreach ($statsKelurahan as $kelurahan => $stats): ?>
+                                    <tr>
+                                        <td><?= esc($kelurahan) ?></td>
+                                        <?php foreach ($headerEntitasKelurahan as $entitas): ?>
+                                            <?php 
+                                            $val = $stats[$entitas] ?? 0;
+                                            $colTotals[$entitas] += $val;
+                                            ?>
+                                            <td class="text-center"><?= esc($val) ?></td>
+                                        <?php endforeach; ?>
+                                    </tr>
+                                <?php endforeach; ?>
+
+                                <!-- Baris Total per Kolom -->
+                                <tr class="bg-light font-weight-bold">
+                                    <td class="text-right">Total Keseluruhan:</td>
+                                    <?php foreach ($headerEntitasKelurahan as $entitas): ?>
+                                        <td class="text-center text-primary"><?= esc($colTotals[$entitas]) ?></td>
+                                    <?php endforeach; ?>
+                                </tr>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="<?= count($headerEntitasKelurahan) + 1 ?>" class="text-center text-muted">Belum ada data lokasi kelurahan tersedia.</td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Map Distribution Section -->
 <div class="row mt-4">
     <div class="col-md-12">
@@ -282,6 +400,20 @@ document.addEventListener('DOMContentLoaded', function() {
         let generatedAvatar = generateAvatar(loc.nama, shadowColor);
         let fotoUrl = loc.foto ? '<?= base_url("uploads/") ?>' + folder + '/' + loc.foto : generatedAvatar;
 
+        // Format Nomor HP untuk WhatsApp (Ubah digit pertama 0 menjadi 62)
+        let waLink = '';
+        if (loc.no_hp) {
+            let hpFormatted = loc.no_hp.replace(/[^0-9]/g, ''); // bersihkan karakter non-angka
+            if (hpFormatted.startsWith('0')) {
+                hpFormatted = '62' + hpFormatted.substring(1);
+            }
+            if (hpFormatted.length >= 10) {
+                waLink = `<a href="https://wa.me/${hpFormatted}" target="_blank" class="btn btn-sm btn-success btn-block mt-1" style="font-size: 12px; border-radius: 4px;">
+                            <i class="fab fa-whatsapp mr-1"></i> Hubungi via WhatsApp
+                          </a>`;
+            }
+        }
+
         // Build HTML untuk Popup Info
         const popupHtml = `
             <div style="text-align: center; min-width: 160px; padding-top: 5px;">
@@ -296,6 +428,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank" class="btn btn-sm btn-info btn-block mt-2" style="font-size: 12px; border-radius: 4px;">
                     <i class="fas fa-directions mr-1"></i> Rute ke Lokasi
                 </a>
+                ${waLink}
             </div>
         `;
 
