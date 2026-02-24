@@ -71,9 +71,12 @@ $routes->group('admin', ['filter' => 'login'], function ($routes) {
         $routes->get('arsitektur', 'Backend\DokumentasiController::arsitektur');
         $routes->get('komponen', 'Backend\DokumentasiController::komponen');
         $routes->get('auth', 'Backend\DokumentasiController::auth');
+        $routes->get('komponen', 'Backend\DokumentasiController::komponen');
+        $routes->get('auth', 'Backend\DokumentasiController::auth');
         $routes->get('alur-insentif', 'Backend\DokumentasiController::alurInsentif');
         $routes->get('upload-berkas', 'Backend\DokumentasiController::uploadBerkas');
         $routes->get('setting-berkas', 'Backend\DokumentasiController::settingBerkas');
+        $routes->get('setting-entitas', 'Backend\DokumentasiController::settingEntitas');
     });
     // --- API & AJAX Endpoints ---
     $routes->group('api', function ($routes) {

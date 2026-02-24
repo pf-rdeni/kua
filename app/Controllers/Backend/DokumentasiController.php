@@ -77,4 +77,14 @@ class DokumentasiController extends BaseController
         
         return view('backend/dokumentasi/setting_berkas', $data);
     }
+
+    public function settingEntitas()
+    {
+        $data = [
+            'title' => 'Panduan Setting Entitas',
+            'entitas_type' => $this->entitasTypeModel->where('is_active', 1)->findAll()
+        ];
+        
+        return view('backend/dokumentasi/setting_entitas', $data);
+    }
 }

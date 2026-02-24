@@ -223,6 +223,12 @@
                                 <p>Panduan Setting Berkas</p>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a href="<?= base_url('admin/dokumentasi/setting-entitas') ?>" class="nav-link <?= url_is('admin/dokumentasi/setting-entitas') ? 'active' : '' ?>">
+                                <i class="far fa-circle nav-icon text-success"></i>
+                                <p>Panduan Setting Entitas</p>
+                            </a>
+                        </li>
                     </ul>
                 </li>
                 <?php endif; ?>
