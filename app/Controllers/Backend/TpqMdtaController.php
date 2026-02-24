@@ -69,6 +69,8 @@ class TpqMdtaController extends BaseController
             'pimpinan'          => $this->request->getPost('pimpinan'),
             'no_hp_pimpinan'    => $this->request->getPost('no_hp_pimpinan'),
             'jumlah_santri'     => $this->request->getPost('jumlah_santri'),
+            'latitude'          => $this->request->getPost('latitude'),
+            'longitude'         => $this->request->getPost('longitude'),
             'foto'              => $namaFoto,
         ]);
 
@@ -130,6 +132,8 @@ class TpqMdtaController extends BaseController
             'pimpinan'          => $this->request->getPost('pimpinan'),
             'no_hp_pimpinan'    => $this->request->getPost('no_hp_pimpinan'),
             'jumlah_santri'     => $this->request->getPost('jumlah_santri'),
+            'latitude'          => $this->request->getPost('latitude'),
+            'longitude'         => $this->request->getPost('longitude'),
             'foto'              => $namaFoto,
         ]);
 

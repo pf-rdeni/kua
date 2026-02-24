@@ -333,6 +333,9 @@ $breadcrumb = [
 <!-- Leaflet CSS & JS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<!-- Leaflet Geocoder CSS & JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 
 <script>
 $(document).ready(function() {
@@ -728,6 +731,39 @@ $(document).ready(function() {
 
     // Draggable marker
     let marker = L.marker([initialLat, initialLng], {draggable: true}).addTo(map);
+
+    // Add Geocoder Search Control
+    let geocoder = L.Control.geocoder({
+        defaultMarkGeocode: false,
+        geocoder: L.Control.Geocoder.photon(), // Bypass Nominatim CORS (Error 425) di Localhost
+        placeholder: "Cari tempat atau jalan..."
+    })
+    .on('markgeocode', function(e) {
+        let latlng = e.geocode.center;
+        
+        // Photon kadang tidak mengembalikan Bounding Box (bbox) yang valid
+        if (e.geocode.bbox && typeof e.geocode.bbox.getSouthEast === 'function') {
+            try {
+                let bbox = e.geocode.bbox;
+                let poly = L.polygon([
+                    bbox.getSouthEast(),
+                    bbox.getNorthEast(),
+                    bbox.getNorthWest(),
+                    bbox.getSouthWest()
+                ]);
+                map.fitBounds(poly);
+            } catch (error) {
+                map.setView(latlng, 16); // Fallback jika BBox nge-bug
+            }
+        } else {
+            map.setView(latlng, 16); // Fallback utama untuk Photon
+        }
+        
+        marker.setLatLng(latlng);
+        latInput.value = latlng.lat.toFixed(6);
+        lngInput.value = latlng.lng.toFixed(6);
+    })
+    .addTo(map);
 
     // Event listener when marker is dragged
     marker.on('dragend', function(e) {

@@ -14,7 +14,8 @@ class TpqMdtaModel extends Model
     protected $protectFields    = true;
     protected $allowedFields    = [
         'id_masjid_mushola', 'nama', 'alamat', 'hari', 'waktu', 
-        'pimpinan', 'no_hp_pimpinan', 'jumlah_santri', 'foto'
+        'pimpinan', 'no_hp_pimpinan', 'jumlah_santri', 'foto',
+        'latitude', 'longitude'
     ];
 
     // Dates
