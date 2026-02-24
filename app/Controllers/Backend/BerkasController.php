@@ -8,6 +8,7 @@ use App\Models\PersonilModel;
 use App\Models\MajelisTaklimModel;
 use App\Models\TpqMdtaModel;
 use App\Models\SettingBerkasModel;
+use App\Models\MasjidMusholaModel;
 
 /**
  * BerkasController — Shared AJAX controller untuk upload/edit/delete berkas lampiran.
@@ -62,6 +63,12 @@ class BerkasController extends BaseController
             'pk'        => 'id_tpq_mdta',
             'fotoField' => 'foto',
             'fotoDir'   => 'uploads/tpq_mdta',
+        ],
+        'masjid_mushola' => [
+            'model'     => MasjidMusholaModel::class,
+            'pk'        => 'id_masjid_mushola',
+            'fotoField' => 'foto',
+            'fotoDir'   => 'uploads/masjid_mushola',
         ],
     ];
 
@@ -483,7 +490,12 @@ class BerkasController extends BaseController
                     }
 
                     // Update kolom foto di tabel entitas peminta
-                    $model->update($entitasId, [$fotoField => $fileName]);
+                    if (!$model->update($entitasId, [$fotoField => $fileName])) {
+                        return $this->response->setJSON([
+                            'success' => false, 
+                            'message' => 'Gagal memperbarui database: ' . json_encode($model->errors())
+                        ]);
+                    }
 
                     // --- [NEW] GLOBAL FILE SHARING UPDATE (FOTO PROFIL) ---
                     if ($syncAll === 'true' && in_array($entitasType, ['mubaligh', 'imam_masjid', 'fardu_kifayah', 'penggali_kubur']) && !empty($entitasData['nik'])) {

@@ -420,4 +420,106 @@ class PersonilController extends BaseController
 
         return view('backend/personil/berkasLampiran', $data);
     }
+
+    // ============================================================
+    // API ENDPOINT: Update Foto Base64 via AJAX Cropper
+    // ============================================================
+    public function updateFotoBase64($entitasType)
+    {
+        // Allowed roles
+        $allowedRoles = [
+            'SuperAdmin', 'Admin', 'Kasi Bimas', 'Kepala KUA',
+            'OperatorMubaligh', 'OperatorImamMasjid', 'OperatorFarduKifayah', 'OperatorPenggaliKubur'
+        ];
+        if (!in_array(session()->get('role'), $allowedRoles)) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Unauthorized']);
+        }
+
+        $id = $this->request->getVar('id');
+        $base64Image = $this->request->getVar('image_base64');
+
+        if (empty($id) || empty($base64Image)) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Data tidak lengkap']);
+        }
+
+        // Check entitas exist
+        $personil = $this->personilModel->find($id);
+        if (!$personil) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Personil tidak ditemukan']);
+        }
+
+        try {
+            // Strip out data header if exists (data:image/jpeg;base64,)
+            if (preg_match('/^data:image\/(\w+);base64,/', $base64Image, $type)) {
+                $base64Image = substr($base64Image, strpos($base64Image, ',') + 1);
+                $type = strtolower($type[1]); // jpg, png, gif
+
+                // Force type to jpg for uniformity or keep original. We'll use jpg.
+                if (!in_array($type, ['jpg', 'jpeg', 'png', 'gif'])) {
+                    throw new \Exception('Invalid image type');
+                }
+            } else {
+                throw new \Exception('Did not match data URI with image data');
+            }
+
+            $base64Image = str_replace(' ', '+', $base64Image);
+            $imageData = base64_decode($base64Image);
+
+            if ($imageData === false) {
+                throw new \Exception('Base64 decode failed');
+            }
+
+            // Generate filename
+            $newFileName = $personil['nik'] . '_' . uniqid() . '.jpg';
+            $uploadPath = FCPATH . 'uploads/personil/';
+            
+            // Ensure folder exists
+            if (!is_dir($uploadPath)) {
+                mkdir($uploadPath, 0777, true);
+            }
+
+            $filePath = $uploadPath . $newFileName;
+
+            // Save raw image first
+            if (!file_put_contents($filePath, $imageData)) {
+                throw new \Exception('Failed to save file');
+            }
+
+            // Manipulate/Compress Image (500x500 max)
+            \Config\Services::image()
+                ->withFile($filePath)
+                ->resize(500, 500, true, 'height')
+                ->save($filePath, 80); // 80% quality
+
+            // Delete old photo if it exists and different
+            if (!empty($personil['foto']) && $personil['foto'] !== 'default.jpg' && file_exists($uploadPath . $personil['foto'])) {
+                // Warning: If NIK sharing is active, ensure we don't break others. 
+                // For safety in this quick edit, standard unlink might be risky if shared. 
+                // We'll skip physical unlink here or implement reference counting if needed.
+                // Assuming it's safe for now to orphan old avatars or we use reference counting:
+                $count = $this->personilModel->where('foto', $personil['foto'])->countAllResults();
+                if ($count <= 1) {
+                    @unlink($uploadPath . $personil['foto']);
+                }
+            }
+
+            // Update database
+            $this->personilModel->update($id, ['foto' => $newFileName]);
+
+            // If NIK sharing is enabled, broadcast update to siblings
+            $siblings = $this->personilModel->where('nik', $personil['nik'])->where('id !=', $id)->findAll();
+            if(!empty($siblings)){
+                 $this->personilModel->where('nik', $personil['nik'])->set(['foto' => $newFileName])->update();
+            }
+
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'Foto berhasil diperbarui',
+                'new_image_url' => base_url('uploads/personil/' . $newFileName)
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+        }
+    }
 }

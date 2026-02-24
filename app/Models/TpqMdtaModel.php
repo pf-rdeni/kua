@@ -13,9 +13,23 @@ class TpqMdtaModel extends Model
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'id_masjid_mushola', 'nama', 'alamat', 'hari', 'waktu', 
-        'pimpinan', 'no_hp_pimpinan', 'jumlah_santri', 'foto',
-        'latitude', 'longitude'
+        'id_masjid_mushola',
+        'nama',
+        'alamat',
+        'provinsi', 
+        'kabupaten_kota', 
+        'kecamatan', 
+        'kelurahan_desa', 
+        'rt', 
+        'rw',
+        'hari',
+        'waktu',
+        'pimpinan',
+        'no_hp_pimpinan',
+        'jumlah_santri',
+        'foto',
+        'latitude',
+        'longitude'
     ];
 
     // Dates
@@ -34,7 +48,6 @@ class TpqMdtaModel extends Model
         'pimpinan'          => 'permit_empty|max_length[100]',
         'no_hp_pimpinan'    => 'permit_empty|max_length[20]',
         'jumlah_santri'     => 'permit_empty|numeric',
-        'foto'              => 'permit_empty|max_size[foto,2048]|is_image[foto]|mime_in[foto,image/jpg,image/jpeg,image/png]',
     ];
     protected $validationMessages   = [];
     protected $skipValidation       = false;

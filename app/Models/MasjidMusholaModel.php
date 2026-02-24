@@ -13,9 +13,9 @@ class MasjidMusholaModel extends Model
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'nama', 'jenis', 'alamat', 'tahun_berdiri', 'luas_bangunan', 
-        'status_tanah', 'nama_ketua_dkm', 'no_hp_ketua', 'jumlah_jamaah', 
-        'foto', 'latitude', 'longitude'
+        'nama', 'jenis', 'tahun_berdiri', 'luas_tanah', 'status_tanah', 'luas_bangunan',
+        'alamat', 'provinsi', 'kabupaten_kota', 'kecamatan', 'kelurahan_desa', 'rt', 'rw',
+        'nama_ketua_dkm', 'no_hp_ketua', 'jumlah_jamaah', 'foto', 'latitude', 'longitude'
     ];
 
     // Dates
@@ -32,7 +32,6 @@ class MasjidMusholaModel extends Model
         'tahun_berdiri'     => 'permit_empty|numeric|exact_length[4]',
         'luas_bangunan'     => 'permit_empty|numeric',
         'nama_ketua_dkm'    => 'permit_empty|max_length[100]',
-        'foto'              => 'permit_empty|max_size[foto,2048]|is_image[foto]|mime_in[foto,image/jpg,image/jpeg,image/png]',
     ];
     protected $validationMessages   = [];
     protected $skipValidation       = false;

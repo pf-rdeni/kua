@@ -45,8 +45,58 @@ $this->setVar('breadcrumb', $breadcrumb);
                                     <small class="text-muted">Biarkan kosong jika tidak berafiliasi dengan Masjid di database.</small>
                                 </div>
                                 <div class="form-group">
-                                    <label>Alamat</label>
-                                    <textarea class="form-control" name="alamat"><?= old('alamat', $tpq['alamat'] ?? '') ?></textarea>
+                                    <label>Alamat Gedung/Jalan</label>
+                                    <textarea class="form-control" name="alamat" rows="2"><?= old('alamat', $tpq['alamat'] ?? '') ?></textarea>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="provinsi">Provinsi <i class="fas fa-spinner fa-spin d-none ml-1" id="loading-provinsi"></i></label>
+                                            <select class="form-control select2-regional" id="provinsi" name="provinsi" style="width: 100%;">
+                                                <option value="">-- Sedang Memuat Data... --</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="kabupaten_kota">Kabupaten/Kota <i class="fas fa-spinner fa-spin d-none ml-1" id="loading-kabupaten"></i></label>
+                                            <select class="form-control select2-regional" id="kabupaten_kota" name="kabupaten_kota" style="width: 100%;">
+                                                <option value="">-- Pilih Provinsi Dahulu --</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label for="kecamatan">Kecamatan <i class="fas fa-spinner fa-spin d-none ml-1" id="loading-kecamatan"></i></label>
+                                            <select class="form-control select2-regional" id="kecamatan" name="kecamatan" style="width: 100%;">
+                                                <option value="">-- Pilih Kabupaten/Kota Dahulu --</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="kelurahan_desa">Kelurahan/Desa <i class="fas fa-spinner fa-spin d-none ml-1" id="loading-desa"></i></label>
+                                            <select class="form-control select2-regional" id="kelurahan_desa" name="kelurahan_desa" style="width: 100%;">
+                                                <option value="">-- Pilih Kecamatan Dahulu --</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="rt">RT</label>
+                                            <input type="text" class="form-control" id="rt" name="rt" placeholder="001" value="<?= old('rt', $tpq['rt'] ?? '') ?>">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="rw">RW</label>
+                                            <input type="text" class="form-control" id="rw" name="rw" placeholder="002" value="<?= old('rw', $tpq['rw'] ?? '') ?>">
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="row">
                                     <div class="col-md-6">
@@ -74,14 +124,7 @@ $this->setVar('breadcrumb', $breadcrumb);
                                     <label>Jumlah Santri</label>
                                     <input type="number" class="form-control" name="jumlah_santri" value="<?= old('jumlah_santri', $tpq['jumlah_santri'] ?? '') ?>">
                                 </div>
-                                <div class="form-group">
-                                    <label>Foto Kegiatan/Struktur</label>
-                                    <div class="custom-file">
-                                        <input type="file" class="custom-file-input" id="foto" name="foto" accept="image/*">
-                                        <label class="custom-file-label" for="foto">Pilih file</label>
-                                    </div>
-                                    <small class="text-muted">Max: 2MB. Kosongkan jika tidak ubah.</small>
-                                </div>
+
                             </div>
                         </div>
                         
@@ -151,11 +194,7 @@ $(document).ready(function() {
         }, 10);
     });
 
-    // 2. Custom file input label update
-    $('.custom-file-input').on('change', function() {
-        var fileName = $(this).val().split('\\').pop();
-        $(this).siblings('.custom-file-label').addClass('selected').html(fileName);
-    });
+
 
     // 3. Initialize Leaflet Map
     const latInput = document.getElementById('latitude');
@@ -258,6 +297,121 @@ $(document).ready(function() {
             Swal.fire('Error', 'Browser Anda tidak mendukung Geolokasi.', 'error');
         }
     });
+
+    // --- EMSIFA API WILAYAH INTEGRATION ---
+    $('.select2-regional').select2({ theme: 'bootstrap4', tags: true });
+
+    const API_BASE = 'https://www.emsifa.com/api-wilayah-indonesia/api';
+    let sProv = '<?= old("provinsi", $tpq["provinsi"] ?? "") ?>';
+    let sKab = '<?= old("kabupaten_kota", $tpq["kabupaten_kota"] ?? "") ?>';
+    let sKec = '<?= old("kecamatan", $tpq["kecamatan"] ?? "") ?>';
+    let sDesa = '<?= old("kelurahan_desa", $tpq["kelurahan_desa"] ?? "") ?>';
+
+    // Set Default: Kepulauan Riau (21), Bintan (21.01), Seri Kuala Lobam (21.01.12)
+    const DEFAULT_PROV_ID = '21';
+    const DEFAULT_KAB_ID = '21.01';
+    const DEFAULT_KEC_ID = '21.01.12';
+
+    function populateDropdown(selector, data, defaultOptionText, savedValue, defaultIdTarget = null) {
+        let options = `<option value="">${defaultOptionText}</option>`;
+        let isSavedInList = false;
+
+        data.forEach(item => {
+            let itemVal = `${item.id}|${item.name}`;
+            
+            // 1. Prioritas Utama: Apakah string item name cocok dengan nilai database $savedValue (kasus edit)
+            if (savedValue && item.name.trim().toUpperCase() === savedValue.trim().toUpperCase()) {
+                isSavedInList = itemVal;
+            }
+            // 2. Prioritas Kedua: Apakah ini item dengan ID sama persis dengan $savedValue (kasus form invalid callback)
+            else if (savedValue && savedValue === itemVal) {
+                isSavedInList = itemVal;
+            }
+            // 3. Fallback: Jika mode form kosong (Tambah Baru), pilih berdasarkan ID Default
+            else if (!savedValue && defaultIdTarget && item.id === defaultIdTarget) {
+                isSavedInList = itemVal;
+            }
+        });
+
+        if (savedValue && !isSavedInList) {
+            options = `<option value="${savedValue}">${savedValue}</option>` + options;
+            isSavedInList = savedValue;
+        }
+
+        data.forEach(item => {
+            let itemVal = `${item.id}|${item.name}`;
+            let selected = (itemVal === isSavedInList) ? 'selected' : '';
+            options += `<option value="${itemVal}" ${selected}>${item.name}</option>`;
+        });
+
+        $(selector).html(options);
+        if (isSavedInList) {
+            $(selector).val(isSavedInList).trigger('change');
+        }
+    }
+
+    // 1. Fetch Provinces
+    $('#loading-provinsi').removeClass('d-none');
+    fetch(`${API_BASE}/provinces.json`).then(res => res.json()).then(data => {
+        populateDropdown('#provinsi', data, '-- Pilih Provinsi --', sProv, DEFAULT_PROV_ID);
+        $('#loading-provinsi').addClass('d-none');
+    });
+
+    // 2. Fetch Kab on Prov Change
+    $('#provinsi').on('change', function() {
+        let val = $(this).val();
+        if (!val) { $('#kabupaten_kota').html('<option value="">-- Pilih Provinsi Dahulu --</option>').trigger('change'); return; }
+        let id_prov = val.split('|')[0];
+        $('#loading-kabupaten').removeClass('d-none');
+        fetch(`${API_BASE}/regencies/${id_prov}.json`).then(res => res.json()).then(data => {
+            populateDropdown('#kabupaten_kota', data, '-- Pilih Kabupaten/Kota --', sKab, DEFAULT_KAB_ID);
+            $('#loading-kabupaten').addClass('d-none');
+            sKab = '';
+        });
+    });
+
+    // 3. Fetch Kec on Kab Change
+    $('#kabupaten_kota').on('change', function() {
+        let val = $(this).val();
+        if (!val) { $('#kecamatan').html('<option value="">-- Pilih Kabupaten Dahulu --</option>').trigger('change'); return; }
+        let id_kab = val.split('|')[0];
+        $('#loading-kecamatan').removeClass('d-none');
+        fetch(`${API_BASE}/districts/${id_kab}.json`).then(res => res.json()).then(data => {
+            populateDropdown('#kecamatan', data, '-- Pilih Kecamatan --', sKec, DEFAULT_KEC_ID);
+            $('#loading-kecamatan').addClass('d-none');
+            sKec = '';
+        });
+    });
+
+    // 4. Fetch Desa on Kec Change
+    $('#kecamatan').on('change', function() {
+        let val = $(this).val();
+        if (!val) { $('#kelurahan_desa').html('<option value="">-- Pilih Kecamatan Dahulu --</option>'); return; }
+        let id_kec = val.split('|')[0];
+        $('#loading-desa').removeClass('d-none');
+        fetch(`${API_BASE}/villages/${id_kec}.json`).then(res => res.json()).then(data => {
+            populateDropdown('#kelurahan_desa', data, '-- Pilih Kelurahan/Desa --', sDesa, null);
+            $('#loading-desa').addClass('d-none');
+            sDesa = '';
+        });
+    });
+
+    // 5. Intercept Form Submission u/ hilangkan Prefix ID angka (opsional jika controller sdh tangkap, tapi aman)
+    $('form').on('submit', function(e) {
+        let cleans = ['provinsi', 'kabupaten_kota', 'kecamatan', 'kelurahan_desa'];
+        cleans.forEach(id => {
+            let el = $('#' + id);
+            if(el.length) {
+                let val = el.val() || '';
+                let parts = val.split('|');
+                if(parts.length > 1) {
+                    $('<input>').attr({type: 'hidden', name: id, value: parts[1]}).appendTo(this);
+                    el.removeAttr('name');
+                }
+            }
+        });
+    });
 });
 </script>
 <?= $this->endSection(); ?>
+```
