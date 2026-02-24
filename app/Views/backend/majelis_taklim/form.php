@@ -1,22 +1,29 @@
 <?= $this->extend('backend/template/template'); ?>
+<?php
+$isEdit = isset($majelis);
+$pageTitle = $isEdit ? 'Edit Data Majelis Taklim' : 'Tambah Data Majelis Taklim';
+$breadcrumb = [
+    ['title' => 'Dashboard', 'url' => 'admin/dashboard'],
+    ['title' => 'Majelis Taklim', 'url' => 'admin/majelis-taklim'],
+    ['title' => 'Form', 'url' => ''],
+];
+// Mem-pass variabel ke view utama agar dipakai oleh header.php
+$this->setVar('pageTitle', $pageTitle);
+$this->setVar('breadcrumb', $breadcrumb);
+?>
 
 <?= $this->section('content'); ?>
-<div class="content-wrapper">
-    <section class="content-header">
-        <h1><?= isset($majelis) ? 'Edit' : 'Tambah' ?> Data Majelis Taklim</h1>
-    </section>
+<div class="row">
+    <div class="col-md-12">
+        <?php if (session()->has('errors')) : ?>
+            <div class="alert alert-danger">
+                <ul><?php foreach (session('errors') as $error) : ?><li><?= esc($error) ?></li><?php endforeach ?></ul>
+            </div>
+        <?php endif ?>
 
-    <section class="content">
-        <div class="container-fluid">
-            <?php if (session()->has('errors')) : ?>
-                <div class="alert alert-danger">
-                    <ul><?php foreach (session('errors') as $error) : ?><li><?= esc($error) ?></li><?php endforeach ?></ul>
-                </div>
-            <?php endif ?>
-
-            <div class="card card-primary">
-                <form action="<?= isset($majelis) ? base_url('admin/majelis-taklim/update/' . $majelis['id_majelis_taklim']) : base_url('admin/majelis-taklim/store') ?>" method="post" enctype="multipart/form-data">
-                    <?= csrf_field() ?>
+        <div class="card card-primary">
+            <form action="<?= $isEdit ? base_url('admin/majelis-taklim/update/' . $majelis['id_majelis_taklim']) : base_url('admin/majelis-taklim/store') ?>" method="post" enctype="multipart/form-data">
+                <?= csrf_field() ?>
                     <div class="card-body">
                         <div class="form-group">
                             <label>Nama Majelis Taklim *</label>
@@ -120,10 +127,8 @@
                         <button type="submit" class="btn btn-primary">Simpan</button>
                         <a href="<?= base_url('admin/majelis-taklim') ?>" class="btn btn-default float-right">Batal</a>
                     </div>
-                </form>
-            </div>
         </div>
-    </section>
+    </div>
 </div>
 <?= $this->endSection(); ?>
 
@@ -157,9 +162,9 @@ $(document).ready(function() {
     let sDesa = '<?= old("kelurahan_desa", $majelis["kelurahan_desa"] ?? "") ?>';
 
     // Set Default: Kepulauan Riau (21), Bintan (21.01), Seri Kuala Lobam (21.01.12)
-    const DEFAULT_PROV_ID = '21';
-    const DEFAULT_KAB_ID = '21.01';
-    const DEFAULT_KEC_ID = '21.01.12';
+    const DEFAULT_PROV_ID = '21';      // KEPULAUAN RIAU
+    const DEFAULT_KAB_ID  = '2102';    // KABUPATEN BINTAN
+    const DEFAULT_KEC_ID  = '2102052'; // SERI KUALA LOBAM
 
     function populateDropdown(selector, data, defaultOptionText, savedValue, defaultIdTarget = null) {
         let options = `<option value="">${defaultOptionText}</option>`;

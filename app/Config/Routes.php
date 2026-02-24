@@ -134,7 +134,6 @@ $routes->group('admin', ['filter' => 'login'], function ($routes) {
         $routes->post('(:segment)/store', 'Backend\PersonilController::store/$1');
         $routes->get('(:segment)/edit/(:num)', 'Backend\PersonilController::edit/$1/$2');
         $routes->post('(:segment)/update/(:num)', 'Backend\PersonilController::update/$1/$2');
-        $routes->post('(:segment)/update-foto', 'Backend\PersonilController::updateFotoBase64/$1');
         $routes->get('(:segment)/delete/(:num)', 'Backend\PersonilController::delete/$1/$2');
         $routes->get('(:segment)/show/(:num)', 'Backend\PersonilController::show/$1/$2');
         $routes->get('(:segment)/berkas-lampiran', 'Backend\PersonilController::showBerkasLampiran/$1');
@@ -156,7 +155,6 @@ $routes->group('admin', ['filter' => 'login'], function ($routes) {
         $routes->post('store', 'Backend\MasjidMusholaController::store');
         $routes->get('edit/(:num)', 'Backend\MasjidMusholaController::edit/$1');
         $routes->post('update/(:num)', 'Backend\MasjidMusholaController::update/$1');
-        $routes->post('update-foto', 'Backend\MasjidMusholaController::updateFotoBase64');
         $routes->get('delete/(:num)', 'Backend\MasjidMusholaController::delete/$1');
         $routes->get('show/(:num)', 'Backend\MasjidMusholaController::show/$1');
     });
@@ -168,7 +166,6 @@ $routes->group('admin', ['filter' => 'login'], function ($routes) {
         $routes->post('store', 'Backend\MajelisTaklimController::store');
         $routes->get('edit/(:num)', 'Backend\MajelisTaklimController::edit/$1');
         $routes->post('update/(:num)', 'Backend\MajelisTaklimController::update/$1');
-        $routes->post('update-foto', 'Backend\MajelisTaklimController::updateFotoBase64');
         $routes->get('delete/(:num)', 'Backend\MajelisTaklimController::delete/$1');
         $routes->get('show/(:num)', 'Backend\MajelisTaklimController::show/$1');
     });
@@ -180,7 +177,6 @@ $routes->group('admin', ['filter' => 'login'], function ($routes) {
         $routes->post('store', 'Backend\TpqMdtaController::store');
         $routes->get('edit/(:num)', 'Backend\TpqMdtaController::edit/$1');
         $routes->post('update/(:num)', 'Backend\TpqMdtaController::update/$1');
-        $routes->post('update-foto', 'Backend\TpqMdtaController::updateFotoBase64');
         $routes->get('delete/(:num)', 'Backend\TpqMdtaController::delete/$1');
         $routes->get('show/(:num)', 'Backend\TpqMdtaController::show/$1');
     });

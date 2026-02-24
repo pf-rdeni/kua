@@ -51,7 +51,7 @@ $breadcrumb = [
                                     <td><?= $no++ ?></td>
                                     <td class="text-center">
                                         <?php if (!empty($p['foto'])): ?>
-                                            <img src="<?= base_url('uploads/personil/' . esc($p['foto'])) ?>" alt="Foto" class="img-thumbnail img-fluid cursor-pointer view-photo" data-src="<?= base_url('uploads/personil/' . esc($p['foto'])) ?>" data-title="<?= esc($p['nama_lengkap']) ?>" style="width: 45px; height: 45px; object-fit: cover; border-radius: 50%;">
+                                            <img src="<?= base_url('uploads/personil/' . esc($p['foto'])) ?>" alt="Foto" class="img-thumbnail img-fluid cursor-pointer view-photo" data-id="<?= $p['id'] ?>" data-src="<?= base_url('uploads/personil/' . esc($p['foto'])) ?>" data-title="<?= esc($p['nama_lengkap']) ?>" style="width: 45px; height: 45px; object-fit: cover; border-radius: 50%;">
                                         <?php else: ?>
                                             <?php 
                                             // Membangun Avatar 2 Huruf Initials
@@ -69,7 +69,7 @@ $breadcrumb = [
                                             $colorIndex = ord($initials[0]) % count($colors);
                                             $bgColor = $colors[$colorIndex] ?? '#6c757d';
                                             ?>
-                                            <div class="d-inline-flex align-items-center justify-content-center text-white" style="width: 45px; height: 45px; border-radius: 50%; background-color: <?= $bgColor ?>; font-weight: bold; font-size: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                            <div class="d-inline-flex align-items-center justify-content-center text-white cursor-pointer view-photo" data-id="<?= $p['id'] ?>" data-src="<?= base_url('assets/img/avatar-fallback.png') ?>" data-title="<?= esc($p['nama_lengkap']) ?>" style="width: 45px; height: 45px; border-radius: 50%; background-color: <?= $bgColor ?>; font-weight: bold; font-size: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                                                 <?= $initials ?>
                                             </div>
                                         <?php endif; ?>
@@ -204,20 +204,10 @@ $breadcrumb = [
         var currentEntitasId = null;
         var imageElement = document.getElementById('lightboxImage');
 
-        // Event listener saat avatar di tabel di-klik
         $(document).on('click', '.view-photo', function() {
             var src = $(this).data('src');
             var nama = $(this).data('title');
-            var id = $(this).closest('tr').find('.btn-edit').attr('href'); 
-            
-            // Ekstrak ID dari URL Edit button (mendukung DataTables Responsive mode)
-            var tr = $(this).closest('tr');
-            if (tr.hasClass('child')) {
-                tr = tr.prev('.parent');
-            }
-            var editUrl = tr.find('a[href*="edit/"]').attr('href') || '';
-            var segments = editUrl.split('/');
-            currentEntitasId = segments[segments.length - 1];
+            currentEntitasId = $(this).data('id');
 
             $('#photoModalLabel').text('Detail & Edit Foto Profil - ' + nama);
             $('#editFotoId').val(currentEntitasId);

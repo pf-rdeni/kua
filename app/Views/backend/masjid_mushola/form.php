@@ -321,9 +321,9 @@ $(document).ready(function() {
     let sDesa = '<?= old("kelurahan_desa", $masjid["kelurahan_desa"] ?? "") ?>';
 
     // Set Default: Kepulauan Riau (21), Bintan (21.01), Seri Kuala Lobam (21.01.12)
-    const DEFAULT_PROV_ID = '21';
-    const DEFAULT_KAB_ID = '21.01';
-    const DEFAULT_KEC_ID = '21.01.12';
+    const DEFAULT_PROV_ID = '21';      // KEPULAUAN RIAU
+    const DEFAULT_KAB_ID  = '2102';    // KABUPATEN BINTAN
+    const DEFAULT_KEC_ID  = '2102052'; // SERI KUALA LOBAM
 
     function populateDropdown(selector, data, defaultOptionText, savedValue, defaultIdTarget = null) {
         let options = `<option value="">${defaultOptionText}</option>`;

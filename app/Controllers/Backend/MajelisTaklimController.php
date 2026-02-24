@@ -122,23 +122,6 @@ class MajelisTaklimController extends BaseController
 
         $mtLama = $this->mtModel->find($id);
 
-        // Handle Foto
-        $foto = $this->request->getFile('foto');
-        $namaFoto = $mtLama['foto'];
-        if ($foto && $foto->isValid() && !$foto->hasMoved()) {
-            if ($namaFoto && file_exists('uploads/majelis_taklim/' . $namaFoto)) {
-                @unlink('uploads/majelis_taklim/' . $namaFoto);
-            }
-            $namaFoto = $foto->getRandomName();
-            $foto->move('uploads/majelis_taklim', $namaFoto);
-
-            // Resize compress
-            \Config\Services::image()
-                ->withFile('uploads/majelis_taklim/' . $namaFoto)
-                ->resize(800, 800, true, 'height')
-                ->save('uploads/majelis_taklim/' . $namaFoto, 70);
-        }
-
         // Parsing JSON Wilayah dari Emsifa
         $provinsi = $this->request->getPost('provinsi');
         $kabupaten = $this->request->getPost('kabupaten_kota');
@@ -183,82 +166,5 @@ class MajelisTaklimController extends BaseController
         $this->mtModel->delete($id);
 
         return redirect()->to('admin/majelis-taklim')->with('success', 'Data Majelis Taklim berhasil dihapus.');
-    }
-
-    // ============================================================
-    // API ENDPOINT: Update Foto Base64 via AJAX Cropper
-    // ============================================================
-    public function updateFotoBase64()
-    {
-        // Allowed roles
-        $allowedRoles = ['SuperAdmin', 'Admin', 'Kasi Bimas', 'Kepala KUA', 'OperatorMajelisTaklim'];
-        if (!in_array(session()->get('role'), $allowedRoles)) {
-            return $this->response->setJSON(['success' => false, 'message' => 'Unauthorized']);
-        }
-
-        $id = $this->request->getVar('id');
-        $base64Image = $this->request->getVar('image_base64');
-
-        if (empty($id) || empty($base64Image)) {
-            return $this->response->setJSON(['success' => false, 'message' => 'Data tidak lengkap']);
-        }
-
-        $mt = $this->mtModel->find($id);
-        if (!$mt) {
-            return $this->response->setJSON(['success' => false, 'message' => 'Data tidak ditemukan']);
-        }
-
-        try {
-            if (preg_match('/^data:image\/(\w+);base64,/', $base64Image, $type)) {
-                $base64Image = substr($base64Image, strpos($base64Image, ',') + 1);
-                $type = strtolower($type[1]);
-                if (!in_array($type, ['jpg', 'jpeg', 'png', 'gif'])) {
-                    throw new \Exception('Invalid image type');
-                }
-            } else {
-                throw new \Exception('Did not match data URI with image data');
-            }
-
-            $base64Image = str_replace(' ', '+', $base64Image);
-            $imageData = base64_decode($base64Image);
-
-            if ($imageData === false) {
-                throw new \Exception('Base64 decode failed');
-            }
-
-            // Generate filename
-            $newFileName = 'mt_' . uniqid() . '.jpg';
-            $uploadPath = FCPATH . 'uploads/majelis_taklim/';
-            
-            if (!is_dir($uploadPath)) {
-                mkdir($uploadPath, 0777, true);
-            }
-
-            $filePath = $uploadPath . $newFileName;
-
-            if (!file_put_contents($filePath, $imageData)) {
-                throw new \Exception('Failed to save file');
-            }
-
-            \Config\Services::image()
-                ->withFile($filePath)
-                ->resize(800, 800, true, 'height')
-                ->save($filePath, 80);
-
-            if (!empty($mt['foto']) && file_exists($uploadPath . $mt['foto'])) {
-                @unlink($uploadPath . $mt['foto']);
-            }
-
-            $this->mtModel->update($id, ['foto' => $newFileName]);
-
-            return $this->response->setJSON([
-                'success' => true,
-                'message' => 'Foto berhasil diperbarui',
-                'new_image_url' => base_url('uploads/majelis_taklim/' . $newFileName)
-            ]);
-
-        } catch (\Exception $e) {
-            return $this->response->setJSON(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
-        }
     }
 }
