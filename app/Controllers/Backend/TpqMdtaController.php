@@ -61,7 +61,7 @@ class TpqMdtaController extends BaseController
         }
 
         $this->tpqModel->save([
-            'id_masjid_mushola' => $this->request->getPost('id_masjid_mushola'),
+            'id_masjid_mushola' => $this->request->getPost('id_masjid_mushola') ?: null,
             'nama'              => $this->request->getPost('nama'),
             'alamat'            => $this->request->getPost('alamat'),
             'hari'              => $this->request->getPost('hari'),
@@ -124,7 +124,7 @@ class TpqMdtaController extends BaseController
         }
 
         $this->tpqModel->update($id, [
-            'id_masjid_mushola' => $this->request->getPost('id_masjid_mushola'),
+            'id_masjid_mushola' => $this->request->getPost('id_masjid_mushola') ?: null,
             'nama'              => $this->request->getPost('nama'),
             'alamat'            => $this->request->getPost('alamat'),
             'hari'              => $this->request->getPost('hari'),
