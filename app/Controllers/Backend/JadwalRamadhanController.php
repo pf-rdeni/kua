@@ -165,8 +165,18 @@ class JadwalRamadhanController extends BaseController
                 return $this->response->setJSON(['status' => 'error', 'message' => 'Tidak ada jadwal di tahun sumber (' . $from_year . ')']);
             }
 
+            // Ambil data tanggal dari tema target untuk dipetakan
+            $targetThemes = $this->temaModel->where('tahun_hijriah', $to_year)->findAll();
+            $targetDateMap = [];
+            foreach ($targetThemes as $tt) {
+                $targetDateMap[$tt['hari_ke']] = $tt['tanggal'];
+            }
+
             $insertData = [];
             foreach ($sourceSchedules as $s) {
+                // Cari tanggal masehi pada target year
+                $tanggalTarget = $targetDateMap[$s['hari_ke']] ?? null;
+
                 $insertData[] = [
                     'jenis_kegiatan' => $s['jenis_kegiatan'],
                     'tahun_hijriah' => $to_year,
@@ -174,7 +184,7 @@ class JadwalRamadhanController extends BaseController
                     'id_personil' => $s['id_personil'],
                     'hari_ke' => $s['hari_ke'],
                     'id_tema' => null, // opsional
-                    'tanggal' => null // Tanggal masehi reset
+                    'tanggal' => $tanggalTarget // Sinkronisasi Tanggal Masehi (Phase 6)
                 ];
             }
 
@@ -230,7 +240,7 @@ class JadwalRamadhanController extends BaseController
                 $results[] = [
                     'id'   => $m['id'],
                     'text' => $m['nik'] . ' - ' . $m['nama_lengkap'],
-                    'foto' => $m['foto'] ? base_url('uploads/personil/' . $m['foto']) : base_url('dist/img/default-150x150.png')
+                    'foto' => $m['foto'] ? base_url('uploads/personil/' . $m['foto']) : base_url('template/backend/dist/img/default-150x150.png')
                 ];
             }
             
@@ -256,11 +266,20 @@ class JadwalRamadhanController extends BaseController
                             ->where('hari_ke', $hari_ke)
                             ->first();
 
+            // AMBIL TANGGAL DARI TEMA
+            $tema = $this->temaModel
+                        ->where('jenis_kegiatan', 'ramadhan')
+                        ->where('tahun_hijriah', $tahun_hijriah)
+                        ->where('hari_ke', $hari_ke)
+                        ->first();
+            $tanggalMasehi = $tema ? $tema['tanggal'] : null;
+
             $data = [
                 'jenis_kegiatan'    => 'ramadhan',
                 'tahun_hijriah'     => $tahun_hijriah,
                 'id_masjid_mushola' => $id_masjid,
                 'hari_ke'           => $hari_ke,
+                'tanggal'           => $tanggalMasehi,
                 'id_personil'       => empty($id_personil) ? null : $id_personil
             ];
 

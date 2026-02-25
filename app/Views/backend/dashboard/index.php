@@ -146,37 +146,165 @@ $breadcrumb = [
                                                 $hpFormatted = '62' . substr($hpFormatted, 1);
                                             }
                                             
-                                            $tglStr = '-';
-                                            if ($j['tanggal']) {
-                                                $tglStr = tanggal_indo_panjang($j['tanggal']);
-                                            }
-
-                                            $malamKe = intval($j['hari_ke']) + 1;
-                                            $tahunHijriah = isset($j['tahun_hijriah']) ? $j['tahun_hijriah'] : '';
-                                            $pesan = urlencode("Assalamualaikum Wr Wb.\nReminder Jadwal Ceramah Tarawih:\n\nMalam Ke: " . $malamKe . " Ramadhan " . $tahunHijriah . "\nHari Tanggal: " . $tglStr . "\nTempat: " . $j['nama_masjid'] . " (" . $j['alamat_masjid'] . ")\nTema: " . ($j['tema'] ?: 'Menyesuaikan') . "\n\nTerima kasih.\n\n_Pesan ini di-generate otomatis dari sistem, tidak perlu dibalas._");
+                                            $tglStr = $j['tanggal'] ? tanggal_indo_panjang($j['tanggal']) : '-';
+                                            $malamKe = intval($j['hari_ke'] ?? 0) + 1;
+                                            $tahunHijriah = $j['tahun_hijriah'] ?? '';
+                                            
+                                            $linkAbsen = base_url('jadwal-mubaligh/' . ($j['token_jadwal'] ?? ''));
+                                            $pesan = urlencode("Assalamualaikum Wr Wb.\nReminder Jadwal Ceramah Tarawih:\n\nMalam Ke: " . $malamKe . " Ramadhan " . $tahunHijriah . "\nHari Tanggal: " . $tglStr . "\nTempat: " . $j['nama_masjid'] . " (" . $j['alamat_masjid'] . ")\nTema: " . ($j['tema'] ?: 'Menyesuaikan') . "\n\nCek Jadwal Sebulan & Konfirmasi Kehadiran:\n" . $linkAbsen . "\n\nTerima kasih.\n\n_Pesan ini di-generate otomatis dari sistem, tidak perlu dibalas._");
                                             $waLink = "https://wa.me/" . $hpFormatted . "?text=" . $pesan;
                                         }
-                                    ?>
-                                    <?php
-                                        // Variasi warna badge berdasarkan sisa bagi hari_ke
                                         $badgeColors = ['badge-primary', 'badge-success', 'badge-info', 'badge-warning', 'badge-danger'];
-                                        $colorIndex = (intval($j['hari_ke']) - 1) % count($badgeColors);
+                                        $colorIndex = abs(intval($j['hari_ke'] ?? 0) - 1) % count($badgeColors);
                                         $badgeClass = $badgeColors[$colorIndex];
                                     ?>
                                 <tr>
                                     <td>
-                                        <span class="badge <?= $badgeClass ?> mb-1"><?= esc($j['hari_ke']) ?> Ramadhan <?= isset($j['tahun_hijriah']) ? esc($j['tahun_hijriah']) : '' ?> (Malam Ke-<?= intval($j['hari_ke']) + 1 ?>)</span><br>
+                                        <span class="badge <?= $badgeClass ?> mb-1"><?= esc($j['hari_ke'] ?? '') ?> Ramadhan <?= esc($j['tahun_hijriah'] ?? '') ?> (Malam Ke-<?= intval($j['hari_ke'] ?? 0) + 1 ?>)</span><br>
                                         <small class="text-muted"><i class="far fa-calendar-alt"></i> <?= $tglStr ?></small>
                                     </td>
                                     <td class="font-weight-bold">
-                                        <?php 
-                                            $foto = !empty($j['foto']) ? base_url('uploads/personil/' . $j['foto']) : base_url('dist/img/default-150x150.png');
-                                        ?>
+                                        <?php $foto = !empty($j['foto']) ? base_url('uploads/personil/' . $j['foto']) : base_url('template/backend/dist/img/default-150x150.png'); ?>
                                         <img src="<?= esc($foto) ?>" alt="Foto Mubaligh" class="img-circle img-sm mr-2" style="width: 32px; height: 32px; object-fit: cover; border: 1px solid #ddd;">
-                                        <?= esc($j['nama_mubaligh']) ?>
+                                        <?= esc($j['nama_mubaligh'] ?? '') ?>
                                     </td>
-                                    <td><?= esc($j['nama_masjid']) ?></td>
-                                    <td><?= esc($j['tema']) ?></td>
+                                    <td><?= esc($j['nama_masjid'] ?? '') ?></td>
+                                    <td><?= esc($j['tema'] ?? '') ?></td>
+                                    <td class="text-center">
+                                        <?php if($noHp): ?>
+                                        <a href="<?= $waLink ?>" target="_blank" class="btn btn-xs btn-success"><i class="fab fa-whatsapp"></i> Kirim Reminder</a>
+                                        <?php else: ?>
+                                        <span class="text-muted"><i class="fas fa-exclamation-circle"></i> No HP Kosong</span>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
+<!-- Reminder Jadwal Khotib Jumat -->
+<?php if (!empty($jadwalKhotibJumat)): ?>
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card card-outline card-success">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-bullhorn text-success mr-1"></i> Reminder Khotib Jumat Terdekat
+                </h3>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm m-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Hari Tanggal</th>
+                                <th>Khotib</th>
+                                <th>Tempat Masjid</th>
+                                <th class="text-center">Aksi (Kirim WA)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                                <?php foreach($jadwalKhotibJumat as $j): ?>
+                                    <?php 
+                                        $noHp = $j['no_hp'] ?? '';
+                                        $waLink = '#';
+                                        $tglStr = $j['tanggal'] ? tanggal_indo_panjang($j['tanggal']) : '-';
+                                        if ($noHp) {
+                                            $hpFormatted = preg_replace('/[^0-9]/', '', $noHp);
+                                            if (str_starts_with($hpFormatted, '0')) {
+                                                $hpFormatted = '62' . substr($hpFormatted, 1);
+                                            }
+                                            $linkAbsen = base_url('jadwal-mubaligh/' . ($j['token_jadwal'] ?? ''));
+                                            $pesan = urlencode("Assalamualaikum Wr Wb.\nReminder Jadwal Khotib Jumat:\n\nHari Tanggal: " . $tglStr . "\nTempat: " . $j['nama_masjid'] . " (" . $j['alamat_masjid'] . ")\n\nCek Jadwal Tahunan & Konfirmasi Kehadiran:\n" . $linkAbsen . "\n\nTerima kasih.\n\n_Pesan ini di-generate otomatis dari sistem, tidak perlu dibalas._");
+                                            $waLink = "https://wa.me/" . $hpFormatted . "?text=" . $pesan;
+                                        }
+                                    ?>
+                                <tr>
+                                    <td>
+                                        <span class="badge badge-success mb-1">Jumat</span><br>
+                                        <small class="text-muted"><i class="far fa-calendar-alt"></i> <?= $tglStr ?></small>
+                                    </td>
+                                    <td class="font-weight-bold">
+                                        <?php $foto = !empty($j['foto']) ? base_url('uploads/personil/' . $j['foto']) : base_url('template/backend/dist/img/default-150x150.png'); ?>
+                                        <img src="<?= esc($foto) ?>" alt="Foto" class="img-circle img-sm mr-2" style="width: 32px; height: 32px; object-fit: cover; border: 1px solid #ddd;">
+                                        <?= esc($j['nama_mubaligh'] ?? '') ?>
+                                    </td>
+                                    <td><?= esc($j['nama_masjid'] ?? '') ?></td>
+                                    <td class="text-center">
+                                        <?php if($noHp): ?>
+                                        <a href="<?= $waLink ?>" target="_blank" class="btn btn-xs btn-success"><i class="fab fa-whatsapp"></i> Kirim Reminder</a>
+                                        <?php else: ?>
+                                        <span class="text-muted"><i class="fas fa-exclamation-circle"></i> No HP Kosong</span>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
+<!-- Reminder Jadwal Maghrib Mengaji -->
+<?php if (!empty($jadwalMaghribMengaji)): ?>
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card card-outline card-primary">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-book-reader text-primary mr-1"></i> Reminder Maghrib Mengaji Terdekat
+                </h3>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm m-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Hari Tanggal</th>
+                                <th>Petugas</th>
+                                <th>Tempat</th>
+                                <th>Peran</th>
+                                <th class="text-center">Aksi (Kirim WA)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                                <?php foreach($jadwalMaghribMengaji as $j): ?>
+                                    <?php 
+                                        $noHp = $j['no_hp'] ?? '';
+                                        $waLink = '#';
+                                        $tglStr = $j['tanggal'] ? tanggal_indo_panjang($j['tanggal']) : '-';
+                                        $peran = strtoupper($j['peran_petugas'] ?? '');
+                                        if ($noHp) {
+                                            $hpFormatted = preg_replace('/[^0-9]/', '', $noHp);
+                                            if (str_starts_with($hpFormatted, '0')) {
+                                                $hpFormatted = '62' . substr($hpFormatted, 1);
+                                            }
+                                            $linkAbsen = base_url('jadwal-mubaligh/' . ($j['token_jadwal'] ?? ''));
+                                            $pesan = urlencode("Assalamualaikum Wr Wb.\nReminder Jadwal Maghrib Mengaji:\n\nPetugas: " . $peran . "\nHari Tanggal: " . $tglStr . "\nTempat: " . $j['nama_masjid'] . " (" . $j['alamat_masjid'] . ")\n\nCek Jadwal & Konfirmasi Kehadiran:\n" . $linkAbsen . "\n\nTerima kasih.\n\n_Pesan ini di-generate otomatis dari sistem, tidak perlu dibalas._");
+                                            $waLink = "https://wa.me/" . $hpFormatted . "?text=" . $pesan;
+                                        }
+                                    ?>
+                                <tr>
+                                    <td>
+                                        <span class="badge badge-primary mb-1">Mengaji</span><br>
+                                        <small class="text-muted"><i class="far fa-calendar-alt"></i> <?= $tglStr ?></small>
+                                    </td>
+                                    <td class="font-weight-bold">
+                                        <?php $foto = !empty($j['foto']) ? base_url('uploads/personil/' . $j['foto']) : base_url('template/backend/dist/img/default-150x150.png'); ?>
+                                        <img src="<?= esc($foto) ?>" alt="Foto" class="img-circle img-sm mr-2" style="width: 32px; height: 32px; object-fit: cover; border: 1px solid #ddd;">
+                                        <?= esc($j['nama_mubaligh'] ?? '') ?>
+                                    </td>
+                                    <td><?= esc($j['nama_masjid'] ?? '') ?></td>
+                                    <td><span class="badge badge-outline-primary"><?= esc($peran) ?></span></td>
                                     <td class="text-center">
                                         <?php if($noHp): ?>
                                         <a href="<?= $waLink ?>" target="_blank" class="btn btn-xs btn-success"><i class="fab fa-whatsapp"></i> Kirim Reminder</a>

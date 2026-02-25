@@ -15,13 +15,14 @@ class JadwalKegiatanModel extends Model
     protected $allowedFields    = [
         'jenis_kegiatan',
         'tahun_hijriah',
+        'tahun_masehi',
+        'bulan',
         'id_masjid_mushola',
         'id_personil',
+        'peran_petugas',
         'tanggal',
         'hari_ke',
-        'id_tema',
-        'status_kehadiran',
-        'id_personil_pengganti'
+        'id_tema'
     ];
 
     protected $useTimestamps = true;

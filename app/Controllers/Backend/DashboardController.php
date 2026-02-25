@@ -172,7 +172,7 @@ class DashboardController extends BaseController
         ksort($statsKelurahan);
 
         $jadwalRamadhan = $db->table('tbl_jadwal_kegiatan j')
-            ->select('j.hari_ke, j.tahun_hijriah, m.nama as nama_masjid, m.alamat as alamat_masjid, p.nama_lengkap as nama_mubaligh, p.no_hp, p.foto, t.tema, t.tanggal')
+            ->select('j.hari_ke, j.tahun_hijriah, m.nama as nama_masjid, m.alamat as alamat_masjid, p.id as id_mubaligh, p.nama_lengkap as nama_mubaligh, p.no_hp, p.foto, p.token_jadwal, t.tema, t.tanggal')
             ->join('tbl_masjid_mushola m', 'm.id_masjid_mushola = j.id_masjid_mushola', 'left')
             ->join('tbl_personil p', 'p.id = j.id_personil', 'left')
             ->join('tbl_tema_ceramah t', 't.hari_ke = j.hari_ke AND t.tahun_hijriah = j.tahun_hijriah', 'left')
@@ -181,6 +181,39 @@ class DashboardController extends BaseController
             ->whereIn('t.tanggal', [date('Y-m-d'), date('Y-m-d', strtotime('+1 day'))])
             ->orderBy('t.tanggal', 'ASC')
             ->get()->getResultArray();
+
+        $jadwalMaghribMengaji = $db->table('tbl_jadwal_kegiatan j')
+            ->select('j.peran_petugas, j.tanggal, m.nama as nama_masjid, m.alamat as alamat_masjid, p.id as id_mubaligh, p.nama_lengkap as nama_mubaligh, p.no_hp, p.foto, p.token_jadwal')
+            ->join('tbl_masjid_mushola m', 'm.id_masjid_mushola = j.id_masjid_mushola', 'left')
+            ->join('tbl_personil p', 'p.id = j.id_personil', 'left')
+            ->where('j.jenis_kegiatan', 'maghrib_mengaji')
+            ->where('j.id_personil IS NOT NULL')
+            ->whereIn('j.tanggal', [date('Y-m-d'), date('Y-m-d', strtotime('+1 day'))])
+            ->get()->getResultArray();
+
+        $jadwalKhotibJumat = $db->table('tbl_jadwal_kegiatan j')
+            ->select('j.peran_petugas, j.tanggal, m.nama as nama_masjid, m.alamat as alamat_masjid, p.id as id_mubaligh, p.nama_lengkap as nama_mubaligh, p.no_hp, p.foto, p.token_jadwal')
+            ->join('tbl_masjid_mushola m', 'm.id_masjid_mushola = j.id_masjid_mushola', 'left')
+            ->join('tbl_personil p', 'p.id = j.id_personil', 'left')
+            ->where('j.jenis_kegiatan', 'jumat')
+            ->where('j.id_personil IS NOT NULL')
+            ->where('j.tanggal >=', date('Y-m-d', strtotime('-7 days')))
+            ->where('j.tanggal <=', date('Y-m-d', strtotime('+21 days')))
+            ->orderBy('j.tanggal', 'ASC')
+            ->get()->getResultArray();
+
+        // Generate tokens for each list
+        $this->ensureTokens($jadwalRamadhan, $db);
+        $this->ensureTokens($jadwalMaghribMengaji, $db);
+        $this->ensureTokens($jadwalKhotibJumat, $db);
+
+        // Urutkan ulang berdasarkan tanggal ASC
+        usort($jadwalMaghribMengaji, function($a, $b) {
+            return strtotime($a['tanggal']) - strtotime($b['tanggal']);
+        });
+        usort($jadwalKhotibJumat, function($a, $b) {
+            return strtotime($a['tanggal']) - strtotime($b['tanggal']);
+        });
 
         $data = [
             'title'              => 'Dashboard',
@@ -196,8 +229,24 @@ class DashboardController extends BaseController
             'statsKelurahan'     => $statsKelurahan,
             'headerEntitasKelurahan' => $headerEntitasKelurahan,
             'jadwalRamadhan'     => $jadwalRamadhan,
+            'jadwalMaghribMengaji' => $jadwalMaghribMengaji,
+            'jadwalKhotibJumat'  => $jadwalKhotibJumat,
         ];
 
         return view('backend/dashboard/index', $data);
+    }
+
+    private function ensureTokens(&$list, $db)
+    {
+        foreach ($list as &$row) {
+            if (empty($row['token_jadwal']) && !empty($row['id_mubaligh'])) {
+                $newToken = bin2hex(random_bytes(4)); 
+                $db->table('tbl_personil')
+                   ->where('id', $row['id_mubaligh'])
+                   ->update(['token_jadwal' => $newToken]);
+                
+                $row['token_jadwal'] = $newToken;
+            }
+        }
     }
 }

@@ -36,8 +36,9 @@ $routes->group('layanan', function($routes) {
     $routes->get('kemasjidan', 'Frontend\LayananController::kemasjidan');
     $routes->get('haji', 'Frontend\LayananController::haji');
 });
-
+// ============================================================
 // Data Public (Dynamic)
+// ============================================================
 $routes->group('data', function($routes) {
     $routes->get('masjid-mushola', 'Frontend\DataController::masjid_mushola');
     $routes->get('masjid-mushola/(:num)', 'Frontend\DataController::detail_masjid/$1');
@@ -47,6 +48,11 @@ $routes->group('data', function($routes) {
     $routes->get('tpq-mdta', 'Frontend\DataController::tpq_mdta');
     // Add others as needed
 });
+
+// Jadwal Publik Mubaligh (Pakai URL Bebas Tanpa Filter Login)
+$routes->get('jadwal-mubaligh/(:any)', 'Frontend\PublicJadwalController::view/$1');
+$routes->post('jadwal-mubaligh/konfirmasi-hadir', 'Frontend\PublicJadwalController::konfirmasi_hadir');
+$routes->post('jadwal-mubaligh/ajukan-pengganti', 'Frontend\PublicJadwalController::ajukan_pengganti');
 
 // ============================================================
 // AUTH ROUTES (Myth:Auth) - Login, Logout, dll
@@ -154,6 +160,24 @@ $routes->group('admin', ['filter' => 'login'], function ($routes) {
         $routes->get('export-excel', 'Backend\JadwalRamadhanController::export_excel');
         $routes->get('cetak-mubaligh/(:num)', 'Backend\JadwalRamadhanController::cetak_mubaligh/$1');
         $routes->get('cetak-masjid/(:num)', 'Backend\JadwalRamadhanController::cetak_masjid/$1');
+        
+        // Absensi Ramadhan
+        $routes->get('absensi', 'Backend\AbsensiRamadhanController::index');
+        $routes->post('save-absensi', 'Backend\AbsensiRamadhanController::save_absensi_admin');
+    });
+
+    // --- Maghrib Mengaji ---
+    $routes->group('maghrib-mengaji', function ($routes) {
+        $routes->get('/', 'Backend\MaghribMengajiController::index');
+        $routes->post('save-matrix', 'Backend\MaghribMengajiController::save_matrix');
+    });
+
+    // --- Khotib Jumat ---
+    $routes->group('khotib-jumat', function ($routes) {
+        $routes->get('/', 'Backend\KhotibJumatController::index');
+        $routes->post('save-cell', 'Backend\KhotibJumatController::save_cell');
+        $routes->get('cetak-mubaligh/(:num)', 'Backend\KhotibJumatController::cetak_mubaligh/$1');
+        $routes->get('cetak-masjid/(:num)', 'Backend\KhotibJumatController::cetak_masjid/$1');
     });
 
     // --- Pengajuan Insentif (per entitas type) ---
