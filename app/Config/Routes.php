@@ -147,7 +147,7 @@ $routes->group('admin', ['filter' => 'login'], function ($routes) {
     });
 
     // --- Jadwal Ramadhan ---
-    $routes->group('jadwal-ramadhan', function ($routes) {
+    $routes->group('jadwal-ramadhan', ['filter' => 'role:SuperAdmin,Admin,OperatorMubaligh'], function ($routes) {
         $routes->get('/', 'Backend\JadwalRamadhanController::index');
         $routes->get('tema', 'Backend\JadwalRamadhanController::tema');
         $routes->post('save-tema', 'Backend\JadwalRamadhanController::save_tema');
@@ -167,15 +167,19 @@ $routes->group('admin', ['filter' => 'login'], function ($routes) {
     });
 
     // --- Maghrib Mengaji ---
-    $routes->group('maghrib-mengaji', function ($routes) {
+    $routes->group('maghrib-mengaji', ['filter' => 'role:SuperAdmin,Admin,OperatorMubaligh'], function ($routes) {
         $routes->get('/', 'Backend\MaghribMengajiController::index');
         $routes->post('save-matrix', 'Backend\MaghribMengajiController::save_matrix');
+        $routes->post('save-cell', 'Backend\MaghribMengajiController::save_cell');
+        $routes->get('search-mubaligh', 'Backend\MaghribMengajiController::search_mubaligh');
+        $routes->get('cetak', 'Backend\MaghribMengajiController::get_cetak');
     });
 
     // --- Khotib Jumat ---
-    $routes->group('khotib-jumat', function ($routes) {
+    $routes->group('khotib-jumat', ['filter' => 'role:SuperAdmin,Admin,OperatorMubaligh'], function ($routes) {
         $routes->get('/', 'Backend\KhotibJumatController::index');
         $routes->post('save-cell', 'Backend\KhotibJumatController::save_cell');
+        $routes->get('search-mubaligh', 'Backend\KhotibJumatController::search_mubaligh');
         $routes->get('cetak-mubaligh/(:num)', 'Backend\KhotibJumatController::cetak_mubaligh/$1');
         $routes->get('cetak-masjid/(:num)', 'Backend\KhotibJumatController::cetak_masjid/$1');
     });

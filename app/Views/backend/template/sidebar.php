@@ -131,6 +131,10 @@
                 </li>
                 <?php endif; ?>
 
+                <?php if (in_array('SuperAdmin', $userGroups) || in_array('Admin', $userGroups) || in_array('OperatorMubaligh', $userGroups)): ?>
+                <!-- Separator PENJADWALAN -->
+                <li class="nav-header">PENJADWALAN</li>
+
                 <?php
                     $isRamadhanActive = strpos(uri_string(), 'admin/jadwal-ramadhan') !== false;
                 ?>
@@ -143,12 +147,12 @@
                         </p>
                     </a>
                     <ul class="nav nav-treeview">
-                <li class="nav-item">
-                    <a href="<?= base_url('admin/jadwal-ramadhan') ?>" class="nav-link <?= url_is('admin/jadwal-ramadhan') ? 'active' : '' ?>">
-                        <i class="far fa-circle nav-icon"></i>
-                        <p>Matriks Jadwal</p>
-                    </a>
-                </li>
+                        <li class="nav-item">
+                            <a href="<?= base_url('admin/jadwal-ramadhan') ?>" class="nav-link <?= url_is('admin/jadwal-ramadhan') ? 'active' : '' ?>">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Matriks Jadwal</p>
+                            </a>
+                        </li>
                         <li class="nav-item">
                             <a href="<?= base_url('admin/jadwal-ramadhan/tema') ?>" class="nav-link <?= url_is('admin/jadwal-ramadhan/tema') ? 'active' : '' ?>">
                                 <i class="far fa-circle nav-icon"></i>
@@ -167,7 +171,7 @@
                 <!-- Menu Khotib Jumat -->
                 <li class="nav-item">
                     <a href="<?= base_url('admin/khotib-jumat') ?>" class="nav-link <?= strpos(uri_string(), 'admin/khotib-jumat') !== false ? 'active' : '' ?>">
-                        <i class="nav-icon fas fa-mosque"></i>
+                        <i class="nav-icon fas fa-bullhorn"></i>
                         <p>Khotib Jumat</p>
                     </a>
                 </li>
@@ -175,10 +179,13 @@
                 <!-- Menu Maghrib Mengaji -->
                 <li class="nav-item">
                     <a href="<?= base_url('admin/maghrib-mengaji') ?>" class="nav-link <?= strpos(uri_string(), 'admin/maghrib-mengaji') !== false ? 'active' : '' ?>">
-                        <i class="nav-icon fas fa-book-open"></i>
+                        <i class="nav-icon fas fa-book-reader"></i>
                         <p>Maghrib Mengaji</p>
                     </a>
                 </li>
+                <?php endif; ?>
+
+
 
                 <?php if (in_array('SuperAdmin', $userGroups) || in_array('Admin', $userGroups)): ?>
                 <!-- Separator PENGATURAN -->

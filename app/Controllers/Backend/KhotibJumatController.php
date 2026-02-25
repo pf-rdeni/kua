@@ -179,6 +179,60 @@ class KhotibJumatController extends BaseController
         ]);
     }
 
+    public function search_mubaligh()
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setStatusCode(403)->setJSON(['status' => 'error', 'message' => 'Forbidden']);
+        }
+
+        $keyword = $this->request->getGet('q');
+        $tanggal = $this->request->getGet('tanggal');
+        
+        // Cari ID mubaligh yang sudah dijadwalkan pada tanggal tersebut
+        $scheduledIds = [];
+        if ($tanggal) {
+            $scheduled = $this->db->table('tbl_jadwal_kegiatan')
+                ->select('id_personil')
+                ->where('jenis_kegiatan', 'jumat')
+                ->where('tanggal', $tanggal)
+                ->where('id_personil IS NOT NULL')
+                ->get()->getResultArray();
+            $scheduledIds = array_column($scheduled, 'id_personil');
+        }
+
+        $builder = $this->db->table('tbl_personil')
+            ->where('status_aktif', 1)
+            ->where('entitas_type', 'mubaligh');
+        
+        // Kecualikan yang sudah dijadwalkan
+        if (!empty($scheduledIds)) {
+            $builder->whereNotIn('id', $scheduledIds);
+        }
+
+        if ($keyword) {
+            $builder->groupStart()
+                    ->like('nama_lengkap', $keyword)
+                    ->orLike('nik', $keyword)
+                    ->groupEnd();
+        }
+        
+        $mubalighs = $builder->get()->getResultArray();
+        
+        $results = [];
+        foreach ($mubalighs as $m) {
+            $results[] = [
+                'id'   => $m['id'],
+                'text' => $m['nama_lengkap'], // Gunakan nama saja agar bersih
+                'nama' => $m['nama_lengkap'],
+                'foto' => $m['foto'] ? base_url('uploads/personil/' . $m['foto']) : base_url('template/backend/dist/img/default-150x150.png')
+            ];
+        }
+        
+        return $this->response->setJSON([
+            'results' => $results
+        ]);
+    }
+
     public function cetak_mubaligh($id_personil)
     {
         $tahunPilih = $this->request->getGet('tahun') ?? date('Y');

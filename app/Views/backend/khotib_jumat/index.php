@@ -240,24 +240,18 @@ $(document).ready(function() {
         placeholder: 'Pilih Khotib...',
         allowClear: true,
         ajax: {
-            url: "<?= base_url('admin/jadwal-ramadhan/search-mubaligh') ?>",
+            url: "<?= base_url('admin/khotib-jumat/search-mubaligh') ?>",
             dataType: 'json',
             delay: 250,
             data: function (params) {
-                return { q: params.term };
+                var el = $(this);
+                return {
+                    q: params.term,
+                    tanggal: el.data('tanggal')
+                };
             },
             processResults: function (data) {
-                // Map data to match expected format and extract 'nama' only
-                var mappedResults = data.results.map(function(item) {
-                    var namaOnly = item.text.split(' - ')[1] || item.text;
-                    return {
-                        id: item.id,
-                        text: namaOnly,
-                        nama: namaOnly,
-                        foto: item.foto
-                    };
-                });
-                return { results: mappedResults };
+                return { results: data.results };
             },
             cache: true
         },
