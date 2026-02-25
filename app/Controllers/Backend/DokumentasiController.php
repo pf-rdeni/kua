@@ -87,4 +87,15 @@ class DokumentasiController extends BaseController
         
         return view('backend/dokumentasi/setting_entitas', $data);
     }
+
+    public function jadwalRamadhan()
+    {
+        return view('backend/dokumentasi/jadwal_ramadhan', [
+            'pageTitle' => 'Panduan Jadwal Ramadhan',
+            'breadcrumb' => [
+                ['title' => 'Dokumentasi', 'url' => 'admin/dokumentasi/arsitektur'],
+                ['title' => 'Jadwal Ramadhan', 'url' => '']
+            ]
+        ]);
+    }
 }

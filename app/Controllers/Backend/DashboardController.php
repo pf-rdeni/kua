@@ -171,6 +171,17 @@ class DashboardController extends BaseController
         // Sort keys (nama kelurahan) 
         ksort($statsKelurahan);
 
+        $jadwalRamadhan = $db->table('tbl_jadwal_kegiatan j')
+            ->select('j.hari_ke, j.tahun_hijriah, m.nama as nama_masjid, m.alamat as alamat_masjid, p.nama_lengkap as nama_mubaligh, p.no_hp, p.foto, t.tema, t.tanggal')
+            ->join('tbl_masjid_mushola m', 'm.id_masjid_mushola = j.id_masjid_mushola', 'left')
+            ->join('tbl_personil p', 'p.id = j.id_personil', 'left')
+            ->join('tbl_tema_ceramah t', 't.hari_ke = j.hari_ke AND t.tahun_hijriah = j.tahun_hijriah', 'left')
+            ->where('j.jenis_kegiatan', 'ramadhan')
+            ->where('j.id_personil IS NOT NULL')
+            ->whereIn('t.tanggal', [date('Y-m-d'), date('Y-m-d', strtotime('+1 day'))])
+            ->orderBy('t.tanggal', 'ASC')
+            ->get()->getResultArray();
+
         $data = [
             'title'              => 'Dashboard',
             'mapLocationsJson'   => base64_encode(json_encode($allLocations)),
@@ -184,6 +195,7 @@ class DashboardController extends BaseController
             'statsGender'        => $statsGender,
             'statsKelurahan'     => $statsKelurahan,
             'headerEntitasKelurahan' => $headerEntitasKelurahan,
+            'jadwalRamadhan'     => $jadwalRamadhan,
         ];
 
         return view('backend/dashboard/index', $data);

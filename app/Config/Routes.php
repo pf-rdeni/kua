@@ -77,6 +77,7 @@ $routes->group('admin', ['filter' => 'login'], function ($routes) {
         $routes->get('upload-berkas', 'Backend\DokumentasiController::uploadBerkas');
         $routes->get('setting-berkas', 'Backend\DokumentasiController::settingBerkas');
         $routes->get('setting-entitas', 'Backend\DokumentasiController::settingEntitas');
+        $routes->get('jadwal-ramadhan', 'Backend\DokumentasiController::jadwalRamadhan');
     });
     // --- API & AJAX Endpoints ---
     $routes->group('api', function ($routes) {
@@ -137,6 +138,22 @@ $routes->group('admin', ['filter' => 'login'], function ($routes) {
         $routes->get('(:segment)/delete/(:num)', 'Backend\PersonilController::delete/$1/$2');
         $routes->get('(:segment)/show/(:num)', 'Backend\PersonilController::show/$1/$2');
         $routes->get('(:segment)/berkas-lampiran', 'Backend\PersonilController::showBerkasLampiran/$1');
+    });
+
+    // --- Jadwal Ramadhan ---
+    $routes->group('jadwal-ramadhan', function ($routes) {
+        $routes->get('/', 'Backend\JadwalRamadhanController::index');
+        $routes->get('tema', 'Backend\JadwalRamadhanController::tema');
+        $routes->post('save-tema', 'Backend\JadwalRamadhanController::save_tema');
+        $routes->post('duplicate-tema', 'Backend\JadwalRamadhanController::duplicate_tema');
+        $routes->post('duplicate-jadwal', 'Backend\JadwalRamadhanController::duplicate_jadwal');
+        $routes->post('generate-tanggal', 'Backend\JadwalRamadhanController::generate_tanggal_masehi');
+        $routes->get('search-mubaligh', 'Backend\JadwalRamadhanController::search_mubaligh');
+        $routes->post('save-cell', 'Backend\JadwalRamadhanController::save_cell');
+        $routes->post('reset-jadwal', 'Backend\JadwalRamadhanController::reset_jadwal');
+        $routes->get('export-excel', 'Backend\JadwalRamadhanController::export_excel');
+        $routes->get('cetak-mubaligh/(:num)', 'Backend\JadwalRamadhanController::cetak_mubaligh/$1');
+        $routes->get('cetak-masjid/(:num)', 'Backend\JadwalRamadhanController::cetak_masjid/$1');
     });
 
     // --- Pengajuan Insentif (per entitas type) ---

@@ -113,6 +113,88 @@ $breadcrumb = [
     </div>
 </div>
 
+<!-- Reminder Jadwal Ramadhan -->
+<?php if (!empty($jadwalRamadhan)): ?>
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card card-outline card-warning">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-bell text-warning mr-1"></i> Reminder Jadwal Ramadhan Terdekat
+                </h3>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm m-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Hari Ke / Tanggal</th>
+                                <th>Mubaligh</th>
+                                <th>Tempat</th>
+                                <th>Tema</th>
+                                <th class="text-center">Aksi (Kirim WA)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                                <?php foreach($jadwalRamadhan as $j): ?>
+                                    <?php 
+                                        $noHp = $j['no_hp'] ?? '';
+                                        $waLink = '#';
+                                        if ($noHp) {
+                                            $hpFormatted = preg_replace('/[^0-9]/', '', $noHp);
+                                            if (str_starts_with($hpFormatted, '0')) {
+                                                $hpFormatted = '62' . substr($hpFormatted, 1);
+                                            }
+                                            
+                                            $tglStr = '-';
+                                            if ($j['tanggal']) {
+                                                $tglStr = tanggal_indo_panjang($j['tanggal']);
+                                            }
+
+                                            $malamKe = intval($j['hari_ke']) + 1;
+                                            $tahunHijriah = isset($j['tahun_hijriah']) ? $j['tahun_hijriah'] : '';
+                                            $pesan = urlencode("Assalamualaikum Wr Wb.\nReminder Jadwal Ceramah Tarawih:\n\nMalam Ke: " . $malamKe . " Ramadhan " . $tahunHijriah . "\nHari Tanggal: " . $tglStr . "\nTempat: " . $j['nama_masjid'] . " (" . $j['alamat_masjid'] . ")\nTema: " . ($j['tema'] ?: 'Menyesuaikan') . "\n\nTerima kasih.\n\n_Pesan ini di-generate otomatis dari sistem, tidak perlu dibalas._");
+                                            $waLink = "https://wa.me/" . $hpFormatted . "?text=" . $pesan;
+                                        }
+                                    ?>
+                                    <?php
+                                        // Variasi warna badge berdasarkan sisa bagi hari_ke
+                                        $badgeColors = ['badge-primary', 'badge-success', 'badge-info', 'badge-warning', 'badge-danger'];
+                                        $colorIndex = (intval($j['hari_ke']) - 1) % count($badgeColors);
+                                        $badgeClass = $badgeColors[$colorIndex];
+                                    ?>
+                                <tr>
+                                    <td>
+                                        <span class="badge <?= $badgeClass ?> mb-1"><?= esc($j['hari_ke']) ?> Ramadhan <?= isset($j['tahun_hijriah']) ? esc($j['tahun_hijriah']) : '' ?> (Malam Ke-<?= intval($j['hari_ke']) + 1 ?>)</span><br>
+                                        <small class="text-muted"><i class="far fa-calendar-alt"></i> <?= $tglStr ?></small>
+                                    </td>
+                                    <td class="font-weight-bold">
+                                        <?php 
+                                            $foto = !empty($j['foto']) ? base_url('uploads/personil/' . $j['foto']) : base_url('dist/img/default-150x150.png');
+                                        ?>
+                                        <img src="<?= esc($foto) ?>" alt="Foto Mubaligh" class="img-circle img-sm mr-2" style="width: 32px; height: 32px; object-fit: cover; border: 1px solid #ddd;">
+                                        <?= esc($j['nama_mubaligh']) ?>
+                                    </td>
+                                    <td><?= esc($j['nama_masjid']) ?></td>
+                                    <td><?= esc($j['tema']) ?></td>
+                                    <td class="text-center">
+                                        <?php if($noHp): ?>
+                                        <a href="<?= $waLink ?>" target="_blank" class="btn btn-xs btn-success"><i class="fab fa-whatsapp"></i> Kirim Reminder</a>
+                                        <?php else: ?>
+                                        <span class="text-muted"><i class="fas fa-exclamation-circle"></i> No HP Kosong</span>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
 <!-- Statistics Section -->
 <div class="row mt-4">
     <!-- Tabel Statistik Jenis Kelamin -->
@@ -256,7 +338,7 @@ $breadcrumb = [
                 </div>
             </div>
             <div class="card-body p-0">
-                <div id="dashboard-map" style="height: 500px; width: 100%; z-index: 1;"></div>
+                <div id="dashboard-map" style="height: 500px; width: 100%; z-index: 0;"></div>
             </div>
             <div class="card-footer bg-white">
                 <ul class="list-unstyled mb-0 d-flex flex-wrap justify-content-center" style="font-size: 14px;">

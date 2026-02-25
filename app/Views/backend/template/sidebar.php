@@ -131,6 +131,33 @@
                 </li>
                 <?php endif; ?>
 
+                <?php
+                    $isRamadhanActive = strpos(uri_string(), 'admin/jadwal-ramadhan') !== false;
+                ?>
+                <li class="nav-item has-treeview <?= $isRamadhanActive ? 'menu-open' : '' ?>">
+                    <a href="#" class="nav-link <?= $isRamadhanActive ? 'active' : '' ?>">
+                        <i class="nav-icon fas fa-calendar-alt"></i>
+                        <p>
+                            Jadwal Ramadhan
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                <li class="nav-item">
+                    <a href="<?= base_url('admin/jadwal-ramadhan') ?>" class="nav-link <?= url_is('admin/jadwal-ramadhan') ? 'active' : '' ?>">
+                        <i class="far fa-circle nav-icon"></i>
+                        <p>Matriks Jadwal</p>
+                    </a>
+                </li>
+                        <li class="nav-item">
+                            <a href="<?= base_url('admin/jadwal-ramadhan/tema') ?>" class="nav-link <?= url_is('admin/jadwal-ramadhan/tema') ? 'active' : '' ?>">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Tema Ceramah</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
                 <?php if (in_array('SuperAdmin', $userGroups) || in_array('Admin', $userGroups)): ?>
                 <!-- Separator PENGATURAN -->
                 <li class="nav-header">PENGATURAN</li>
@@ -227,6 +254,12 @@
                             <a href="<?= base_url('admin/dokumentasi/setting-entitas') ?>" class="nav-link <?= url_is('admin/dokumentasi/setting-entitas') ? 'active' : '' ?>">
                                 <i class="far fa-circle nav-icon text-success"></i>
                                 <p>Panduan Setting Entitas</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="<?= base_url('admin/dokumentasi/jadwal-ramadhan') ?>" class="nav-link <?= url_is('admin/dokumentasi/jadwal-ramadhan') ? 'active' : '' ?>">
+                                <i class="far fa-circle nav-icon text-info"></i>
+                                <p>Jadwal Ramadhan</p>
                             </a>
                         </li>
                     </ul>
