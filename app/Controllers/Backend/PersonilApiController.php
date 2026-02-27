@@ -135,4 +135,67 @@ class PersonilApiController extends BaseController
              'siblingRoles' => array_unique($rolesArray)
         ]);
     }
+
+    /**
+     * Endpoint untuk mendapatkan NIA berikutnya berdasarkan entitas_type.
+     * Mengembalikan default minimum 2 digit (01).
+     */
+    public function getNextNia()
+    {
+        $entitasType = $this->request->getGet('entitas_type');
+        if (empty($entitasType)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Parameter tidak lengkap']);
+        }
+
+        $personilModel = new PersonilModel();
+        
+        // 1. Dapatkan Max NIA saat ini (dalam integer)
+        $maxNiaNum = $personilModel->getMaxNiaByEntitas($entitasType);
+        
+        // 2. Tambah 1
+        $nextNum = $maxNiaNum + 1;
+        
+        // 3. Tentukan jumlah digit minimal padding. Minimal 2 digit.
+        // Jika angka mencapai >= 100, gunakan panjang string angka itu sendiri.
+        $targetLength = max(2, strlen((string)$nextNum));
+        
+        // 4. Lakukan padding
+        $nextNiaStr = str_pad((string)$nextNum, $targetLength, '0', STR_PAD_LEFT);
+        
+        return $this->response->setJSON([
+            'status' => 'success',
+            'next_nia'  => $nextNiaStr
+        ]);
+    }
+
+    /**
+     * Endpoint untuk mengecek apakah NIA sudah terpakai di entitas tertentu (Live Validation)
+     */
+    public function checkNia()
+    {
+        $nia = $this->request->getGet('nia');
+        $entitasType = $this->request->getGet('entitas_type');
+        $excludeId = $this->request->getGet('exclude_id'); // Untuk exception saat mode Edit
+
+        if (empty($nia) || empty($entitasType)) {
+            return $this->response->setJSON(['status' => 'error']);
+        }
+
+        $personilModel = new PersonilModel();
+        $builder = $personilModel->where('nia', $nia)->where('entitas_type', $entitasType);
+        
+        if (!empty($excludeId)) {
+            $builder->where('id !=', $excludeId);
+        }
+
+        $existingData = $builder->first();
+        $isUsed = $existingData ? true : false;
+        $ownerName = $existingData ? $existingData['nama_lengkap'] : null;
+
+        return $this->response->setJSON([
+            'status' => 'success',
+            'is_used' => $isUsed,
+            'owner_name' => $ownerName
+        ]);
+    }
 }

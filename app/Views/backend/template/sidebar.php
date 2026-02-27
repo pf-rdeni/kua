@@ -185,6 +185,74 @@
                 </li>
                 <?php endif; ?>
 
+                <!-- ============================== -->
+                <!-- Separator KEUANGAN -->
+                <!-- ============================== -->
+                <?php
+                // Menu keuangan tampil jika user punya akses ke minimal satu entitas
+                $keuanganEntitas = $entitasTypeModel->getAccessibleForUser($userGroups);
+                $isKeuanganOpen  = strpos(uri_string(), 'admin/keuangan') !== false;
+                if (!empty($keuanganEntitas)):
+                ?>
+                <li class="nav-header">KEUANGAN</li>
+
+                <!-- Dashboard Keuangan -->
+                <li class="nav-item">
+                    <a href="<?= base_url('admin/keuangan/dashboard') ?>" class="nav-link <?= url_is('admin/keuangan/dashboard') ? 'active' : '' ?>">
+                        <i class="nav-icon fas fa-wallet text-success"></i>
+                        <p>Dashboard Keuangan</p>
+                    </a>
+                </li>
+
+                <!-- Laporan Umum -->
+                <li class="nav-item">
+                    <a href="<?= base_url('admin/keuangan/laporan') ?>" class="nav-link <?= url_is('admin/keuangan/laporan') ? 'active' : '' ?>">
+                        <i class="nav-icon fas fa-file-alt text-info"></i>
+                        <p>Laporan Keuangan</p>
+                    </a>
+                </li>
+
+                <!-- Sub-menu Keuangan per Entitas yang bisa diakses -->
+                <?php foreach ($keuanganEntitas as $ke): ?>
+                <?php
+                    $kTransUrl = 'admin/keuangan/transaksi/' . $ke['kode'];
+                    $kIuranUrl = 'admin/keuangan/iuran/' . $ke['kode'];
+                    $kKasUrl   = 'admin/keuangan/kas/' . $ke['kode'];
+                    $isKEntitasOpen = strpos(uri_string(), $kTransUrl) !== false
+                                  || strpos(uri_string(), $kIuranUrl) !== false
+                                  || strpos(uri_string(), $kKasUrl) !== false;
+                ?>
+                <li class="nav-item has-treeview <?= $isKEntitasOpen ? 'menu-open' : '' ?>">
+                    <a href="#" class="nav-link <?= $isKEntitasOpen ? 'active' : '' ?>">
+                        <i class="nav-icon <?= esc($ke['icon'] ?? 'fas fa-coins') ?>"></i>
+                        <p>
+                            <?= esc($ke['nama_label']) ?>
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="<?= base_url($kTransUrl) ?>" class="nav-link <?= strpos(uri_string(), $kTransUrl) !== false ? 'active' : '' ?>">
+                                <i class="far fa-circle nav-icon text-success"></i>
+                                <p>Transaksi</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="<?= base_url($kIuranUrl) ?>" class="nav-link <?= strpos(uri_string(), $kIuranUrl) !== false ? 'active' : '' ?>">
+                                <i class="far fa-circle nav-icon text-warning"></i>
+                                <p>Iuran Anggota</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="<?= base_url($kKasUrl) ?>" class="nav-link <?= strpos(uri_string(), $kKasUrl) !== false ? 'active' : '' ?>">
+                                <i class="far fa-circle nav-icon text-info"></i>
+                                <p>Kelola Kas</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <?php endforeach; ?>
+                <?php endif; ?>
 
 
                 <?php if (in_array('SuperAdmin', $userGroups) || in_array('Admin', $userGroups)): ?>

@@ -4,6 +4,13 @@
 
 <?php
 $pageTitle = 'Data ' . $entitasConfig['nama_label'];
+// Generate dinamis "NI" + huruf depan setiap kata
+$words = explode(' ', $entitasConfig['nama_label'] ?? '');
+$inisial = '';
+foreach ($words as $w) {
+    if(!empty($w)) $inisial .= strtoupper(substr($w, 0, 1));
+}
+$labelNIA = "NI" . ($inisial ?: 'A');
 $breadcrumb = [
     ['title' => 'Home', 'url' => 'admin/dashboard'],
     ['title' => $entitasConfig['nama_label'], 'url' => ''],
@@ -30,10 +37,9 @@ $breadcrumb = [
                     <table class="table table-bordered table-hover table-sm" id="tabelPersonil">
                         <thead class="thead-light">
                             <tr>
-                                <th style="width: 40px;">No</th>
+                                <th style="width: 100px;"><?= $labelNIA ?></th>
                                 <th style="width: 60px; text-align: center;">Foto</th>
                                 <th>Nama Lengkap</th>
-                                <th>NIK</th>
                                 <?php if ($entitasConfig['has_masjid_link']): ?>
                                 <th>Masjid/Mushola</th>
                                 <?php endif; ?>
@@ -48,7 +54,7 @@ $breadcrumb = [
                                 <?php $no = 1; ?>
                                 <?php foreach ($personilList as $p): ?>
                                 <tr>
-                                    <td><?= $no++ ?></td>
+                                    <td><strong><?= esc($p['nia'] ?? '-') ?></strong></td>
                                     <td class="text-center">
                                         <?php if (!empty($p['foto'])): ?>
                                             <img src="<?= base_url('uploads/personil/' . esc($p['foto'])) ?>" alt="Foto" class="img-thumbnail img-fluid cursor-pointer view-photo" data-id="<?= $p['id'] ?>" data-src="<?= base_url('uploads/personil/' . esc($p['foto'])) ?>" data-title="<?= esc($p['nama_lengkap']) ?>" style="width: 45px; height: 45px; object-fit: cover; border-radius: 50%;">
@@ -75,7 +81,6 @@ $breadcrumb = [
                                         <?php endif; ?>
                                     </td>
                                     <td><?= esc($p['nama_lengkap']) ?></td>
-                                    <td><?= esc($p['nik'] ?? '-') ?></td>
                                     <?php if ($entitasConfig['has_masjid_link']): ?>
                                     <td><?= esc($p['nama_masjid'] ?? '-') ?></td>
                                     <?php endif; ?>
@@ -103,7 +108,7 @@ $breadcrumb = [
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="<?= $entitasConfig['has_masjid_link'] ? 9 : 8 ?>" class="text-center text-muted">Belum ada data <?= esc($entitasConfig['nama_label']) ?>.</td>
+                                    <td colspan="<?= $entitasConfig['has_masjid_link'] ? 7 : 6 ?>" class="text-center text-muted">Belum ada data <?= esc($entitasConfig['nama_label']) ?>.</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>

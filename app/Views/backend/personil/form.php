@@ -5,6 +5,13 @@
 <?php
 $isEdit = isset($personil);
 $pageTitle = $isEdit ? 'Edit ' . $entitasConfig['nama_label'] : 'Tambah ' . $entitasConfig['nama_label'];
+// Generate dinamis "NI" + huruf depan setiap kata
+$words = explode(' ', $entitasConfig['nama_label'] ?? '');
+$inisial = '';
+foreach ($words as $w) {
+    if(!empty($w)) $inisial .= strtoupper(substr($w, 0, 1));
+}
+$labelNIA = "NI" . ($inisial ?: 'A');
 $breadcrumb = [
     ['title' => 'Home', 'url' => 'admin/dashboard'],
     ['title' => $entitasConfig['nama_label'], 'url' => 'admin/personil/' . $entitasType],
@@ -55,7 +62,7 @@ $breadcrumb = [
 
                     <div class="row">
                         <!-- NIK -->
-                        <div class="col-md-12">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="nik">NIK <span class="text-danger">*</span></label>
                                 <select class="form-control select2" id="nik" name="nik" required style="width: 100%;">
@@ -63,7 +70,24 @@ $breadcrumb = [
                                         <option value="<?= old('nik', $personil['nik'] ?? '') ?>" selected><?= old('nik', $personil['nik'] ?? '') ?></option>
                                     <?php endif; ?>
                                 </select>
-                                <small class="text-muted">Ketik 16 Digit NIK. Jika sudah ada di database, pilih dari daftar untuk auto-fill data.</small>
+                                <small class="text-muted">Ketik 16 Digit NIK.</small>
+                            </div>
+                        </div>
+
+                        <!-- NIA -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <label for="nia"><?= $labelNIA ?> <span class="text-danger">*</span></label>
+                                    <div class="custom-control custom-switch custom-switch-off-danger custom-switch-on-success">
+                                        <input type="checkbox" class="custom-control-input" id="toggleNiaMode" checked>
+                                        <label class="custom-control-label" for="toggleNiaMode">Auto</label>
+                                    </div>
+                                </div>
+                                <input type="text" class="form-control" id="nia" name="nia"
+                                       value="<?= old('nia', $personil['nia'] ?? '') ?>" placeholder="Sistem akan membuatkan otomatis" readonly required>
+                                <small class="text-muted" id="niaModeHelp">Mode Auto akan menghasilkan nomor urut berikutnya.</small>
+                                <div id="niaFeedback" class="invalid-feedback font-weight-bold" style="display: none;"></div>
                             </div>
                         </div>
                     </div>
@@ -363,6 +387,125 @@ $(document).ready(function() {
         minimumInputLength: 3
     });
 
+    // --- LOGIKA AUTO-NIA TOGLE ---
+    const swNia = document.getElementById('toggleNiaMode');
+    const inputNia = document.getElementById('nia');
+    const labelNiaM = document.getElementById('niaModeHelp');
+    const entitasTypeStr = '<?= $entitasType ?>';
+    let isEditContext = <?= $isEdit ? 'true' : 'false' ?>;
+    
+    // Fungsi untuk menarik angka NIA baru dari Backend API
+    function fetchNextNia() {
+        $.ajax({
+            url: '<?= base_url('admin/api/personil/get-next-nia') ?>',
+            type: 'GET',
+            data: { entitas_type: entitasTypeStr },
+            dataType: 'json',
+            success: function(response) {
+                if (response.status === 'success') {
+                    inputNia.value = response.next_nia;
+                }
+            }
+        });
+    }
+
+    // Fungsi update UI berdasarkan toggle state (Auto/Manual)
+    function changeNiaMode(isAuto) {
+        if(isAuto) {
+            inputNia.readOnly = true;
+            inputNia.placeholder = 'Sistem akan membuatkan otomatis';
+            labelNiaM.innerHTML = 'Mode Auto akan menghasilkan nomor urut berikutnya.';
+            // Hanya fetch bila sedang tidak dalam keadaan edit yg nilai lamanya mungkin sudah ada
+            if(!isEditContext || inputNia.value === '') { 
+                fetchNextNia();
+            }
+        } else {
+            inputNia.readOnly = false;
+            inputNia.placeholder = 'Ketik <?= $labelNIA ?> secara manual';
+            labelNiaM.innerHTML = 'Mode Manual membebaskan Anda mengetik angka sendiri.';
+            if(!isEditContext || (isEditContext && swNia._justToggledByUser)) {
+                // Di mode create atau user klik secara manual, kosongkan biar enak ngisi manual
+                inputNia.value = '';
+            }
+        }
+    }
+
+    // Listen to changes on toggle
+    if(swNia) {
+        swNia.addEventListener('change', function() {
+            this._justToggledByUser = true;
+            changeNiaMode(this.checked);
+        });
+
+        // Initialize state saat load halaman
+        if(isEditContext) {
+            // Jika edit, matikan toggle auto dan set manual
+            swNia.checked = false; 
+            changeNiaMode(false);
+        } else {
+            // Jika create baru, hidupkan default auto
+            swNia.checked = true;
+            changeNiaMode(true);
+        }
+    }
+    // --- AKHIR LOGIKA AUTO-NIA TOGLE ---
+
+    // --- LOGIKA LIVE CHECK NIA (Manual Mode) ---
+    let typingTimer;
+    const doneTypingInterval = 3000; // 3 detik
+    const niaFeedback = document.getElementById('niaFeedback');
+    const personilId = '<?= $isEdit ? $personil['id'] : '' ?>';
+    const labelNIA = '<?= $labelNIA ?>'; // Contoh: NIM
+
+    function checkNiaAvailability() {
+        let val = inputNia.value.trim();
+        if (inputNia.readOnly || val === '') {
+            inputNia.classList.remove('is-invalid');
+            niaFeedback.style.display = 'none';
+            return;
+        }
+
+        $.ajax({
+            url: '<?= base_url('admin/api/personil/check-nia') ?>',
+            type: 'GET',
+            data: { 
+                nia: val, 
+                entitas_type: entitasTypeStr,
+                exclude_id: personilId
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.status === 'success') {
+                    if (response.is_used) {
+                        inputNia.classList.add('is-invalid');
+                        niaFeedback.innerHTML = `Hati-hati: ${labelNIA} <b>${val}</b> sudah digunakan oleh <b>${response.owner_name}</b>, silakan verifikasi kembali!`;
+                        niaFeedback.style.display = 'block';
+                    } else {
+                        inputNia.classList.remove('is-invalid');
+                        niaFeedback.style.display = 'none';
+                    }
+                }
+            }
+        });
+    }
+
+    if (inputNia) {
+        // Cek saat user berhenti mengetik selama 3 detik
+        inputNia.addEventListener('keyup', function () {
+            clearTimeout(typingTimer);
+            if (inputNia.value) {
+                typingTimer = setTimeout(checkNiaAvailability, doneTypingInterval);
+            }
+        });
+
+        // Cek saat user tap/klik keluar dari form (hilang fokus)
+        inputNia.addEventListener('blur', function () {
+            clearTimeout(typingTimer);
+            checkNiaAvailability();
+        });
+    }
+    // --- AKHIR LOGIKA LIVE CHECK NIA ---
+
     // 1-A. Limit Dropdown Input: Hanya Angka & Maksimal 16 Digit
     $('#nik').on('select2:open', function() {
         // Karena input Select2 ter-generate dinamis secara eksternal, kita ambil elemennya setelah pop-up dropdown terbuka
@@ -644,6 +787,7 @@ $(document).ready(function() {
                         if (result.isConfirmed) {
                             // Inject Data ke DOM Text Inputs
                             $('#nama_lengkap').val(pData.nama_lengkap);
+                            $('#nia').val(pData.nia);
                             $('#tempat_lahir').val(pData.tempat_lahir);
                             $('#tanggal_lahir').val(pData.tanggal_lahir);
                             $('#jenis_kelamin').val(pData.jenis_kelamin);

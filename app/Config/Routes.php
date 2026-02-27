@@ -90,6 +90,8 @@ $routes->group('admin', ['filter' => 'login'], function ($routes) {
         $routes->get('personil/search-nik', 'Backend\PersonilApiController::searchNik');
         $routes->get('personil/get-by-nik', 'Backend\PersonilApiController::getByNik');
         $routes->get('personil/check-nik-sharing', 'Backend\PersonilApiController::checkNikSharing');
+        $routes->get('personil/get-next-nia', 'Backend\PersonilApiController::getNextNia');
+        $routes->get('personil/check-nia', 'Backend\PersonilApiController::checkNia');
     });
 
     // --- Berkas Lampiran (Shared AJAX Routes) ---
@@ -193,6 +195,37 @@ $routes->group('admin', ['filter' => 'login'], function ($routes) {
         $routes->get('(:segment)/cetak-lampiran/(:num)', 'Backend\PengajuanInsentifController::cetakLampiran/$1/$2');
         $routes->get('(:segment)/cetak-gabungan/(:num)', 'Backend\PengajuanInsentifController::cetakGabungan/$1/$2');
         $routes->get('(:segment)/cetak-bulk-zip', 'Backend\PengajuanInsentifController::cetakBulkZip/$1');
+    });
+
+    // --- Keuangan (Akses kontrol dinamis di controller per entitas) ---
+    $routes->group('keuangan', function ($routes) {
+        // Dashboard & Laporan Umum
+        $routes->get('dashboard', 'Backend\KeuanganController::index');
+        $routes->get('laporan', 'Backend\KeuanganController::laporan');
+
+        // Transaksi per entitas type
+        $routes->get('transaksi/(:segment)', 'Backend\KeuanganTransaksiController::index/$1');
+        $routes->get('transaksi/(:segment)/create', 'Backend\KeuanganTransaksiController::create/$1');
+        $routes->post('transaksi/(:segment)/store', 'Backend\KeuanganTransaksiController::store/$1');
+        $routes->get('transaksi/(:segment)/edit/(:num)', 'Backend\KeuanganTransaksiController::edit/$1/$2');
+        $routes->post('transaksi/(:segment)/update/(:num)', 'Backend\KeuanganTransaksiController::update/$1/$2');
+        $routes->post('transaksi/(:segment)/delete/(:num)', 'Backend\KeuanganTransaksiController::delete/$1/$2');
+
+        // Kas per entitas type
+        $routes->get('kas/(:segment)', 'Backend\KeuanganTransaksiController::kas/$1');
+        $routes->post('kas/(:segment)/store', 'Backend\KeuanganTransaksiController::storeKas/$1');
+        $routes->post('kas/(:segment)/update/(:num)', 'Backend\KeuanganTransaksiController::updateKas/$1/$2');
+
+        // Iuran Setting per entitas type
+        $routes->get('iuran/(:segment)', 'Backend\KeuanganIuranController::setting/$1');
+        $routes->post('iuran/(:segment)/store-setting', 'Backend\KeuanganIuranController::storeSetting/$1');
+        $routes->post('iuran/(:segment)/update-setting/(:num)', 'Backend\KeuanganIuranController::updateSetting/$1/$2');
+        $routes->post('iuran/(:segment)/delete-setting/(:num)', 'Backend\KeuanganIuranController::deleteSetting/$1/$2');
+
+        // Iuran Anggota (laporan + catat bayar)
+        $routes->get('iuran/(:segment)/anggota/(:num)', 'Backend\KeuanganIuranController::anggota/$1/$2');
+        $routes->post('iuran/(:segment)/bayar', 'Backend\KeuanganIuranController::bayar/$1');
+        $routes->post('iuran/(:segment)/delete-bayar/(:num)', 'Backend\KeuanganIuranController::deleteBayar/$1/$2');
     });
 
     // --- Masjid & Mushola (SuperAdmin, Admin, OperatorMasjidMushola) ---

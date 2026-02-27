@@ -212,7 +212,7 @@ class KhotibJumatController extends BaseController
         if ($keyword) {
             $builder->groupStart()
                     ->like('nama_lengkap', $keyword)
-                    ->orLike('nik', $keyword)
+                    ->orLike('nia', $keyword)
                     ->groupEnd();
         }
         
@@ -222,7 +222,7 @@ class KhotibJumatController extends BaseController
         foreach ($mubalighs as $m) {
             $results[] = [
                 'id'   => $m['id'],
-                'text' => $m['nama_lengkap'], // Gunakan nama saja agar bersih
+                'text' => $m['nia'] . ' - ' . $m['nama_lengkap'],
                 'nama' => $m['nama_lengkap'],
                 'foto' => $m['foto'] ? base_url('uploads/personil/' . $m['foto']) : base_url('template/backend/dist/img/default-150x150.png')
             ];

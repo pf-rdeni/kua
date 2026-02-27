@@ -229,7 +229,7 @@ class JadwalRamadhanController extends BaseController
             if ($keyword) {
                 $builder->groupStart()
                         ->like('nama_lengkap', $keyword)
-                        ->orLike('nik', $keyword)
+                        ->orLike('nia', $keyword)
                         ->groupEnd();
             }
             
@@ -239,7 +239,7 @@ class JadwalRamadhanController extends BaseController
             foreach ($mubalighs as $m) {
                 $results[] = [
                     'id'   => $m['id'],
-                    'text' => $m['nik'] . ' - ' . $m['nama_lengkap'],
+                    'text' => $m['nia'] . ' - ' . $m['nama_lengkap'],
                     'foto' => $m['foto'] ? base_url('uploads/personil/' . $m['foto']) : base_url('template/backend/dist/img/default-150x150.png')
                 ];
             }
@@ -302,6 +302,7 @@ class JadwalRamadhanController extends BaseController
                 $p = $this->personilModel->find($id_personil);
                 $personil_info = [
                     'nik' => $p['nik'],
+                    'nia' => $p['nia'],
                     'nama' => $p['nama_lengkap'],
                     'foto' => $p['foto'] ? base_url('uploads/personil/' . $p['foto']) : base_url('dist/img/default-150x150.png')
                 ];

@@ -121,7 +121,7 @@
                                     <?php 
                                         $cellData = $matriks[$m['id_masjid_mushola']][$i] ?? null; 
                                         $selectedId = $cellData ? $cellData['id_personil'] : '';
-                                        $selectedText = $cellData ? ($cellData['nik_mubaligh'] . ' - ' . $cellData['nama_mubaligh']) : '';
+                                        $selectedText = $cellData ? ($cellData['nia_mubaligh'] . ' - ' . $cellData['nama_mubaligh']) : '';
                                         $foto = $cellData && $cellData['foto_mubaligh'] ? base_url('uploads/personil/' . $cellData['foto_mubaligh']) : base_url('dist/img/default-150x150.png');
                                     ?>
                                 <td>
@@ -138,7 +138,7 @@
                                         <img src="<?= $selectedId ? $foto : '' ?>" alt="Foto" id="foto-<?= $m['id_masjid_mushola'] ?>-<?= $i ?>">
                                         <div class="info">
                                             <strong id="nama-<?= $m['id_masjid_mushola'] ?>-<?= $i ?>"><?= $cellData['nama_mubaligh'] ?? '' ?></strong>
-                                            <span class="text-muted" id="nik-<?= $m['id_masjid_mushola'] ?>-<?= $i ?>">ID: <?= $cellData['nik_mubaligh'] ?? '' ?></span>
+                                            <span class="text-muted" id="nia-<?= $m['id_masjid_mushola'] ?>-<?= $i ?>">ID: <?= $cellData['nia_mubaligh'] ?? '' ?></span>
                                         </div>
                                     </div>
                                 </td>
@@ -366,7 +366,7 @@ $(document).ready(function() {
                     if (res.personil) {
                         $('#foto-' + id_masjid + '-' + hari_ke).attr('src', res.personil.foto);
                         $('#nama-' + id_masjid + '-' + hari_ke).text(res.personil.nama);
-                        $('#nik-' + id_masjid + '-' + hari_ke).text('ID: ' + res.personil.nik);
+                        $('#nia-' + id_masjid + '-' + hari_ke).text('ID: ' + (res.personil.nia || ''));
                         cardContainer.show();
                     } else {
                         cardContainer.hide();
@@ -387,7 +387,7 @@ $(document).ready(function() {
 
     // Modal select2 inisialisasi
     $('.select2-cetak-mubaligh').select2({
-        placeholder: "Ketik Nama / NIK Mubaligh...",
+        placeholder: "Ketik Nama / NIA Khotib/Mubaligh...",
         allowClear: true,
         dropdownParent: $('#modalCetakMubaligh'),
         ajax: {

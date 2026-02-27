@@ -4,7 +4,7 @@
 
 <div class="text-center py-5">
     <h2>Selamat Datang di</h2>
-    <h1 class="text-primary font-weight-bold">Sistem Administrasi Pembantu KUA</h1>
+    <h1 class="text-primary font-weight-bold">Sistem Pembatu Administrasi KUA</h1>
     <h3>Kecamatan Seri Kuala Lobam</h3>
     <hr class="my-4" style="max-width: 400px; margin: auto;">
 

@@ -4,6 +4,13 @@
 
 <?php
 $pageTitle = 'Detail ' . $entitasConfig['nama_label'];
+// Generate dinamis "NI" + huruf depan setiap kata
+$words = explode(' ', $entitasConfig['nama_label'] ?? '');
+$inisial = '';
+foreach ($words as $w) {
+    if(!empty($w)) $inisial .= strtoupper(substr($w, 0, 1));
+}
+$labelNIA = "NI" . ($inisial ?: 'A');
 $breadcrumb = [
     ['title' => 'Home', 'url' => 'admin/dashboard'],
     ['title' => $entitasConfig['nama_label'], 'url' => 'admin/personil/' . $entitasType],
@@ -50,6 +57,7 @@ $breadcrumb = [
                         <table class="table table-sm table-borderless">
                             <tr><th style="width: 180px;">Nama Lengkap</th><td>: <?= esc($personil['nama_lengkap']) ?></td></tr>
                             <tr><th>NIK</th><td>: <?= esc($personil['nik'] ?? '-') ?></td></tr>
+                            <tr><th><?= $labelNIA ?></th><td>: <?= esc($personil['nia'] ?? '-') ?></td></tr>
                             <tr><th>Tempat, Tgl Lahir</th><td>: <?= esc($personil['tempat_lahir'] ?? '-') ?>, <?= $personil['tanggal_lahir'] ? date('d-m-Y', strtotime($personil['tanggal_lahir'])) : '-' ?></td></tr>
                             <tr><th>Jenis Kelamin</th><td>: <?= $personil['jenis_kelamin'] == 'L' ? 'Laki-laki' : 'Perempuan' ?></td></tr>
                             <tr><th>Alamat</th><td>: <?= esc($personil['alamat'] ?? '-') ?></td></tr>

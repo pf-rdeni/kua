@@ -110,6 +110,7 @@ class PersonilController extends BaseController
         $rules = [
             'nama_lengkap'  => 'required|min_length[3]|max_length[255]',
             'nik'           => 'permit_empty|exact_length[16]|numeric',
+            'nia'           => 'permit_empty|max_length[50]',
             'jenis_kelamin' => 'required|in_list[L,P]',
             'no_hp'         => 'permit_empty|max_length[20]',
         ];
@@ -119,6 +120,7 @@ class PersonilController extends BaseController
         }
 
         $nikBaru = $this->request->getPost('nik');
+        $niaBaru = $this->request->getPost('nia');
 
         // [New Validation] Cek Duplikat NIK di Entitas yang Sama (Backend Protection)
         if (!empty($nikBaru)) {
@@ -127,6 +129,16 @@ class PersonilController extends BaseController
                                              ->first();
             if ($duplicate) {
                 return redirect()->back()->withInput()->with('error', 'NIK tersebut sudah didaftarkan pada entitas ini!');
+            }
+        }
+
+        // [New Validation] Cek Duplikat NIA di Entitas yang Sama
+        if (!empty($niaBaru)) {
+            $duplicateNia = $this->personilModel->where('nia', $niaBaru)
+                                                ->where('entitas_type', $entitasType)
+                                                ->first();
+            if ($duplicateNia) {
+                return redirect()->back()->withInput()->with('error', 'Nomor Induk Anggota (NIA) tersebut sudah terpakai di entitas ini!');
             }
         }
 
@@ -148,6 +160,7 @@ class PersonilController extends BaseController
             'entitas_type'        => $entitasType,
             'nama_lengkap'        => $this->request->getPost('nama_lengkap'),
             'nik'                 => $nikBaru,
+            'nia'                 => $this->request->getPost('nia'),
             'tempat_lahir'        => $this->request->getPost('tempat_lahir'),
             'tanggal_lahir'       => $this->request->getPost('tanggal_lahir'),
             'jenis_kelamin'       => $this->request->getPost('jenis_kelamin'),
@@ -175,6 +188,16 @@ class PersonilController extends BaseController
         }
 
         $this->personilModel->save($saveData);
+
+        // Auto-Padding Logic for NIA (jika digit bertambah, padding semua record lama)
+        if (!empty($niaBaru)) {
+            $niaLength = strlen($niaBaru);
+            if ($niaLength >= 3) {
+                $db = \Config\Database::connect();
+                // Update records where the length of 'nia' is less than the new length
+                $db->query("UPDATE tbl_personil SET nia = LPAD(nia, ?, '0') WHERE entitas_type = ? AND LENGTH(nia) < ? AND nia IS NOT NULL AND nia != ''", [$niaLength, $entitasType, $niaLength]);
+            }
+        }
 
         return redirect()->to('/admin/personil/' . $entitasType)->with('success', 'Data ' . $config['nama_label'] . ' berhasil ditambahkan.');
     }
@@ -248,6 +271,7 @@ class PersonilController extends BaseController
         $rules = [
             'nama_lengkap'  => 'required|min_length[3]|max_length[255]',
             'nik'           => 'permit_empty|exact_length[16]|numeric',
+            'nia'           => 'permit_empty|max_length[50]',
             'jenis_kelamin' => 'required|in_list[L,P]',
             'no_hp'         => 'permit_empty|max_length[20]',
         ];
@@ -257,6 +281,7 @@ class PersonilController extends BaseController
         }
 
         $nikUpdate = $this->request->getPost('nik');
+        $niaUpdate = $this->request->getPost('nia');
 
         // [New Validation] Cek Duplikat NIK untuk Edit di entitas sendiri
         if (!empty($nikUpdate)) {
@@ -266,6 +291,17 @@ class PersonilController extends BaseController
                                              ->first();
             if ($duplicate) {
                 return redirect()->back()->withInput()->with('error', 'NIK tidak dapat diubah karena telah terpakai oleh ID lain di entitas ini!');
+            }
+        }
+
+        // [New Validation] Cek Duplikat NIA untuk Edit di entitas sendiri
+        if (!empty($niaUpdate)) {
+            $duplicateNia = $this->personilModel->where('nia', $niaUpdate)
+                                                ->where('entitas_type', $entitasType)
+                                                ->where('id !=', $id)
+                                                ->first();
+            if ($duplicateNia) {
+                return redirect()->back()->withInput()->with('error', 'Nomor Induk Anggota (NIA) tidak dapat diubah karena telah terpakai oleh ID lain di entitas ini!');
             }
         }
 
@@ -289,6 +325,7 @@ class PersonilController extends BaseController
         $updateData = [
             'nama_lengkap'        => $this->request->getPost('nama_lengkap'),
             'nik'                 => $nikUpdate,
+            'nia'                 => $this->request->getPost('nia'),
             'tempat_lahir'        => $this->request->getPost('tempat_lahir'),
             'tanggal_lahir'       => $this->request->getPost('tanggal_lahir'),
             'jenis_kelamin'       => $this->request->getPost('jenis_kelamin'),
@@ -327,6 +364,7 @@ class PersonilController extends BaseController
                 // Data dasar yang mutlak sama harus di-sync (tanpa ID, entitas_type, entitas khusus Masjid, form unik dll)
                 $syncData = [
                     'nama_lengkap' => $updateData['nama_lengkap'],
+                    'nia' => $updateData['nia'],
                     'tempat_lahir' => $updateData['tempat_lahir'],
                     'tanggal_lahir' => $updateData['tanggal_lahir'],
                     'jenis_kelamin' => $updateData['jenis_kelamin'],
@@ -346,6 +384,15 @@ class PersonilController extends BaseController
                 
                 // Lakukan Update Berantai Serentak
                 $this->personilModel->where('nik', $nikUpdate)->where('id !=', $id)->set($syncData)->update();
+            }
+        }
+
+        // Auto-Padding Logic for NIA on update as well
+        if (!empty($niaUpdate)) {
+            $niaLength = strlen($niaUpdate);
+            if ($niaLength >= 3) {
+                $db = \Config\Database::connect();
+                $db->query("UPDATE tbl_personil SET nia = LPAD(nia, ?, '0') WHERE entitas_type = ? AND LENGTH(nia) < ? AND nia IS NOT NULL AND nia != ''", [$niaLength, $entitasType, $niaLength]);
             }
         }
 

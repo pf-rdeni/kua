@@ -17,6 +17,7 @@ class PersonilModel extends Model
         'id_masjid_mushola',
         'nama_lengkap',
         'nik',
+        'nia',
         'tempat_lahir',
         'tanggal_lahir',
         'jenis_kelamin',
@@ -102,5 +103,21 @@ class PersonilModel extends Model
         return $this->ofType($entitasType)
                     ->where('status_aktif', 1)
                     ->findAll();
+    }
+
+    /**
+     * Ambil nilai NIA terbesar berdasarkan entitas_type (di-cast ke integer).
+     */
+    public function getMaxNiaByEntitas(string $entitasType)
+    {
+        $db = \Config\Database::connect();
+        $builder = $db->table($this->table);
+        $builder->select('MAX(CAST(nia AS UNSIGNED)) as max_nia', false);
+        $builder->where('entitas_type', $entitasType);
+        
+        $query = $builder->get();
+        $row = $query->getRow();
+        
+        return $row ? (int)$row->max_nia : 0;
     }
 }
