@@ -36,12 +36,18 @@ $breadcrumb = [
                 <div class="row">
                     <!-- Foto -->
                     <div class="col-md-4 text-center mb-3">
-                        <?php if (!empty($personil['foto'])): ?>
-                            <img src="<?= base_url('uploads/personil/' . $personil['foto']) ?>" alt="Foto" class="img-fluid img-thumbnail" style="max-height: 250px;">
-                        <?php else: ?>
-                            <div class="d-flex justify-content-center align-items-center bg-light border rounded" style="height: 200px;">
-                                <i class="fas fa-user fa-5x text-secondary"></i>
-                            </div>
+                        <?php 
+                        if (!empty($personil['foto']) && file_exists(FCPATH . 'uploads/personil/' . $personil['foto'])): ?>
+                            <img src="<?= base_url('uploads/personil/' . esc($personil['foto'])) ?>" alt="Foto" class="img-fluid img-thumbnail" style="max-height: 250px;">
+                        <?php else: 
+                            $words = explode(' ', trim($personil['nama_lengkap']));
+                            $initials = count($words) > 1 ? strtoupper(substr($words[0], 0, 1) . substr($words[count($words)-1], 0, 1)) : strtoupper(substr($words[0], 0, 1));
+                            $colors = ['#f56954', '#f39c12', '#00a65a', '#00c0ef', '#3c8dbc', '#605ca8', '#ff851b', '#39cccc'];
+                            $bgColor = $colors[crc32($personil['nama_lengkap']) % count($colors)];
+                            $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="200" height="200" fill="'.$bgColor.'"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="80" font-weight="bold">'.$initials.'</text></svg>';
+                            $fotoUrl = 'data:image/svg+xml;base64,' . base64_encode($svg);
+                        ?>
+                            <img src="<?= $fotoUrl ?>" alt="Foto" class="img-fluid img-thumbnail" style="width: 200px; height: 200px; object-fit: cover;">
                         <?php endif; ?>
                         <div class="mt-2">
                             <?php if ($personil['status_aktif'] == 1): ?>

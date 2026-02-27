@@ -28,7 +28,19 @@
 <body>
 
 <div class="header-profile">
-    <?php $foto = !empty($mubaligh['foto']) ? base_url('uploads/personil/' . $mubaligh['foto']) : base_url('dist/img/default-150x150.png'); ?>
+    <?php 
+        $foto = '';
+        if (!empty($mubaligh['foto']) && file_exists(FCPATH . 'uploads/personil/' . $mubaligh['foto'])) {
+            $foto = base_url('uploads/personil/' . $mubaligh['foto']); 
+        } else {
+            $words = explode(' ', trim($mubaligh['nama_lengkap']));
+            $initials = count($words) > 1 ? strtoupper(substr($words[0], 0, 1) . substr($words[count($words)-1], 0, 1)) : strtoupper(substr($words[0], 0, 1));
+            $colors = ['#f56954', '#f39c12', '#00a65a', '#00c0ef', '#3c8dbc', '#605ca8', '#ff851b', '#39cccc'];
+            $bgColor = $colors[crc32($mubaligh['nama_lengkap']) % count($colors)];
+            $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="'.$bgColor.'"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="40" font-weight="bold">'.$initials.'</text></svg>';
+            $foto = 'data:image/svg+xml;base64,' . base64_encode($svg);
+        }
+    ?>
     <img src="<?= esc($foto) ?>" alt="Foto Profil">
     <h4 class="mb-0 font-weight-bold"><?= esc($mubaligh['nama_lengkap']) ?></h4>
     <p class="mb-0 text-light"><i class="fas fa-calendar-alt"></i> Jadwal Kegiatan Keagamaan</p>

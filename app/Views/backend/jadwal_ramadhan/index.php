@@ -122,7 +122,19 @@
                                         $cellData = $matriks[$m['id_masjid_mushola']][$i] ?? null; 
                                         $selectedId = $cellData ? $cellData['id_personil'] : '';
                                         $selectedText = $cellData ? ($cellData['nia_mubaligh'] . ' - ' . $cellData['nama_mubaligh']) : '';
-                                        $foto = $cellData && $cellData['foto_mubaligh'] ? base_url('uploads/personil/' . $cellData['foto_mubaligh']) : base_url('dist/img/default-150x150.png');
+                                        $foto = '';
+                                        if ($cellData) {
+                                            if (!empty($cellData['foto_mubaligh']) && file_exists(FCPATH . 'uploads/personil/' . $cellData['foto_mubaligh'])) {
+                                                $foto = base_url('uploads/personil/' . $cellData['foto_mubaligh']);
+                                            } else {
+                                                $words = explode(' ', trim($cellData['nama_mubaligh']));
+                                                $initials = count($words) > 1 ? strtoupper(substr($words[0], 0, 1) . substr($words[count($words)-1], 0, 1)) : strtoupper(substr($words[0], 0, 1));
+                                                $colors = ['#f56954', '#f39c12', '#00a65a', '#00c0ef', '#3c8dbc', '#605ca8', '#ff851b', '#39cccc'];
+                                                $bgColor = $colors[crc32($cellData['nama_mubaligh']) % count($colors)];
+                                                $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="'.$bgColor.'"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="40" font-weight="bold">'.$initials.'</text></svg>';
+                                                $foto = 'data:image/svg+xml;base64,' . base64_encode($svg);
+                                            }
+                                        }
                                     ?>
                                 <td>
                                     <select class="form-control select2-mubaligh" 

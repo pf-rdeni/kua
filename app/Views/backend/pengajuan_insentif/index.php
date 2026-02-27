@@ -41,10 +41,17 @@
                                     <?php
                                     $p = $item['personil'];
                                     $berkas = $item['berkas'];
-                                    $fotoUrl = !empty($p['foto']) ? base_url('uploads/personil/' . $p['foto']) : null;
-                                    $fotoThumbUrl = $fotoUrl;
-                                    if (!empty($p['foto']) && file_exists(FCPATH . 'uploads/personil/thumbs/' . $p['foto'])) {
-                                        $fotoThumbUrl = base_url('uploads/personil/thumbs/' . $p['foto']);
+                                    $fotoThumbUrl = '';
+                                    if (!empty($p['foto']) && file_exists(FCPATH . 'uploads/personil/' . $p['foto'])) {
+                                        $fotoUrl = base_url('uploads/personil/' . $p['foto']);
+                                        $fotoThumbUrl = file_exists(FCPATH . 'uploads/personil/thumbs/' . $p['foto']) ? base_url('uploads/personil/thumbs/' . $p['foto']) : $fotoUrl;
+                                    } else {
+                                        $words = explode(' ', trim($p['nama_lengkap']));
+                                        $initials = count($words) > 1 ? strtoupper(substr($words[0], 0, 1) . substr($words[count($words)-1], 0, 1)) : strtoupper(substr($words[0], 0, 1));
+                                        $colors = ['#f56954', '#f39c12', '#00a65a', '#00c0ef', '#3c8dbc', '#605ca8', '#ff851b', '#39cccc'];
+                                        $bgColor = $colors[crc32($p['nama_lengkap']) % count($colors)];
+                                        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="'.$bgColor.'"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="40" font-weight="bold">'.$initials.'</text></svg>';
+                                        $fotoThumbUrl = 'data:image/svg+xml;base64,' . base64_encode($svg);
                                     }
                                     ?>
                                     <tr>
@@ -60,12 +67,7 @@
                                         </td>
                                         <!-- Foto Profil -->
                                         <td class="text-center" style="vertical-align: middle;">
-                                            <?php if ($fotoUrl): ?>
-                                                <img src="<?= $fotoThumbUrl ?>" alt="Profil" class="img-thumbnail"
-                                                     style="max-width: 60px; max-height: 80px; object-fit: cover;">
-                                            <?php else: ?>
-                                                <span class="text-muted"><i class="fas fa-user fa-2x"></i></span>
-                                            <?php endif; ?>
+                                            <img src="<?= $fotoThumbUrl ?>" alt="Profil" class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%;">
                                         </td>
                                         <!-- Status Berkas (ikon centang/silang) -->
                                         <?php foreach ($settingBerkas as $sb): ?>

@@ -237,10 +237,22 @@ class JadwalRamadhanController extends BaseController
             
             $results = [];
             foreach ($mubalighs as $m) {
+                $fotoUrl = '';
+                if (!empty($m['foto']) && file_exists(FCPATH . 'uploads/personil/' . $m['foto'])) {
+                    $fotoUrl = base_url('uploads/personil/' . $m['foto']);
+                } else {
+                    $words = explode(' ', trim($m['nama_lengkap']));
+                    $initials = count($words) > 1 ? strtoupper(substr($words[0], 0, 1) . substr($words[count($words)-1], 0, 1)) : strtoupper(substr($words[0], 0, 1));
+                    $colors = ['#f56954', '#f39c12', '#00a65a', '#00c0ef', '#3c8dbc', '#605ca8', '#ff851b', '#39cccc'];
+                    $bgColor = $colors[crc32($m['nama_lengkap']) % count($colors)];
+                    $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="'.$bgColor.'"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="40" font-weight="bold">'.$initials.'</text></svg>';
+                    $fotoUrl = 'data:image/svg+xml;base64,' . base64_encode($svg);
+                }
+
                 $results[] = [
                     'id'   => $m['id'],
                     'text' => $m['nia'] . ' - ' . $m['nama_lengkap'],
-                    'foto' => $m['foto'] ? base_url('uploads/personil/' . $m['foto']) : base_url('template/backend/dist/img/default-150x150.png')
+                    'foto' => $fotoUrl
                 ];
             }
             
@@ -300,11 +312,23 @@ class JadwalRamadhanController extends BaseController
             $personil_info = null;
             if (!empty($id_personil)) {
                 $p = $this->personilModel->find($id_personil);
+                $fotoUrl = '';
+                if (!empty($p['foto']) && file_exists(FCPATH . 'uploads/personil/' . $p['foto'])) {
+                    $fotoUrl = base_url('uploads/personil/' . $p['foto']);
+                } else {
+                    $words = explode(' ', trim($p['nama_lengkap']));
+                    $initials = count($words) > 1 ? strtoupper(substr($words[0], 0, 1) . substr($words[count($words)-1], 0, 1)) : strtoupper(substr($words[0], 0, 1));
+                    $colors = ['#f56954', '#f39c12', '#00a65a', '#00c0ef', '#3c8dbc', '#605ca8', '#ff851b', '#39cccc'];
+                    $bgColor = $colors[crc32($p['nama_lengkap']) % count($colors)];
+                    $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="'.$bgColor.'"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="40" font-weight="bold">'.$initials.'</text></svg>';
+                    $fotoUrl = 'data:image/svg+xml;base64,' . base64_encode($svg);
+                }
+
                 $personil_info = [
                     'nik' => $p['nik'],
                     'nia' => $p['nia'],
                     'nama' => $p['nama_lengkap'],
-                    'foto' => $p['foto'] ? base_url('uploads/personil/' . $p['foto']) : base_url('dist/img/default-150x150.png')
+                    'foto' => $fotoUrl
                 ];
             }
 

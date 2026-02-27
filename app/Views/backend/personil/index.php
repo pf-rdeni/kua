@@ -56,7 +56,7 @@ $breadcrumb = [
                                 <tr>
                                     <td><strong><?= esc($p['nia'] ?? '-') ?></strong></td>
                                     <td class="text-center">
-                                        <?php if (!empty($p['foto'])): ?>
+                                        <?php if (!empty($p['foto']) && file_exists(FCPATH . 'uploads/personil/' . $p['foto'])): ?>
                                             <img src="<?= base_url('uploads/personil/' . esc($p['foto'])) ?>" alt="Foto" class="img-thumbnail img-fluid cursor-pointer view-photo" data-id="<?= $p['id'] ?>" data-src="<?= base_url('uploads/personil/' . esc($p['foto'])) ?>" data-title="<?= esc($p['nama_lengkap']) ?>" style="width: 45px; height: 45px; object-fit: cover; border-radius: 50%;">
                                         <?php else: ?>
                                             <?php 

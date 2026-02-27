@@ -29,11 +29,11 @@
                                     <?php
                                     $p = $item['personil'];
                                     $berkas = $item['berkas'];
-                                    $fotoUrl = !empty($p['foto']) ? base_url('uploads/personil/' . $p['foto']) : null;
+                                    $fotoUrl = (!empty($p['foto']) && file_exists(FCPATH . 'uploads/personil/' . $p['foto'])) ? base_url('uploads/personil/' . $p['foto']) : null;
                                     
                                     // Use thumbnail if available
                                     $fotoThumbUrl = $fotoUrl;
-                                    if (!empty($p['foto']) && file_exists(FCPATH . 'uploads/personil/thumbs/' . $p['foto'])) {
+                                    if ($fotoUrl && file_exists(FCPATH . 'uploads/personil/thumbs/' . $p['foto'])) {
                                         $fotoThumbUrl = base_url('uploads/personil/thumbs/' . $p['foto']);
                                     }
                                     ?>

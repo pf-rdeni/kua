@@ -164,8 +164,23 @@ $breadcrumb = [
                                         <small class="text-muted"><i class="far fa-calendar-alt"></i> <?= $tglStr ?></small>
                                     </td>
                                     <td class="font-weight-bold">
-                                        <?php $foto = !empty($j['foto']) ? base_url('uploads/personil/' . $j['foto']) : base_url('template/backend/dist/img/default-150x150.png'); ?>
-                                        <img src="<?= esc($foto) ?>" alt="Foto Mubaligh" class="img-circle img-sm mr-2" style="width: 32px; height: 32px; object-fit: cover; border: 1px solid #ddd;">
+                                        <?php if (!empty($j['foto']) && file_exists(FCPATH . 'uploads/personil/' . $j['foto'])): ?>
+                                            <img src="<?= base_url('uploads/personil/' . esc($j['foto'])) ?>" alt="Foto" class="img-circle img-sm mr-2" style="width: 32px; height: 32px; object-fit: cover; border: 1px solid #ddd;">
+                                        <?php else: ?>
+                                            <?php 
+                                            $initials = '?';
+                                            $bgColor = '#6c757d'; 
+                                            if (!empty($j['nama_mubaligh'])) {
+                                                $words = explode(' ', trim($j['nama_mubaligh']));
+                                                $initials = count($words) > 1 ? strtoupper(substr($words[0], 0, 1) . substr($words[count($words)-1], 0, 1)) : strtoupper(substr($words[0], 0, 1));
+                                                $colors = ['#f56954', '#f39c12', '#00a65a', '#00c0ef', '#3c8dbc', '#605ca8', '#ff851b', '#39cccc'];
+                                                $bgColor = $colors[crc32($j['nama_mubaligh']) % count($colors)];
+                                            }
+                                            ?>
+                                            <div class="d-inline-flex align-items-center justify-content-center text-white rounded-circle mr-2" style="width: 32px; height: 32px; background-color: <?= $bgColor ?>; font-size: 12px; font-weight: bold; border: 1px solid #ddd;">
+                                                <?= esc($initials) ?>
+                                            </div>
+                                        <?php endif; ?>
                                         <?= esc($j['nama_mubaligh'] ?? '') ?>
                                     </td>
                                     <td><?= esc($j['nama_masjid'] ?? '') ?></td>
@@ -231,8 +246,23 @@ $breadcrumb = [
                                         <small class="text-muted"><i class="far fa-calendar-alt"></i> <?= $tglStr ?></small>
                                     </td>
                                     <td class="font-weight-bold">
-                                        <?php $foto = !empty($j['foto']) ? base_url('uploads/personil/' . $j['foto']) : base_url('template/backend/dist/img/default-150x150.png'); ?>
-                                        <img src="<?= esc($foto) ?>" alt="Foto" class="img-circle img-sm mr-2" style="width: 32px; height: 32px; object-fit: cover; border: 1px solid #ddd;">
+                                        <?php if (!empty($j['foto']) && file_exists(FCPATH . 'uploads/personil/' . $j['foto'])): ?>
+                                            <img src="<?= base_url('uploads/personil/' . esc($j['foto'])) ?>" alt="Foto" class="img-circle img-sm mr-2" style="width: 32px; height: 32px; object-fit: cover; border: 1px solid #ddd;">
+                                        <?php else: ?>
+                                            <?php 
+                                            $initials = '?';
+                                            $bgColor = '#6c757d'; 
+                                            if (!empty($j['nama_mubaligh'])) {
+                                                $words = explode(' ', trim($j['nama_mubaligh']));
+                                                $initials = count($words) > 1 ? strtoupper(substr($words[0], 0, 1) . substr($words[count($words)-1], 0, 1)) : strtoupper(substr($words[0], 0, 1));
+                                                $colors = ['#f56954', '#f39c12', '#00a65a', '#00c0ef', '#3c8dbc', '#605ca8', '#ff851b', '#39cccc'];
+                                                $bgColor = $colors[crc32($j['nama_mubaligh']) % count($colors)];
+                                            }
+                                            ?>
+                                            <div class="d-inline-flex align-items-center justify-content-center text-white rounded-circle mr-2" style="width: 32px; height: 32px; background-color: <?= $bgColor ?>; font-size: 12px; font-weight: bold; border: 1px solid #ddd;">
+                                                <?= esc($initials) ?>
+                                            </div>
+                                        <?php endif; ?>
                                         <?= esc($j['nama_mubaligh'] ?? '') ?>
                                     </td>
                                     <td><?= esc($j['nama_masjid'] ?? '') ?></td>
@@ -299,8 +329,23 @@ $breadcrumb = [
                                         <small class="text-muted"><i class="far fa-calendar-alt"></i> <?= $tglStr ?></small>
                                     </td>
                                     <td class="font-weight-bold">
-                                        <?php $foto = !empty($j['foto']) ? base_url('uploads/personil/' . $j['foto']) : base_url('template/backend/dist/img/default-150x150.png'); ?>
-                                        <img src="<?= esc($foto) ?>" alt="Foto" class="img-circle img-sm mr-2" style="width: 32px; height: 32px; object-fit: cover; border: 1px solid #ddd;">
+                                        <?php if (!empty($j['foto']) && file_exists(FCPATH . 'uploads/personil/' . $j['foto'])): ?>
+                                            <img src="<?= base_url('uploads/personil/' . esc($j['foto'])) ?>" alt="Foto" class="img-circle img-sm mr-2" style="width: 32px; height: 32px; object-fit: cover; border: 1px solid #ddd;">
+                                        <?php else: ?>
+                                            <?php 
+                                            $initials = '?';
+                                            $bgColor = '#6c757d'; 
+                                            if (!empty($j['nama_mubaligh'])) {
+                                                $words = explode(' ', trim($j['nama_mubaligh']));
+                                                $initials = count($words) > 1 ? strtoupper(substr($words[0], 0, 1) . substr($words[count($words)-1], 0, 1)) : strtoupper(substr($words[0], 0, 1));
+                                                $colors = ['#f56954', '#f39c12', '#00a65a', '#00c0ef', '#3c8dbc', '#605ca8', '#ff851b', '#39cccc'];
+                                                $bgColor = $colors[crc32($j['nama_mubaligh']) % count($colors)];
+                                            }
+                                            ?>
+                                            <div class="d-inline-flex align-items-center justify-content-center text-white rounded-circle mr-2" style="width: 32px; height: 32px; background-color: <?= $bgColor ?>; font-size: 12px; font-weight: bold; border: 1px solid #ddd;">
+                                                <?= esc($initials) ?>
+                                            </div>
+                                        <?php endif; ?>
                                         <?= esc($j['nama_mubaligh'] ?? '') ?>
                                     </td>
                                     <td><?= esc($j['nama_masjid'] ?? '') ?></td>

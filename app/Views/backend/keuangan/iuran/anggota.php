@@ -117,7 +117,7 @@
                         <td>
                             <div class="d-flex align-items-center">
                                 <div class="mr-3">
-                                    <?php if (!empty($p['foto'])): ?>
+                                    <?php if (!empty($p['foto']) && file_exists(FCPATH . 'uploads/personil/' . $p['foto'])): ?>
                                         <img src="<?= base_url('uploads/personil/' . esc($p['foto'])) ?>" alt="Foto" style="width: 45px; height: 45px; object-fit: cover; border-radius: 50%;">
                                     <?php else: ?>
                                         <?php 
