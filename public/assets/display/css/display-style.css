@@ -1,0 +1,915 @@
+/**
+ * Display Masjid - Stylesheet
+ * CSS untuk tampilan fullscreen display masjid
+ * Mendukung orientasi horizontal (landscape) dan vertikal (portrait)
+ */
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    background: #0a1628;
+    color: #ffffff;
+}
+
+.display-container {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    overflow: hidden;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* Overlay gradient di atas wallpaper */
+.display-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(10, 22, 40, 0.88) 0%, rgba(15, 45, 30, 0.82) 50%, rgba(10, 22, 40, 0.88) 100%);
+    z-index: 1;
+}
+
+.display-content {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+.display-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 30px;
+    background: linear-gradient(90deg, rgba(0, 100, 50, 0.6) 0%, rgba(0, 80, 40, 0.3) 100%);
+    border-bottom: 2px solid rgba(0, 200, 100, 0.3);
+    flex-shrink: 0;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.header-logo {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.header-info h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #ffffff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.header-info .alamat {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin-top: 2px;
+}
+
+.header-right {
+    text-align: right;
+}
+
+.header-right .tanggal {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.header-right .tanggal-hijriah {
+    font-size: 0.85rem;
+    color: #4ade80;
+    margin-top: 2px;
+}
+
+/* ============================================================
+   MAIN BODY
+   ============================================================ */
+.display-body {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    padding: 15px 20px;
+    gap: 20px;
+}
+
+/* ============================================================
+   JAM DIGITAL
+   ============================================================ */
+.jam-container {
+    text-align: center;
+}
+
+.jam-digital {
+    font-size: 5rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #4ade80;
+    text-shadow: 0 0 20px rgba(74, 222, 128, 0.5), 0 0 40px rgba(74, 222, 128, 0.2);
+    letter-spacing: 3px;
+    line-height: 1;
+}
+
+.jam-digital-small {
+    font-size: 3rem;
+}
+
+.jam-digital-mini {
+    font-size: 2rem;
+}
+
+/* ============================================================
+   COUNTDOWN
+   ============================================================ */
+.countdown-container {
+    text-align: center;
+    padding: 15px;
+    background: rgba(0, 100, 50, 0.2);
+    border-radius: 12px;
+    border: 1px solid rgba(0, 200, 100, 0.2);
+    margin-top: 15px;
+}
+
+.countdown-label {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 5px;
+}
+
+.countdown-waktu {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #fbbf24;
+    text-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
+    font-variant-numeric: tabular-nums;
+}
+
+.countdown-waktu-small {
+    font-size: 1.8rem;
+}
+
+.countdown-progress-bar {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    margin-top: 8px;
+    overflow: hidden;
+}
+
+.countdown-progress-bar .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4ade80, #fbbf24);
+    border-radius: 2px;
+    transition: width 1s linear;
+}
+
+/* ============================================================
+   JADWAL SHOLAT
+   ============================================================ */
+.jadwal-container {
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.jadwal-title {
+    text-align: center;
+    padding: 10px;
+    background: linear-gradient(90deg, rgba(0, 100, 50, 0.5), rgba(0, 80, 40, 0.3));
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #4ade80;
+}
+
+.jadwal-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.jadwal-table td {
+    padding: 10px 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 1.1rem;
+}
+
+.jadwal-table .waktu-nama {
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.jadwal-table .waktu-jam {
+    text-align: right;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #ffffff;
+    font-size: 1.2rem;
+}
+
+/* Highlight baris jadwal aktif */
+.jadwal-row.active {
+    background: rgba(74, 222, 128, 0.15);
+}
+
+.jadwal-row.active .waktu-nama {
+    color: #4ade80;
+}
+
+.jadwal-row.next {
+    background: rgba(251, 191, 36, 0.1);
+}
+
+.jadwal-row.next .waktu-nama {
+    color: #fbbf24;
+}
+
+/* Size variants */
+.jadwal-table-lg td {
+    padding: 14px 20px;
+    font-size: 1.3rem;
+}
+
+.jadwal-table-lg .waktu-jam {
+    font-size: 1.5rem;
+}
+
+/* ============================================================
+   SLIDE KONTEN
+   ============================================================ */
+.slide-container {
+    position: relative;
+    flex: 1;
+    overflow: hidden;
+    border-radius: 12px;
+}
+
+.display-slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0;
+    transition: opacity 0.8s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.display-slide.slide-active {
+    opacity: 1;
+    z-index: 2;
+}
+
+.display-slide.slide-exit {
+    opacity: 0;
+    z-index: 1;
+}
+
+.slide-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.slide-text {
+    text-align: center;
+    padding: 20px;
+}
+
+.slide-text h3 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: #4ade80;
+}
+
+.slide-text p {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.85);
+    line-height: 1.6;
+}
+
+.slide-indicators {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+    z-index: 5;
+}
+
+.slide-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transition: all 0.3s;
+}
+
+.slide-indicator.active {
+    background: #4ade80;
+    width: 24px;
+    border-radius: 4px;
+}
+
+/* ============================================================
+   INFO PANEL
+   ============================================================ */
+.info-panel {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    padding: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    overflow-y: auto;
+}
+
+.info-panel h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #4ade80;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.info-item {
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-item h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #fbbf24;
+    margin-bottom: 4px;
+}
+
+.info-item p {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.5;
+}
+
+/* ============================================================
+   RUNNING TEXT (Footer)
+   ============================================================ */
+.display-footer {
+    flex-shrink: 0;
+    background: linear-gradient(90deg, rgba(0, 100, 50, 0.5), rgba(0, 80, 40, 0.3));
+    border-top: 2px solid rgba(0, 200, 100, 0.3);
+    padding: 8px 0;
+    overflow: hidden;
+    position: relative;
+}
+
+.running-text-wrapper {
+    width: 100%;
+    overflow: hidden;
+}
+
+.running-text-content {
+    display: inline-block;
+    white-space: nowrap;
+    animation: marquee 30s linear infinite;
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.9);
+    padding-left: 100%;
+}
+
+@keyframes marquee {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-100%);
+    }
+}
+
+/* ============================================================
+   STATUS INDIKATOR
+   ============================================================ */
+.status-bar {
+    position: absolute;
+    bottom: 40px;
+    right: 15px;
+    z-index: 10;
+    font-size: 0.7rem;
+    opacity: 0.5;
+}
+
+.status-online {
+    color: #4ade80;
+}
+
+.status-offline {
+    color: #f87171;
+}
+
+/* ============================================================
+   KEUANGAN PANEL
+   ============================================================ */
+.keuangan-panel {
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.keuangan-panel h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #4ade80;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-align: center;
+}
+
+.keuangan-summary {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.keuangan-card {
+    flex: 1;
+    text-align: center;
+    padding: 15px 10px;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.keuangan-card .label {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.keuangan-card .nilai {
+    font-size: 1.4rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.keuangan-card.pemasukan .nilai {
+    color: #4ade80;
+}
+
+.keuangan-card.pengeluaran .nilai {
+    color: #f87171;
+}
+
+.keuangan-card.saldo .nilai {
+    color: #60a5fa;
+}
+
+.keuangan-transaksi {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.keuangan-transaksi table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.keuangan-transaksi td {
+    padding: 6px 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.keuangan-transaksi .pemasukan {
+    color: #4ade80;
+}
+
+.keuangan-transaksi .pengeluaran {
+    color: #f87171;
+}
+
+/* ============================================================
+   TEMPLATE: KLASIK (Horizontal)
+   ============================================================ */
+.template-klasik .display-body {
+    display: grid;
+    grid-template-columns: 280px 1fr 300px;
+    gap: 20px;
+    padding: 15px 20px;
+}
+
+.template-klasik .panel-kiri {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.template-klasik .panel-tengah {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.template-klasik .panel-kanan {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    overflow-y: auto;
+}
+
+/* ============================================================
+   TEMPLATE: MODERN (Horizontal)
+   ============================================================ */
+.template-modern .display-body {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 20px;
+    padding: 15px 20px;
+}
+
+.template-modern .panel-utama {
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+}
+
+.template-modern .panel-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* ============================================================
+   TEMPLATE: KEUANGAN (Horizontal)
+   ============================================================ */
+.template-keuangan .display-body {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 20px;
+    padding: 15px 20px;
+}
+
+.template-keuangan .panel-keuangan {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.template-keuangan .panel-info {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* ============================================================
+   ORIENTASI VERTIKAL (Portrait)
+   ============================================================ */
+.orientasi-vertikal .display-header {
+    flex-direction: column;
+    text-align: center;
+    padding: 10px 15px;
+    gap: 5px;
+}
+
+.orientasi-vertikal .header-right {
+    text-align: center;
+}
+
+.orientasi-vertikal .header-info h1 {
+    font-size: 1.3rem;
+}
+
+.orientasi-vertikal .jam-digital {
+    font-size: 3.5rem;
+}
+
+.orientasi-vertikal .countdown-waktu {
+    font-size: 1.8rem;
+}
+
+/* Klasik Vertikal */
+.orientasi-vertikal.template-klasik .display-body {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
+}
+
+/* Modern Vertikal */
+.orientasi-vertikal.template-modern .display-body {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto;
+}
+
+/* Keuangan Vertikal */
+.orientasi-vertikal.template-keuangan .display-body {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
+}
+
+/* ============================================================
+   HALAMAN NOT FOUND
+   ============================================================ */
+.display-not-found {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background: linear-gradient(135deg, #0a1628, #1a2940);
+    text-align: center;
+    padding: 40px;
+}
+
+.display-not-found i {
+    font-size: 4rem;
+    color: #4ade80;
+    margin-bottom: 20px;
+}
+
+.display-not-found h2 {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.display-not-found p {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* ============================================================
+   SCROLLBAR CUSTOM
+   ============================================================ */
+::-webkit-scrollbar {
+    width: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(74, 222, 128, 0.3);
+    border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(74, 222, 128, 0.5);
+}
+
+/* ============================================================
+   PRAYER MODE OVERLAY
+   Fullscreen overlay yang tampil saat event sholat berlangsung
+   ============================================================ */
+.prayer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.6s ease, visibility 0.6s ease;
+    pointer-events: none;
+}
+
+.prayer-overlay.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+/* Background layer (gambar overlay atau gradient) */
+.prayer-overlay-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(5, 15, 35, 0.95) 0%, rgba(10, 50, 30, 0.92) 50%, rgba(5, 15, 35, 0.95) 100%);
+    background-size: cover;
+    background-position: center;
+    z-index: 1;
+}
+
+.prayer-overlay-bg.has-image {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.prayer-overlay-bg.has-image::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.55);
+}
+
+/* Content layer */
+.prayer-overlay-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding: 40px;
+    max-width: 700px;
+}
+
+.prayer-overlay-icon {
+    margin-bottom: 25px;
+    color: #4ade80;
+    filter: drop-shadow(0 0 20px rgba(74, 222, 128, 0.5));
+}
+
+.prayer-overlay-icon i {
+    font-size: 4rem;
+}
+
+.prayer-overlay-title {
+    font-size: 3rem;
+    font-weight: 800;
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    text-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    margin-bottom: 12px;
+    line-height: 1.2;
+}
+
+.prayer-overlay-subtitle {
+    font-size: 1.3rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-style: italic;
+    margin-bottom: 30px;
+    line-height: 1.4;
+}
+
+.prayer-overlay-timer {
+    font-size: 5rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: #fbbf24;
+    text-shadow: 0 0 30px rgba(251, 191, 36, 0.5), 0 0 60px rgba(251, 191, 36, 0.2);
+    letter-spacing: 5px;
+    margin-bottom: 15px;
+}
+
+.prayer-overlay-clock {
+    font-size: 3.5rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #4ade80;
+    text-shadow: 0 0 20px rgba(74, 222, 128, 0.5);
+    letter-spacing: 3px;
+}
+
+/* --- Mode-specific gradient colors --- */
+.prayer-overlay.mode-menjelang_adzan .prayer-overlay-bg {
+    background: linear-gradient(135deg, rgba(30, 60, 90, 0.95), rgba(20, 80, 60, 0.92));
+}
+
+.prayer-overlay.mode-menjelang_adzan .prayer-overlay-icon {
+    color: #60a5fa;
+}
+
+.prayer-overlay.mode-adzan .prayer-overlay-bg {
+    background: linear-gradient(135deg, rgba(10, 50, 30, 0.95), rgba(5, 80, 50, 0.92));
+}
+
+.prayer-overlay.mode-adzan .prayer-overlay-icon {
+    color: #4ade80;
+}
+
+.prayer-overlay.mode-adzan .prayer-overlay-title {
+    color: #4ade80;
+}
+
+.prayer-overlay.mode-qobliyah .prayer-overlay-bg {
+    background: linear-gradient(135deg, rgba(25, 25, 60, 0.95), rgba(40, 20, 100, 0.92));
+}
+
+.prayer-overlay.mode-qobliyah .prayer-overlay-icon {
+    color: #a78bfa;
+}
+
+.prayer-overlay.mode-iqomah .prayer-overlay-bg {
+    background: linear-gradient(135deg, rgba(60, 20, 10, 0.95), rgba(100, 30, 10, 0.92));
+}
+
+.prayer-overlay.mode-iqomah .prayer-overlay-icon {
+    color: #fb923c;
+}
+
+.prayer-overlay.mode-iqomah .prayer-overlay-timer {
+    animation: pulse-timer 1s ease-in-out infinite;
+}
+
+.prayer-overlay.mode-sholat .prayer-overlay-bg {
+    background: linear-gradient(135deg, rgba(5, 30, 15, 0.95), rgba(10, 60, 30, 0.92));
+}
+
+.prayer-overlay.mode-sholat .prayer-overlay-icon {
+    color: #34d399;
+}
+
+.prayer-overlay.mode-sholat .prayer-overlay-title {
+    color: #34d399;
+}
+
+.prayer-overlay.mode-badiyah .prayer-overlay-bg {
+    background: linear-gradient(135deg, rgba(30, 30, 50, 0.95), rgba(40, 40, 70, 0.92));
+}
+
+.prayer-overlay.mode-badiyah .prayer-overlay-icon {
+    color: #94a3b8;
+}
+
+.prayer-overlay.mode-tarawih .prayer-overlay-bg {
+    background: linear-gradient(135deg, rgba(50, 30, 10, 0.95), rgba(80, 50, 5, 0.92));
+}
+
+.prayer-overlay.mode-tarawih .prayer-overlay-icon {
+    color: #fbbf24;
+}
+
+.prayer-overlay.mode-tarawih .prayer-overlay-title {
+    color: #fbbf24;
+}
+
+.prayer-overlay.mode-idul_fitri .prayer-overlay-bg,
+.prayer-overlay.mode-idul_adha .prayer-overlay-bg {
+    background: linear-gradient(135deg, rgba(10, 50, 40, 0.95), rgba(20, 80, 50, 0.92));
+}
+
+.prayer-overlay.mode-idul_fitri .prayer-overlay-icon,
+.prayer-overlay.mode-idul_adha .prayer-overlay-icon {
+    color: #fcd34d;
+}
+
+.prayer-overlay.mode-idul_fitri .prayer-overlay-title,
+.prayer-overlay.mode-idul_adha .prayer-overlay-title {
+    color: #fcd34d;
+}
+
+/* Animasi pulse untuk timer iqomah */
+@keyframes pulse-timer {
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.05);
+        opacity: 0.85;
+    }
+}

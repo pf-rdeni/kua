@@ -49,6 +49,12 @@ $routes->group('data', function($routes) {
     // Add others as needed
 });
 
+// Display Masjid (Public - fullscreen TV, tanpa auth)
+$routes->get('display/(:num)', 'Frontend\DisplayMasjidController::show/$1');
+$routes->get('display/api/(:num)', 'Frontend\DisplayMasjidController::apiData/$1');
+$routes->get('display/api_keuangan/(:num)', 'Frontend\DisplayMasjidController::apiKeuangan/$1');
+$routes->get('display/check_update/(:num)', 'Frontend\DisplayMasjidController::checkUpdate/$1');
+
 // Jadwal Publik Mubaligh (Pakai URL Bebas Tanpa Filter Login)
 $routes->get('jadwal-mubaligh/(:any)', 'Frontend\PublicJadwalController::view/$1');
 $routes->post('jadwal-mubaligh/konfirmasi-hadir', 'Frontend\PublicJadwalController::konfirmasi_hadir');
@@ -237,6 +243,20 @@ $routes->group('admin', ['filter' => 'login'], function ($routes) {
         $routes->post('update/(:num)', 'Backend\MasjidMusholaController::update/$1');
         $routes->get('delete/(:num)', 'Backend\MasjidMusholaController::delete/$1');
         $routes->get('show/(:num)', 'Backend\MasjidMusholaController::show/$1');
+    });
+
+    // --- Display Masjid (Konfigurasi Admin) ---
+    $routes->group('display-masjid', ['filter' => 'role:SuperAdmin,Admin'], function ($routes) {
+        $routes->get('/', 'Backend\DisplayMasjidController::index');
+        $routes->get('create', 'Backend\DisplayMasjidController::create');
+        $routes->post('store', 'Backend\DisplayMasjidController::store');
+        $routes->get('edit/(:num)', 'Backend\DisplayMasjidController::edit/$1');
+        $routes->post('update/(:num)', 'Backend\DisplayMasjidController::update/$1');
+        $routes->get('delete/(:num)', 'Backend\DisplayMasjidController::delete/$1');
+        $routes->get('konten/(:num)', 'Backend\DisplayMasjidController::konten/$1');
+        $routes->post('konten/(:num)/store', 'Backend\DisplayMasjidController::storeKonten/$1');
+        $routes->post('konten/(:num)/update/(:num)', 'Backend\DisplayMasjidController::updateKonten/$1/$2');
+        $routes->post('konten/(:num)/delete/(:num)', 'Backend\DisplayMasjidController::deleteKonten/$1/$2');
     });
 
     // --- Majelis Taklim (SuperAdmin, Admin, OperatorMajelisTaklim) ---

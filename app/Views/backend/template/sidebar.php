@@ -131,6 +131,36 @@
                 </li>
                 <?php endif; ?>
 
+                <?php if (in_array('SuperAdmin', $userGroups) || in_array('Admin', $userGroups)): ?>
+                <!-- Display Masjid -->
+                <?php
+                    $isDisplayMasjidActive = strpos(uri_string(), 'admin/display-masjid') !== false;
+                ?>
+                <li class="nav-item has-treeview <?= $isDisplayMasjidActive ? 'menu-open' : '' ?>">
+                    <a href="#" class="nav-link <?= $isDisplayMasjidActive ? 'active' : '' ?>">
+                        <i class="nav-icon fas fa-tv text-info"></i>
+                        <p>
+                            Display Masjid
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="<?= base_url('admin/display-masjid') ?>" class="nav-link <?= url_is('admin/display-masjid') ? 'active' : '' ?>">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Daftar Display</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="<?= base_url('admin/display-masjid/create') ?>" class="nav-link <?= url_is('admin/display-masjid/create') ? 'active' : '' ?>">
+                                <i class="far fa-circle nav-icon text-success"></i>
+                                <p>Tambah Display</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <?php endif; ?>
+
                 <?php if (in_array('SuperAdmin', $userGroups) || in_array('Admin', $userGroups) || in_array('OperatorMubaligh', $userGroups)): ?>
                 <!-- Separator PENJADWALAN -->
                 <li class="nav-header">PENJADWALAN</li>
