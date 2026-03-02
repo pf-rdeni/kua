@@ -16,6 +16,7 @@ deployment:
     - /bin/cp public/favicon.ico $PUBLICPATH
     - /bin/cp public/robots.txt $PUBLICPATH
     - /bin/cp public/.htaccess $PUBLICPATH
+    - /bin/cp public/sw-display.js $PUBLICPATH
 
 
   
