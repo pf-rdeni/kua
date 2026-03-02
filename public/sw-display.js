@@ -1,15 +1,15 @@
 const CACHE_NAME = 'display-kua-v1';
 
 // Aset statis yang WAJIB di-cache saat pertama kali diakses.
-// Ini memastikan halaman dasar bisa termuat (termasuk CSS, JS core, dan font).
+// Menyimpan menggunakan absolute URL path berdasarkan origin
 const STATIC_ASSETS = [
-    '/assets/display/css/display-style.css',
-    '/assets/display/js/praytimes.js',
-    '/assets/display/js/display-engine.js',
+    './assets/display/css/display-style.css',
+    './assets/display/js/praytimes.js',
+    './assets/display/js/display-engine.js',
     // Fallback jika gambar hilang
-    '/assets/img/default-masjid.jpg',
-    '/assets/img/logo-kemenag.png',
-    '/favicon.ico',
+    './assets/img/default-masjid.jpg',
+    './assets/img/logo-kemenag.png',
+    './favicon.ico',
 ];
 
 // Install Event: Cache aset statis awal
@@ -102,9 +102,10 @@ self.addEventListener('fetch', (event) => {
     }
 
     // 3. GAMBAR & ASET STATIS (/assets/..., /uploads/...) -> Cache First, Fallback to Network
-    if (requestUrl.pathname.startsWith('/assets/') || requestUrl.pathname.startsWith('/uploads/')) {
+    // Gunakan regex yang lebih kuat untuk menangkap string path dimanapun posisinya
+    if (requestUrl.pathname.match(/\/assets\//) || requestUrl.pathname.match(/\/uploads\//) || requestUrl.pathname.endsWith('.jpg') || requestUrl.pathname.endsWith('.png') || requestUrl.pathname.endsWith('.css') || requestUrl.pathname.endsWith('.js')) {
         event.respondWith(
-            caches.match(event.request).then((cachedResponse) => {
+            caches.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
                 // Return cache jika ada
                 if (cachedResponse) {
                     return cachedResponse;
@@ -123,7 +124,8 @@ self.addEventListener('fetch', (event) => {
                 }).catch(() => {
                     // Jika offline dan request adalah GAMBAR, kirim gambar fallback
                     if (event.request.destination === 'image') {
-                        return caches.match('/assets/img/default-masjid.jpg');
+                        // Coba pakai relative match
+                        return caches.match('./assets/img/default-masjid.jpg', { ignoreSearch: true });
                     }
 
                     // Fallback jika asset lain (css/js) gagal diload

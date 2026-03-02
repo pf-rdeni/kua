@@ -269,7 +269,7 @@ $opsiBadiyah  = $opsiWaktu['badiyah']  ?? ['subuh'=>0, 'dzuhur'=>1, 'ashar'=>0, 
     // Register Service Worker untuk Web Offline App (PWA)
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
-            navigator.serviceWorker.register('<?= base_url('sw-display.js') ?>')
+            navigator.serviceWorker.register('<?= base_url('sw-display.js') ?>', { scope: '/' })
                 .then(function(registration) {
                     console.log('[ServiceWorker] Registrasi berhasil dengan scope:', registration.scope);
                 })
