@@ -109,7 +109,52 @@ var DisplayEngine = (function () {
         // Muat dari cache jika ada
         muatDariCache();
 
+        // Inisialisasi auto-scaling untuk TV/Monitor (Proposional 1920x1080)
+        initAutoScaling();
+
         console.log('[DisplayEngine] Diinisialisasi dengan ID:', config.displayId);
+    }
+
+    // ============================================================
+    // AUTO SCALING ENGINE (Responsive Canvas 16:9 - 1920x1080)
+    // ============================================================
+    function initAutoScaling() {
+        var baseWidth = 1920;
+        var baseHeight = 1080;
+        var scaleWrapper = document.getElementById('display-scaler');
+
+        if (!scaleWrapper) {
+            console.warn('[DisplayEngine] display-scaler tidak ditemukan, auto-scaling diabaikan.');
+            return;
+        }
+
+        function calculateScale() {
+            var windowWidth = window.innerWidth;
+            var windowHeight = window.innerHeight;
+
+            // Hitung rasio scale untuk lebar dan tinggi
+            var scaleX = windowWidth / baseWidth;
+            var scaleY = windowHeight / baseHeight;
+
+            // Ambil nilai terkecil agar seluruh elemen muat 100% tanpa terpotong (fit)
+            var scaleValue = Math.min(scaleX, scaleY);
+
+            // Terapkan CSS Transform ke wrapper
+            scaleWrapper.style.transform = 'translate(-50%, -50%) scale(' + scaleValue + ')';
+
+            // (Opsional) Log untuk debugging di konsol
+            // console.log('[AutoScaling] Layar:', windowWidth + 'x' + windowHeight, '| Scale:', scaleValue.toFixed(3));
+        }
+
+        // Jalankan saat pertama kali buka
+        calculateScale();
+
+        // Daftarkan listener saat mendeteksi resize / fullscreen
+        window.addEventListener('resize', function () {
+            // Gunakan sedikit delay (debounce) agar tidak boros CPU saat di-resize
+            clearTimeout(state.resizeTimer);
+            state.resizeTimer = setTimeout(calculateScale, 100);
+        });
     }
 
     // ============================================================
@@ -748,12 +793,6 @@ var DisplayEngine = (function () {
                     // Update indikator status
                     updateStatusIndikator(true);
 
-                    // Catat timestamp updated_at server if exists
-                    if (data.display.updated_at) {
-                        state.lastUpdatedServer = data.display.updated_at;
-                    }
-
-                    console.log('[DisplayEngine] Sync berhasil:', state.lastSync);
                 }
             })
             .catch(function (err) {

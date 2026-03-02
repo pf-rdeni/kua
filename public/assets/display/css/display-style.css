@@ -33,6 +33,27 @@ body {
     background-repeat: no-repeat;
 }
 
+/* KANVAS IDEAL (Base Canvas) yang akan di-scale
+   Ukuran ideal kita tetapkan di rasio 16:9 (misal 1920x1080 atau 1366x768).
+   Berikut pengaturan base 1920x1080.
+*/
+.display-scale-wrapper {
+    width: 1920px;
+    height: 1080px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    /* Origin dari center agar saat di-scale tetap di tengah layar */
+    transform-origin: center center;
+    /* Translate -50% -50% dilakukan di JS bersamaan dengan fungsi scale() */
+    transform: translate(-50%, -50%) scale(1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    /* Background gambar sebenarnya bisa juga dipindah ke sini kalau rasio layarnya tidak 16:9 
+       agar Wallpaper tidak "meleber" keluar area 16:9 */
+}
+
 /* Overlay gradient di atas wallpaper */
 .display-overlay {
     position: absolute;
@@ -41,7 +62,10 @@ body {
     right: 0;
     bottom: 0;
     background: linear-gradient(135deg, rgba(10, 22, 40, 0.88) 0%, rgba(15, 45, 30, 0.82) 50%, rgba(10, 22, 40, 0.88) 100%);
-    z-index: 1;
+    z-index: 0;
+    /* Ubah z-index jadi 0 agar di bawah konten wrapper */
+    pointer-events: none;
+    /* Cegah interaksi pointer */
 }
 
 .display-content {
@@ -51,6 +75,8 @@ body {
     height: 100%;
     display: flex;
     flex-direction: column;
+    /* Pastikan flex tidak overflow dari 1080px parent-nya */
+    flex: 1;
 }
 
 /* ============================================================

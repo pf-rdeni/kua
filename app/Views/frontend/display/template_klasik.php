@@ -27,7 +27,10 @@ $opsiBadiyah  = $opsiWaktu['badiyah']  ?? ['subuh'=>0, 'dzuhur'=>1, 'ashar'=>0, 
      style="background-image: url('<?= $wallpaper ?>')"
      >
     <div class="display-overlay"></div>
-    <div class="display-content">
+    
+    <!-- WRAPPER UNTUK AUTO-SCALING PROPORSI LAYAR TV -->
+    <div id="display-scaler" class="display-scale-wrapper">
+        <div class="display-content">
 
         <!-- ============================================================ -->
         <!-- HEADER: Logo + Nama Masjid + Tanggal -->
@@ -187,6 +190,7 @@ $opsiBadiyah  = $opsiWaktu['badiyah']  ?? ['subuh'=>0, 'dzuhur'=>1, 'ashar'=>0, 
         </div>
 
         <!-- ============================================================ -->
+        <!-- ============================================================ -->
         <!-- FOOTER: Running Text -->
         <!-- ============================================================ -->
         <div class="display-footer">
@@ -195,8 +199,9 @@ $opsiBadiyah  = $opsiWaktu['badiyah']  ?? ['subuh'=>0, 'dzuhur'=>1, 'ashar'=>0, 
             </div>
         </div>
 
-    </div>
-</div>
+        </div> <!-- End display-content -->
+    </div> <!-- End display-scaler -->
+</div> <!-- End display-container -->
 
 <!-- Scripts -->
 <script src="<?= base_url('assets/display/js/praytimes.js') ?>"></script>

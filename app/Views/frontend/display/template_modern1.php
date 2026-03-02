@@ -295,6 +295,11 @@ $opsiBadiyah  = $opsiWaktu['badiyah']  ?? ['subuh'=>0, 'dzuhur'=>1, 'ashar'=>0, 
 <div class="m1-container">
     <div class="m1-bg" style="background-image: url('<?= $wallpaper ?>')"></div>
 
+    <!-- WRAPPER UNTUK AUTO-SCALING PROPORSI LAYAR TV -->
+    <div id="display-scaler" class="display-scale-wrapper" style="width: 1920px; height: 1080px; position: absolute; top: 0; left: 0; transform-origin: top left; transform: scale(1);">
+    <!-- Note: Modern1 pakai layout absolute yang memakan 100vh awal, kita perlu me-lock canvasnya ke 1920x1080px dan scale dari pojok kiri atas -->
+    <div style="width: 1920px; height: 1080px; display: flex; flex-direction: column; position: relative;">
+
     <!-- TOP BAR: Logo + Tanggal | Nama Masjid | Jam Digital -->
     <div class="m1-topbar">
         <div class="m1-topbar-left">
@@ -406,7 +411,10 @@ $opsiBadiyah  = $opsiWaktu['badiyah']  ?? ['subuh'=>0, 'dzuhur'=>1, 'ashar'=>0, 
     <div class="m1-footer">
         <span class="running-text-content" id="running-text-content"><?= esc($display['running_text'] ?? 'Selamat datang di ' . $namaMasjid) ?></span>
     </div>
-</div>
+    
+    </div> <!-- End inner 1920x1080 container -->
+    </div> <!-- End display-scaler -->
+</div> <!-- End m1-container -->
 
 <!-- Scripts -->
 <script src="<?= base_url('assets/display/js/praytimes.js') ?>"></script>
