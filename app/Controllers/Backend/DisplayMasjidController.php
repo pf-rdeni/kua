@@ -480,6 +480,10 @@ class DisplayMasjidController extends BaseController
             'opsi_waktu_sholat' => json_encode([
                 'qobliyah' => $this->request->getPost('opsi_qobliyah') ?? ['subuh'=>1, 'dzuhur'=>1, 'ashar'=>0, 'maghrib'=>1, 'isya'=>1],
                 'badiyah'  => $this->request->getPost('opsi_badiyah') ?? ['subuh'=>0, 'dzuhur'=>1, 'ashar'=>0, 'maghrib'=>1, 'isya'=>1],
+                'koordinat' => [
+                    'latitude'  => $this->request->getPost('latitude'),
+                    'longitude' => $this->request->getPost('longitude')
+                ]
             ]),
         ];
     }

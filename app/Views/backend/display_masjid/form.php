@@ -214,7 +214,32 @@ $formUrl   = $isEdit ? base_url('admin/display-masjid/update/' . $display['id'])
                                 </option>
                             <?php endforeach; ?>
                         </select>
-                        <small class="form-text text-muted">Koordinat diambil otomatis dari data masjid (latitude/longitude).</small>
+                        <small class="form-text text-muted">Secara default, koordinat diambil otomatis dari profil masjid jika koordinat opsional di bawah ini kosong.</small>
+                    </div>
+
+                    <!-- Koordinat Manual -->
+                    <?php
+                    $opsiData = !empty($display['opsi_waktu_sholat']) ? json_decode($display['opsi_waktu_sholat'], true) : [];
+                    $manualLat = $opsiData['koordinat']['latitude'] ?? '';
+                    $manualLon = $opsiData['koordinat']['longitude'] ?? '';
+                    ?>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="latitude" class="font-weight-bold">Latitude (Opsional)</label>
+                                <input type="number" step="any" name="latitude" id="latitude" class="form-control"
+                                       value="<?= old('latitude', $manualLat) ?>" placeholder="Contoh: -6.200000">
+                                <small class="form-text text-muted">Isi untuk mengganti latitude default.</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="longitude" class="font-weight-bold">Longitude (Opsional)</label>
+                                <input type="number" step="any" name="longitude" id="longitude" class="form-control"
+                                       value="<?= old('longitude', $manualLon) ?>" placeholder="Contoh: 106.816666">
+                                <small class="form-text text-muted">Isi untuk mengganti longitude default.</small>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Koreksi Waktu Sholat -->

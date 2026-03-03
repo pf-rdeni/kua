@@ -52,6 +52,13 @@ class DisplayMasjidController extends BaseController
             ? $display['alamat_display']
             : ($display['alamat_masjid'] ?? '');
 
+        $opsiWaktu = !empty($display['opsi_waktu_sholat']) ? json_decode($display['opsi_waktu_sholat'], true) : [];
+        $manualLat = $opsiWaktu['koordinat']['latitude'] ?? null;
+        $manualLon = $opsiWaktu['koordinat']['longitude'] ?? null;
+
+        $finalLat = ($manualLat !== null && $manualLat !== '') ? $manualLat : ($display['latitude'] ?? 1.0408);
+        $finalLon = ($manualLon !== null && $manualLon !== '') ? $manualLon : ($display['longitude'] ?? 104.2417);
+
         // Data untuk view
         $data = [
             'display'       => $display,
@@ -59,8 +66,8 @@ class DisplayMasjidController extends BaseController
             'kontenByTipe'  => $kontenByTipe,
             'namaMasjid'    => $namaMasjid,
             'alamatDisplay' => $alamatDisplay,
-            'latitude'      => $display['latitude'] ?? 1.0408,   // Default: Seri Kuala Lobam
-            'longitude'     => $display['longitude'] ?? 104.2417, // Default: Seri Kuala Lobam
+            'latitude'      => (float)$finalLat,
+            'longitude'     => (float)$finalLon,
         ];
 
         // Pilih template sesuai pengaturan
@@ -130,8 +137,8 @@ class DisplayMasjidController extends BaseController
                 'logo'            => $display['logo'] ? base_url($display['logo']) : null,
                 'wallpaper'       => $display['wallpaper'] ? base_url($display['wallpaper']) : null,
                 'metode_hitung'   => $display['metode_hitung'],
-                'latitude'        => (float)($display['latitude'] ?? 1.0408),
-                'longitude'       => (float)($display['longitude'] ?? 104.2417),
+                'latitude'        => (float)(($opsiWaktu['koordinat']['latitude'] ?? null) !== null && ($opsiWaktu['koordinat']['latitude'] ?? null) !== '' ? $opsiWaktu['koordinat']['latitude'] : ($display['latitude'] ?? 1.0408)),
+                'longitude'       => (float)(($opsiWaktu['koordinat']['longitude'] ?? null) !== null && ($opsiWaktu['koordinat']['longitude'] ?? null) !== '' ? $opsiWaktu['koordinat']['longitude'] : ($display['longitude'] ?? 104.2417)),
                 'interval_sync'   => (int)$display['interval_sync'],
                 'sholat_jumat'    => (int)$display['sholat_jumat'],
                 // Koreksi jadwal (dari JSON)

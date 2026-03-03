@@ -76,13 +76,13 @@ var PrayTimes = (function () {
 
     // Waktu tengah hari (transit matahari)
     function midDay(t) {
-        var eqt = sunPosition(jDate + t).equation;
+        var eqt = sunPosition(jDate + t / 24).equation;
         return fixHour(12 - eqt);
     }
 
     // Sudut waktu matahari
     function sunAngleTime(angle, time, direction) {
-        var decl = sunPosition(jDate + time).declination;
+        var decl = sunPosition(jDate + time / 24).declination;
         var noon = midDay(time);
         var t = 1 / 15 * darccos((-dsin(angle) - dsin(decl) * dsin(lat)) / (dcos(decl) * dcos(lat)));
         return noon + (direction === 'ccw' ? -t : t);
@@ -90,7 +90,7 @@ var PrayTimes = (function () {
 
     // Waktu Ashar (Hanafi atau Standard)
     function asrTime(factor, time) {
-        var decl = sunPosition(jDate + time).declination;
+        var decl = sunPosition(jDate + time / 24).declination;
         var angle = -darccot(factor + dtan(Math.abs(lat - decl)));
         return sunAngleTime(angle, time);
     }
