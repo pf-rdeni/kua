@@ -116,16 +116,32 @@ var DisplayEngine = (function () {
     }
 
     // ============================================================
-    // AUTO SCALING ENGINE (Responsive Canvas 16:9 - 1920x1080)
+    // AUTO SCALING ENGINE (Responsive Canvas)
     // ============================================================
     function initAutoScaling() {
-        var baseWidth = 1920;
-        var baseHeight = 1080;
         var scaleWrapper = document.getElementById('display-scaler');
+        var mainContainer = document.querySelector('.display-container') || document.querySelector('.m1-container') || document.querySelector('.m2-container');
 
         if (!scaleWrapper) {
             console.warn('[DisplayEngine] display-scaler tidak ditemukan, auto-scaling diabaikan.');
             return;
+        }
+
+        // Cek orientasi dari class parent container
+        var isVertical = mainContainer && mainContainer.classList.contains('orientasi-vertikal');
+
+        // Atur dimensi canvas dasar berdasarkan orientasi
+        var baseWidth = isVertical ? 1080 : 1920;
+        var baseHeight = isVertical ? 1920 : 1080;
+
+        // Terapkan paksa css width & heightnya agar sesuai orientasi
+        scaleWrapper.style.width = baseWidth + 'px';
+        scaleWrapper.style.height = baseHeight + 'px';
+
+        // Untuk template modern1 & modern2, ada div child dengan fixed width/height yang juga perlu disesuaikan
+        if (scaleWrapper.children.length === 1 && scaleWrapper.children[0].tagName === 'DIV' && scaleWrapper.children[0].style.width === '1920px') {
+            scaleWrapper.children[0].style.width = baseWidth + 'px';
+            scaleWrapper.children[0].style.height = baseHeight + 'px';
         }
 
         function calculateScale() {

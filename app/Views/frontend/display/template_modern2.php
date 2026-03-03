@@ -296,7 +296,7 @@ $opsiQobliyah = $opsiWaktu['qobliyah'] ?? ['subuh'=>1, 'dzuhur'=>1, 'ashar'=>0, 
 $opsiBadiyah  = $opsiWaktu['badiyah']  ?? ['subuh'=>0, 'dzuhur'=>1, 'ashar'=>0, 'maghrib'=>1, 'isya'=>1];
 ?>
 
-<div class="m2-container">
+<div class="m2-container <?= ($display['orientasi'] ?? 'horizontal') === 'vertikal' ? 'orientasi-vertikal' : '' ?>">
     <div class="m2-bg" style="background-image: url('<?= $wallpaper ?>')"></div>
 
     <!-- WRAPPER UNTUK AUTO-SCALING PROPORSI LAYAR TV -->
