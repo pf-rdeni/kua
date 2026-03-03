@@ -296,9 +296,9 @@ $opsiBadiyah  = $opsiWaktu['badiyah']  ?? ['subuh'=>0, 'dzuhur'=>1, 'ashar'=>0, 
     <div class="m1-bg" style="background-image: url('<?= $wallpaper ?>')"></div>
 
     <!-- WRAPPER UNTUK AUTO-SCALING PROPORSI LAYAR TV -->
-    <div id="display-scaler" class="display-scale-wrapper" style="width: 1920px; height: 1080px; position: absolute; top: 0; left: 0; transform-origin: top left; transform: scale(1);">
-    <!-- Note: Modern1 pakai layout absolute yang memakan 100vh awal, kita perlu me-lock canvasnya ke 1920x1080px dan scale dari pojok kiri atas -->
-    <div style="width: 1920px; height: 1080px; display: flex; flex-direction: column; position: relative;">
+    <!-- Gunakan display-scale-wrapper standard yg memiliki transform-origin: center center; -->
+    <div id="display-scaler" class="display-scale-wrapper">
+    <div style="width: 1920px; height: 1080px; display: flex; flex-direction: column; position: relative; z-index: 1;">
 
     <!-- TOP BAR: Logo + Tanggal | Nama Masjid | Jam Digital -->
     <div class="m1-topbar">
