@@ -7,8 +7,11 @@
         <a href="<?= base_url('admin/keuangan/kas/' . $entitasType) ?>" class="btn btn-sm btn-outline-secondary mr-1">
             <i class="fas fa-piggy-bank mr-1"></i>Kelola Kas
         </a>
-        <a href="<?= base_url('admin/keuangan/transaksi/' . $entitasType . '/create') ?>" class="btn btn-sm btn-success">
-            <i class="fas fa-plus mr-1"></i>Tambah Transaksi
+        <a href="<?= base_url('admin/keuangan/transaksi/' . $entitasType . '/create?jenis=pemasukan') ?>" class="btn btn-sm btn-success mr-1">
+            <i class="fas fa-arrow-down mr-1"></i>Tambah Pemasukan
+        </a>
+        <a href="<?= base_url('admin/keuangan/transaksi/' . $entitasType . '/create?jenis=pengeluaran') ?>" class="btn btn-sm btn-danger">
+            <i class="fas fa-arrow-up mr-1"></i>Tambah Pengeluaran
         </a>
     </div>
 </div>
@@ -92,14 +95,15 @@
                     <?php endforeach; ?>
                 </select>
             </div>
-            <?php if ($entitasType === 'masjid_mushola' && !empty($masjidList)): ?>
+            <?php if (!empty($entitasList)): ?>
             <div class="col-auto">
-                <label class="small font-weight-bold">Masjid/Mushola</label>
+                <label class="small font-weight-bold"><?= esc($entitasConfig['nama_label']) ?></label>
                 <select name="entitas_id" class="form-control form-control-sm">
                     <option value="">Semua</option>
-                    <?php foreach ($masjidList as $m): ?>
-                    <option value="<?= $m['id_masjid_mushola'] ?>" <?= ((string)$filterEntitasId === (string)$m['id_masjid_mushola']) ? 'selected' : '' ?>>
-                        <?= esc($m['nama']) ?>
+                    <?php foreach ($entitasList as $e): ?>
+                    <?php $namaEntitas = isset($e['nama']) ? $e['nama'] : ($e['nama_majelis_taklim'] ?? 'Tanpa Nama'); ?>
+                    <option value="<?= $e[$pkRow] ?>" <?= ((string)$filterEntitasId === (string)$e[$pkRow]) ? 'selected' : '' ?>>
+                        <?= esc($namaEntitas) ?>
                     </option>
                     <?php endforeach; ?>
                 </select>
@@ -137,8 +141,8 @@
                     <tr>
                         <th width="40">#</th>
                         <th>Tanggal</th>
-                        <?php if ($entitasType === 'masjid_mushola'): ?>
-                        <th>Masjid/Mushola</th>
+                        <?php if (in_array($entitasType, ['masjid_mushola', 'majelis_taklim'])): ?>
+                        <th><?= esc($entitasConfig['nama_label']) ?></th>
                         <?php endif; ?>
                         <th>Kas</th>
                         <th>Kategori</th>
@@ -152,7 +156,7 @@
                 </thead>
                 <tfoot>
                     <tr class="bg-light font-weight-bold">
-                        <td colspan="<?= $entitasType === 'masjid_mushola' ? 6 : 5 ?>" class="text-right">TOTAL:</td>
+                        <td colspan="<?= in_array($entitasType, ['masjid_mushola', 'majelis_taklim']) ? 6 : 5 ?>" class="text-right">TOTAL:</td>
                         <td class="text-right">
                             <!-- Pemasukan: --> <span class="text-success">+<?= number_format($rekap['total_pemasukan'], 0, ',', '.') ?></span><br>
                             <!-- Pengeluaran: --> <span class="text-danger">-<?= number_format($rekap['total_pengeluaran'], 0, ',', '.') ?></span>
@@ -170,8 +174,8 @@
                         <td data-order="<?= $t['tanggal_transaksi'] ?>">
                             <?= date('d M Y', strtotime($t['tanggal_transaksi'])) ?>
                         </td>
-                        <?php if ($entitasType === 'masjid_mushola'): ?>
-                        <td><?= esc($t['nama_masjid'] ?? '-') ?></td>
+                        <?php if (in_array($entitasType, ['masjid_mushola', 'majelis_taklim'])): ?>
+                        <td><?= esc($t['nama_masjid'] ?? $t['nama_majelis_taklim'] ?? '-') ?></td>
                         <?php endif; ?>
                         <td><?= esc($t['nama_kas'] ?? '-') ?></td>
                         <td>

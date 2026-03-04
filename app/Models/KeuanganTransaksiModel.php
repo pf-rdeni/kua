@@ -42,10 +42,12 @@ class KeuanganTransaksiModel extends Model
     public function getWithDetail(array $filters = []): array
     {
         $builder = $this->db->table('tbl_keuangan_transaksi t')
-            ->select('t.*, k.nama_kategori, k.warna_badge, ks.nama_kas, u.username as nama_input')
+            ->select('t.*, k.nama_kategori, k.warna_badge, ks.nama_kas, u.username as nama_input, m.nama as nama_masjid, mt.nama_majelis_taklim')
             ->join('tbl_keuangan_kategori k', 'k.id = t.id_kategori', 'left')
             ->join('tbl_keuangan_kas ks', 'ks.id = t.id_kas', 'left')
-            ->join('users u', 'u.id = t.created_by', 'left');
+            ->join('users u', 'u.id = t.created_by', 'left')
+            ->join('tbl_masjid_mushola m', 'm.id_masjid_mushola = t.entitas_id AND t.entitas_type = "masjid_mushola"', 'left')
+            ->join('tbl_majelis_taklim mt', 'mt.id_majelis_taklim = t.entitas_id AND t.entitas_type = "majelis_taklim"', 'left');
 
         // Filter berdasarkan entitas_type
         if (!empty($filters['entitas_type'])) {
@@ -161,5 +163,33 @@ class KeuanganTransaksiModel extends Model
             'pemasukan'   => array_values($pemasukan),
             'pengeluaran' => array_values($pengeluaran),
         ];
+    }
+
+    /**
+     * Hitung rekap berdasarkan kategori untuk chart (contoh Bar Chart)
+     */
+    public function getRekapKategori(string $entitasType, ?int $entitasId = null, int $tahun = 0, int $bulan = 0): array
+    {
+        $builder = $this->db->table('tbl_keuangan_transaksi t')
+            ->select('k.nama_kategori, t.jenis, SUM(t.jumlah) as total')
+            ->join('tbl_keuangan_kategori k', 'k.id = t.id_kategori', 'left')
+            ->where('t.entitas_type', $entitasType);
+
+        if ($entitasId !== null) {
+            $builder->where('t.entitas_id', $entitasId);
+        }
+
+        if ($tahun > 0) {
+            $builder->where('YEAR(t.tanggal_transaksi)', $tahun);
+        }
+        if ($bulan > 0) {
+            $builder->where('MONTH(t.tanggal_transaksi)', $bulan);
+        }
+
+        // Only include those that have category
+        $builder->where('t.id_kategori IS NOT NULL')
+                ->groupBy(['t.id_kategori', 'k.nama_kategori', 't.jenis']);
+
+        return $builder->get()->getResultArray();
     }
 }

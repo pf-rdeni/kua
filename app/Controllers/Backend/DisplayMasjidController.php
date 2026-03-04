@@ -29,9 +29,23 @@ class DisplayMasjidController extends BaseController
      */
     public function index()
     {
+        $displays = [];
+        if (in_groups('OperatorMasjidMushola') && !in_groups('SuperAdmin') && !in_groups('Admin')) {
+            $currentUser = user();
+            if ($currentUser && $currentUser->entitas_type === 'masjid_mushola' && !empty($currentUser->entitas_id)) {
+                $displays = $this->displayModel->select('tbl_display_setting.*, tbl_masjid_mushola.nama as nama_masjid, tbl_masjid_mushola.latitude, tbl_masjid_mushola.longitude')
+                                               ->join('tbl_masjid_mushola', 'tbl_masjid_mushola.id_masjid_mushola = tbl_display_setting.id_masjid_mushola', 'left')
+                                               ->where('tbl_display_setting.id_masjid_mushola', $currentUser->entitas_id)
+                                               ->orderBy('tbl_display_setting.id', 'DESC')
+                                               ->findAll();
+            }
+        } else {
+            $displays = $this->displayModel->getDisplayDenganMasjid();
+        }
+
         $data = [
             'title'    => 'Display Masjid',
-            'displays' => $this->displayModel->getDisplayDenganMasjid(),
+            'displays' => $displays,
         ];
         return view('backend/display_masjid/index', $data);
     }
@@ -41,10 +55,24 @@ class DisplayMasjidController extends BaseController
      */
     public function create()
     {
+        $masjidList = [];
+        $selectedMasjidId = null;
+
+        if (in_groups('OperatorMasjidMushola') && !in_groups('SuperAdmin') && !in_groups('Admin')) {
+            $currentUser = user();
+            if ($currentUser && $currentUser->entitas_type === 'masjid_mushola' && !empty($currentUser->entitas_id)) {
+                $masjidList = $this->masjidModel->where('id_masjid_mushola', $currentUser->entitas_id)->findAll();
+                $selectedMasjidId = $currentUser->entitas_id;
+            }
+        } else {
+            $masjidList = $this->masjidModel->orderBy('nama', 'ASC')->findAll();
+        }
+
         $data = [
             'title'      => 'Tambah Display Masjid',
-            'masjidList' => $this->masjidModel->orderBy('nama', 'ASC')->findAll(),
+            'masjidList' => $masjidList,
             'display'    => null,
+            'selectedMasjidId' => $selectedMasjidId,
         ];
         return view('backend/display_masjid/form', $data);
     }
@@ -97,10 +125,23 @@ class DisplayMasjidController extends BaseController
                              ->with('error', 'Display tidak ditemukan.');
         }
 
+        $masjidList = [];
+        if (in_groups('OperatorMasjidMushola') && !in_groups('SuperAdmin') && !in_groups('Admin')) {
+            $currentUser = user();
+            if ($display['id_masjid_mushola'] != $currentUser->entitas_id) {
+                return redirect()->to(base_url('admin/display-masjid'))
+                                 ->with('error', 'Akses ditolak.');
+            }
+            $masjidList = $this->masjidModel->where('id_masjid_mushola', $currentUser->entitas_id)->findAll();
+        } else {
+            $masjidList = $this->masjidModel->orderBy('nama', 'ASC')->findAll();
+        }
+
         $data = [
             'title'      => 'Edit Display Masjid',
-            'masjidList' => $this->masjidModel->orderBy('nama', 'ASC')->findAll(),
+            'masjidList' => $masjidList,
             'display'    => $display,
+            'selectedMasjidId' => $display['id_masjid_mushola'],
         ];
         return view('backend/display_masjid/form', $data);
     }
@@ -202,6 +243,13 @@ class DisplayMasjidController extends BaseController
                              ->with('error', 'Display tidak ditemukan.');
         }
 
+        if (in_groups('OperatorMasjidMushola') && !in_groups('SuperAdmin') && !in_groups('Admin')) {
+            if ($display['id_masjid_mushola'] != user()->entitas_id) {
+                return redirect()->to(base_url('admin/display-masjid'))
+                                 ->with('error', 'Akses ditolak.');
+            }
+        }
+
         // Hapus file logo dan wallpaper jika ada
         if (!empty($display['logo']) && file_exists(FCPATH . $display['logo'])) {
             unlink(FCPATH . $display['logo']);
@@ -235,6 +283,13 @@ class DisplayMasjidController extends BaseController
         if (!$display) {
             return redirect()->to(base_url('admin/display-masjid'))
                              ->with('error', 'Display tidak ditemukan.');
+        }
+
+        if (in_groups('OperatorMasjidMushola') && !in_groups('SuperAdmin') && !in_groups('Admin')) {
+            if ($display['id_masjid_mushola'] != user()->entitas_id) {
+                return redirect()->to(base_url('admin/display-masjid'))
+                                 ->with('error', 'Akses ditolak.');
+            }
         }
 
         $data = [
@@ -398,8 +453,13 @@ class DisplayMasjidController extends BaseController
      */
     private function _getFormData()
     {
+        $idMasjidMushola = $this->request->getPost('id_masjid_mushola');
+        if (in_groups('OperatorMasjidMushola') && !in_groups('SuperAdmin') && !in_groups('Admin')) {
+            $idMasjidMushola = user()->entitas_id;
+        }
+
         return [
-            'id_masjid_mushola'    => $this->request->getPost('id_masjid_mushola'),
+            'id_masjid_mushola'    => $idMasjidMushola,
             'nama_display'         => $this->request->getPost('nama_display'),
             'template_aktif'       => $this->request->getPost('template_aktif'),
             'orientasi'            => $this->request->getPost('orientasi') ?? 'horizontal',
@@ -418,6 +478,7 @@ class DisplayMasjidController extends BaseController
                 'ashar'   => (int)($this->request->getPost('koreksi_ashar') ?? 0),
                 'maghrib' => (int)($this->request->getPost('koreksi_maghrib') ?? 0),
                 'isya'    => (int)($this->request->getPost('koreksi_isya') ?? 0),
+                'hijriah' => (int)($this->request->getPost('koreksi_hijriah') ?? 0),
             ]),
 
             // JSON: Timer durasi iqomah per waktu

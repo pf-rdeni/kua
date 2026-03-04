@@ -61,6 +61,12 @@
                         title="Edit Kas">
                     <i class="fas fa-edit mr-1"></i>Edit
                 </button>
+                <button class="btn btn-xs btn-danger btn-delete-kas"
+                        data-id="<?= $kas['id'] ?>"
+                        data-nama="<?= esc($kas['nama_kas']) ?>"
+                        title="Hapus Kas">
+                    <i class="fas fa-trash mr-1"></i>Hapus
+                </button>
             </div>
         </div>
     </div>
@@ -82,16 +88,21 @@
                         <label class="font-weight-bold text-sm">Nama Kas <span class="text-danger">*</span></label>
                         <input type="text" name="nama_kas" class="form-control form-control-sm" placeholder="Misal: Kas Masjid Al-Falah" required>
                     </div>
-                    <?php if ($entitasType === 'masjid_mushola' && !empty($masjidList)): ?>
+                    <?php if (in_array($entitasType, ['masjid_mushola', 'majelis_taklim'])): ?>
+                    <?php if ($operatorEntitasId): ?>
+                        <input type="hidden" name="entitas_id" value="<?= $operatorEntitasId ?>">
+                    <?php elseif (!empty($entitasList)): ?>
                     <div class="form-group">
-                        <label class="font-weight-bold text-sm">Masjid/Mushola</label>
+                        <label class="font-weight-bold text-sm"><?= esc($entitasConfig['nama_label']) ?></label>
                         <select name="entitas_id" class="form-control form-control-sm">
-                            <option value="">— Umum (tidak terkait masjid spesifik) —</option>
-                            <?php foreach ($masjidList as $m): ?>
-                            <option value="<?= $m['id_masjid_mushola'] ?>"><?= esc($m['nama']) ?></option>
+                            <option value="">— Umum (tidak terkait spesifik) —</option>
+                            <?php foreach ($entitasList as $e): ?>
+                            <?php $namaEntitas = isset($e['nama']) ? $e['nama'] : ($e['nama_majelis_taklim'] ?? 'Tanpa Nama'); ?>
+                            <option value="<?= $e[$pkRow] ?>"><?= esc($namaEntitas) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
+                    <?php endif; ?>
                     <?php endif; ?>
                     <div class="form-group">
                         <label class="font-weight-bold text-sm">Saldo Awal (Rp)</label>
@@ -129,24 +140,22 @@
                         <label class="font-weight-bold text-sm">Nama Kas <span class="text-danger">*</span></label>
                         <input type="text" name="nama_kas" id="edit_nama_kas" class="form-control form-control-sm" required>
                     </div>
-                    <?php if ($entitasType === 'masjid_mushola' && !empty($masjidList)): ?>
+                    <?php if (in_array($entitasType, ['masjid_mushola', 'majelis_taklim'])): ?>
+                    <?php if ($operatorEntitasId): ?>
+                        <input type="hidden" name="entitas_id" id="edit_entitas_id_hidden" value="<?= $operatorEntitasId ?>">
+                    <?php elseif (!empty($entitasList)): ?>
                     <div class="form-group">
-                        <label class="font-weight-bold text-sm">Masjid/Mushola</label>
+                        <label class="font-weight-bold text-sm"><?= esc($entitasConfig['nama_label']) ?></label>
                         <select name="entitas_id" id="edit_entitas_id" class="form-control form-control-sm">
                             <option value="">— Umum —</option>
-                            <?php foreach ($masjidList as $m): ?>
-                            <option value="<?= $m['id_masjid_mushola'] ?>"><?= esc($m['nama']) ?></option>
+                            <?php foreach ($entitasList as $e): ?>
+                            <?php $namaEntitas = isset($e['nama']) ? $e['nama'] : ($e['nama_majelis_taklim'] ?? 'Tanpa Nama'); ?>
+                            <option value="<?= $e[$pkRow] ?>"><?= esc($namaEntitas) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
                     <?php endif; ?>
-                    <div class="form-group mb-3">
-                            <label class="font-weight-bold text-sm">Update Saldo Saat Ini <span class="text-danger">*</span></label>
-                            <div class="input-group input-group-sm">
-                                <div class="input-group-prepend"><span class="input-group-text">Rp</span></div>
-                                <input type="number" name="saldo_saat_ini" id="edit_saldo" class="form-control form-control-sm" step="any" required>
-                            </div>
-                        </div>
+                    <?php endif; ?>
                     <div class="form-group mb-0">
                         <label class="font-weight-bold text-sm">Keterangan</label>
                         <textarea name="keterangan" id="edit_keterangan" class="form-control form-control-sm" rows="2"></textarea>
@@ -173,10 +182,44 @@ $(function () {
         $('#edit_nama_kas').val($(this).data('nama'));
         $('#edit_saldo_awal').val($(this).data('saldo'));
         $('#edit_keterangan').val($(this).data('ket'));
-        <?php if ($entitasType === 'masjid_mushola'): ?>
-        $('#edit_entitas_id').val($(this).data('entitas-id'));
+        <?php if (in_array($entitasType, ['masjid_mushola', 'majelis_taklim'])): ?>
+        if ($('#edit_entitas_id').length) {
+            $('#edit_entitas_id').val($(this).data('entitas-id'));
+        }
         <?php endif; ?>
         $('#modalEditKas').modal('show');
+    });
+
+    // Hapus Kas
+    $('.btn-delete-kas').on('click', function () {
+        var kasId = $(this).data('id');
+        var kasNama = $(this).data('nama');
+        var baseUrl = '<?= base_url('admin/keuangan/kas/' . $entitasType . '/delete/') ?>' + kasId;
+        
+        Swal.fire({
+            title: 'Hapus Rekening Kas?',
+            html: "Anda yakin ingin menghapus rekening kas <b>" + kasNama + "</b>?<br><small class='text-danger'>Perhatian: Kas yang sudah memiliki riwayat transaksi tidak dapat dihapus.</small>",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: '<i class="fas fa-trash mr-1"></i>Ya, Hapus!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                var form = $('<form>', {
+                    'method': 'POST',
+                    'action': baseUrl
+                });
+                form.append($('<input>', {
+                    'type': 'hidden',
+                    'name': '<?= csrf_token() ?>',
+                    'value': '<?= csrf_hash() ?>'
+                }));
+                $('body').append(form);
+                form.submit();
+            }
+        });
     });
 });
 </script>

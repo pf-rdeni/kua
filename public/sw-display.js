@@ -1,7 +1,7 @@
-const CACHE_NAME = 'display-kua-v1';
+const CACHE_NAME = 'display-kua-v2';
 
 // Aset statis yang WAJIB di-cache saat pertama kali diakses.
-// Menyimpan menggunakan absolute URL path berdasarkan origin
+// Hanya aset untuk halaman display (TV), BUKAN admin/backend!
 const STATIC_ASSETS = [
     './assets/display/css/display-style.css',
     './assets/display/js/praytimes.js',
@@ -56,13 +56,23 @@ self.addEventListener('fetch', (event) => {
 
     const requestUrl = new URL(event.request.url);
 
-    // 1. API DATA (JSON) -> Network First, Fallback to LocalStorage (sudah dihandle display-engine.js)
-    // Sebaiknya SW tidak men-cache respons API JSON di Cache API browser agar
-    // tidak tabrakan dengan mekanisme LocalStorage yang lebih cerdas di display-engine.js.
-    if (requestUrl.pathname.includes('/api/') || requestUrl.pathname.includes('/api_keuangan/') || requestUrl.pathname.includes('/check_update/')) {
+    // 1. HALAMAN ADMIN & AUTH -> JANGAN di-intercept SW sama sekali!
+    // Ini PALING PENTING: memastikan setiap refresh langsung ambil dari server.
+    // Tanpa ini, perubahan kode PHP/CSS/JS di backend tidak langsung terlihat
+    // karena browser melayani dari cache SW.
+    if (requestUrl.pathname.startsWith('/admin') ||
+        requestUrl.pathname.startsWith('/kua/admin') ||
+        requestUrl.pathname.startsWith('/auth') ||
+        requestUrl.pathname.startsWith('/kua/auth')) {
+        return; // SW tidak ikut campur, biarkan browser fetch langsung ke server
+    }
+
+    // 2. API DATA (JSON) -> Network First, Fallback kosong (dihandle display-engine.js via LocalStorage)
+    if (requestUrl.pathname.includes('/api/') ||
+        requestUrl.pathname.includes('/api_keuangan/') ||
+        requestUrl.pathname.includes('/check_update/')) {
         event.respondWith(
             fetch(event.request).catch(() => {
-                // Return fallback JSON response silently to avoid Uncaught TypeError in console
                 return new Response(JSON.stringify({
                     success: false,
                     message: "Offline / Service Unavailable",
@@ -76,14 +86,11 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // 2. HALAMAN DISPLAY HTML (/display/1, /display/keuangan/...) -> Network First, Fallback to Cache
-    // Kenapa Network First? Supaya kalau koneksi jalan, dapat layout HTML/pengaturan terbaru.
-    // Kalau koneksi mati, berikan salinan halaman terakhir dari cache!
+    // 3. HALAMAN DISPLAY HTML (/display/1, /display/keuangan/...) -> Network First, Fallback to Cache
     if (requestUrl.pathname.match(/\/display\/\d+/) || requestUrl.pathname.includes('/display/keuangan/')) {
         event.respondWith(
             fetch(event.request)
                 .then((networkResponse) => {
-                    // Kalau dapet response valid dari server, simpan ke cache
                     if (networkResponse.ok) {
                         const responseClone = networkResponse.clone();
                         caches.open(CACHE_NAME).then((cache) => {
@@ -93,7 +100,6 @@ self.addEventListener('fetch', (event) => {
                     return networkResponse;
                 })
                 .catch(() => {
-                    // JIKA OFFLINE -> Ambil dari cache!
                     console.log('[ServiceWorker] Offline, mengambil halaman Display dari cache:', requestUrl.href);
                     return caches.match(event.request);
                 })
@@ -101,19 +107,17 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // 3. GAMBAR & ASET STATIS (/assets/..., /uploads/...) -> Cache First, Fallback to Network
-    // Gunakan regex yang lebih kuat untuk menangkap string path dimanapun posisinya
-    if (requestUrl.pathname.match(/\/assets\//) || requestUrl.pathname.match(/\/uploads\//) || requestUrl.pathname.endsWith('.jpg') || requestUrl.pathname.endsWith('.png') || requestUrl.pathname.endsWith('.css') || requestUrl.pathname.endsWith('.js')) {
+    // 4. ASET DISPLAY SAJA (/assets/display/) -> Cache First, Fallback to Network
+    // CATATAN: Sengaja HANYA folder assets/display/ yang di-cache.
+    // Folder assets/plugins/, assets/dist/ (AdminLTE), dll. TIDAK dicache
+    // supaya perubahan CSS/JS di backend langsung terlihat.
+    if (requestUrl.pathname.includes('/assets/display/')) {
         event.respondWith(
             caches.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
-                // Return cache jika ada
                 if (cachedResponse) {
                     return cachedResponse;
                 }
-
-                // Jika tidak ada di cache, fetch dari network
                 return fetch(event.request).then((networkResponse) => {
-                    // Jika sukses mengunduh gambar/aset baru, tambahkan ke cache diam-diam
                     if (networkResponse.ok) {
                         const responseClone = networkResponse.clone();
                         caches.open(CACHE_NAME).then((cache) => {
@@ -122,19 +126,10 @@ self.addEventListener('fetch', (event) => {
                     }
                     return networkResponse;
                 }).catch(() => {
-                    // Jika offline dan request adalah GAMBAR, kirim gambar fallback
-                    if (event.request.destination === 'image') {
-                        // Coba pakai relative match
-                        return caches.match('./assets/img/default-masjid.jpg', { ignoreSearch: true });
-                    }
-
-                    // Fallback jika asset lain (css/js) gagal diload
                     return new Response('Asset not available offline.', {
                         status: 503,
                         statusText: 'Service Unavailable',
-                        headers: new Headers({
-                            'Content-Type': 'text/plain'
-                        })
+                        headers: new Headers({ 'Content-Type': 'text/plain' })
                     });
                 });
             })
@@ -142,29 +137,41 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // 4. LAIN-LAIN -> Stale-While-Revalidate
-    event.respondWith(
-        caches.match(event.request).then((cachedResponse) => {
-            const fetchPromise = fetch(event.request).then((networkResponse) => {
-                if (networkResponse.ok) {
-                    const responseClone = networkResponse.clone();
-                    caches.open(CACHE_NAME).then((cache) => {
-                        cache.put(event.request, responseClone);
-                    });
+    // 5. GAMBAR UPLOADS (/uploads/) -> Cache First, Fallback to Network (dan fallback gambar default)
+    if (requestUrl.pathname.includes('/uploads/')) {
+        event.respondWith(
+            caches.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
+                if (cachedResponse) {
+                    return cachedResponse;
                 }
-                return networkResponse;
-            }).catch(() => {
-                // Return fallback response instead of null to prevent TypeError
-                return new Response('Network error occurred.', {
-                    status: 503,
-                    statusText: 'Service Unavailable',
-                    headers: new Headers({
-                        'Content-Type': 'text/plain'
-                    })
+                return fetch(event.request).then((networkResponse) => {
+                    if (networkResponse.ok) {
+                        const responseClone = networkResponse.clone();
+                        caches.open(CACHE_NAME).then((cache) => {
+                            cache.put(event.request, responseClone);
+                        });
+                    }
+                    return networkResponse;
+                }).catch(() => {
+                    if (event.request.destination === 'image') {
+                        return caches.match('./assets/img/default-masjid.jpg', { ignoreSearch: true });
+                    }
+                    return new Response('Asset not available offline.', {
+                        status: 503,
+                        statusText: 'Service Unavailable',
+                        headers: new Headers({ 'Content-Type': 'text/plain' })
+                    });
                 });
-            });
+            })
+        );
+        return;
+    }
 
-            return cachedResponse || fetchPromise;
+    // 6. SEMUA REQUEST LAIN -> Network First (tidak dicache, langsung dari server)
+    // Ini memastikan halaman-halaman lain selalu segar dari server
+    event.respondWith(
+        fetch(event.request).catch(() => {
+            return caches.match(event.request);
         })
     );
 });

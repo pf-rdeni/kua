@@ -16,13 +16,32 @@ class MasjidMusholaController extends BaseController
 
     public function index()
     {
+        $masjidList = [];
+        $title      = 'Data Masjid dan Mushola';
+
+        if (in_groups('OperatorMasjidMushola') && !in_groups('SuperAdmin') && !in_groups('Admin')) {
+            // Operator hanya bisa melihat masjid/mushola tempat dia ditugaskan
+            $currentUser = user();
+            if ($currentUser && $currentUser->entitas_type === 'masjid_mushola' && !empty($currentUser->entitas_id)) {
+                $masjidList = $this->masjidModel->where('id_masjid_mushola', $currentUser->entitas_id)->findAll();
+
+                // Ubah title dinamis jika datanya ada
+                if (!empty($masjidList)) {
+                    $title = 'Data ' . esc($masjidList[0]['jenis']);
+                }
+            }
+        } else {
+            // Admin/SuperAdmin bisa melihat semua
+            $masjidList = $this->masjidModel->findAll();
+        }
+
         $data = [
-            'title'      => 'Data Masjid dan Mushola',
+            'title'      => $title,
             'breadcrumb' => [
                 ['title' => 'Home', 'url' => 'admin/dashboard'],
-                ['title' => 'Masjid dan Mushola', 'url' => ''],
+                ['title' => $title, 'url' => ''],
             ],
-            'masjidList' => $this->masjidModel->findAll(),
+            'masjidList' => $masjidList,
         ];
 
         return view('backend/masjid_mushola/index', $data);

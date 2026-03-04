@@ -37,23 +37,41 @@ class KeuanganIuranSettingModel extends Model
     /**
      * Ambil semua setting iuran aktif berdasarkan entitas_type
      */
-    public function getByEntitasType(string $entitasType): array
+    public function getByEntitasType(string $entitasType, ?int $entitasId = null): array
     {
-        return $this->where('entitas_type', $entitasType)
-                    ->where('is_active', 1)
-                    ->orderBy('nama_iuran', 'ASC')
-                    ->findAll();
+        $builder = $this->where('entitas_type', $entitasType)
+                        ->where('is_active', 1)
+                        ->orderBy('nama_iuran', 'ASC');
+        
+        if ($entitasId !== null) {
+            $builder->groupStart()
+                    ->where('entitas_id', $entitasId)
+                    ->orWhere('entitas_id IS NULL')
+                    ->groupEnd();
+        } else {
+            // Jika admin global (null), tetap lihat semua
+        }
+
+        return $builder->findAll();
     }
 
     /**
      * Ambil semua setting iuran (aktif maupun tidak) untuk halaman management
      */
-    public function getAllByEntitasType(string $entitasType): array
+    public function getAllByEntitasType(string $entitasType, ?int $entitasId = null): array
     {
-        return $this->where('entitas_type', $entitasType)
-                    ->orderBy('is_active', 'DESC')
-                    ->orderBy('nama_iuran', 'ASC')
-                    ->findAll();
+        $builder = $this->where('entitas_type', $entitasType)
+                        ->orderBy('is_active', 'DESC')
+                        ->orderBy('nama_iuran', 'ASC');
+
+        if ($entitasId !== null) {
+            $builder->groupStart()
+                    ->where('entitas_id', $entitasId)
+                    ->orWhere('entitas_id IS NULL')
+                    ->groupEnd();
+        }
+
+        return $builder->findAll();
     }
 
     /**

@@ -7,13 +7,15 @@
         <div class="card">
             <div class="card-header">
                 <h3 class="card-title">
-                    <i class="fas fa-mosque mr-2"></i>Data Masjid & Mushola
+                    <i class="fas fa-mosque mr-2"></i><?= esc($title) ?>
                 </h3>
+                <?php if (in_groups('SuperAdmin') || in_groups('Admin')): ?>
                 <div class="card-tools">
                     <a href="<?= base_url('admin/masjid-mushola/create') ?>" class="btn btn-primary btn-sm">
                         <i class="fas fa-plus mr-1"></i> Tambah
                     </a>
                 </div>
+                <?php endif; ?>
             </div>
 
             <div class="card-body">
@@ -79,9 +81,11 @@
                                         <a href="<?= base_url('admin/masjid-mushola/edit/' . $masjid['id_masjid_mushola']) ?>" class="btn btn-warning btn-xs" title="Edit">
                                             <i class="fas fa-edit"></i>
                                         </a>
+                                        <?php if (in_groups('SuperAdmin') || in_groups('Admin')): ?>
                                         <a href="<?= base_url('admin/masjid-mushola/delete/' . $masjid['id_masjid_mushola']) ?>" class="btn btn-danger btn-xs" onclick="return confirm('Apakah Anda yakin?')" title="Hapus">
                                             <i class="fas fa-trash"></i>
                                         </a>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>

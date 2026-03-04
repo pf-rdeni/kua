@@ -3,11 +3,20 @@
 namespace App\Controllers\Backend;
 
 use App\Controllers\BaseController;
+use App\Models\AgendaKegiatanModel;
 
 class DashboardController extends BaseController
 {
     public function index()
     {
+        // Routing dashboard berdasarkan role
+        if (in_groups('OperatorMasjidMushola') && !in_groups('SuperAdmin') && !in_groups('Admin')) {
+            return $this->dashboardMasjid();
+        }
+        if (in_groups('OperatorMajelisTaklim') && !in_groups('SuperAdmin') && !in_groups('Admin')) {
+            return $this->dashboardMajelisTaklim();
+        }
+
         $db = \Config\Database::connect();
 
         // Mengambil data titik lokasi (yang memiliki koordinat)
@@ -248,5 +257,167 @@ class DashboardController extends BaseController
                 $row['token_jadwal'] = $newToken;
             }
         }
+    }
+
+    /**
+     * Dashboard khusus untuk OperatorMasjidMushola
+     * Menampilkan data yang relevan: profil masjid, display aktif, saldo kas, jadwal
+     */
+    private function dashboardMasjid()
+    {
+        $currentUser = user();
+        $db          = \Config\Database::connect();
+
+        // Jika operator belum punya entitas terhubung, tampilkan pesan setup
+        if (empty($currentUser->entitas_id) || $currentUser->entitas_type !== 'masjid_mushola') {
+            return view('backend/dashboard/operator_masjid', [
+                'title'    => 'Dashboard',
+                'masjid'   => null,
+                'displays' => [],
+                'saldoKas' => 0,
+                'jmlKonten'     => 0,
+                'jadwalMaghrib' => [],
+                'jadwalJumat'   => [],
+                'belumSetup'    => true,
+            ]);
+        }
+
+        $idMasjid = $currentUser->entitas_id;
+
+        // 1. Profil Masjid
+        $masjid = $db->table('tbl_masjid_mushola')
+                     ->where('id_masjid_mushola', $idMasjid)
+                     ->get()->getRowArray();
+
+        // 2. Daftar Display aktif milik masjid ini
+        $displays = $db->table('tbl_display_setting')
+                       ->where('id_masjid_mushola', $idMasjid)
+                       ->get()->getResultArray();
+
+        // 3. Jumlah konten display aktif
+        $displayIds = array_column($displays, 'id');
+        $jmlKonten  = 0;
+        if (!empty($displayIds)) {
+            $jmlKonten = $db->table('tbl_display_konten')
+                            ->whereIn('id_display_setting', $displayIds)
+                            ->where('aktif', 1)
+                            ->countAllResults();
+        }
+
+        // 4. Saldo kas bulan ini (pemasukan - pengeluaran)
+        $bulanIni  = date('Y-m');
+        $saldoKas  = 0;
+        $kasExists = $db->tableExists('tbl_keuangan_transaksi');
+        if ($kasExists) {
+            $pemasukan = $db->table('tbl_keuangan_transaksi')
+                            ->selectSum('jumlah')
+                            ->where('entitas_type', 'masjid_mushola')
+                            ->where('entitas_id', $idMasjid)
+                            ->where('jenis', 'pemasukan')
+                            ->like('tanggal_transaksi', $bulanIni, 'after')
+                            ->get()->getRowArray()['jumlah'] ?? 0;
+
+            $pengeluaran = $db->table('tbl_keuangan_transaksi')
+                              ->selectSum('jumlah')
+                              ->where('entitas_type', 'masjid_mushola')
+                              ->where('entitas_id', $idMasjid)
+                              ->where('jenis', 'pengeluaran')
+                              ->like('tanggal_transaksi', $bulanIni, 'after')
+                              ->get()->getRowArray()['jumlah'] ?? 0;
+
+            $saldoKas = ((float)$pemasukan) - ((float)$pengeluaran);
+        }
+
+        // 5. Jadwal Maghrib Mengaji di masjid ini (hari ini & besok)
+        $jadwalMaghrib = $db->table('tbl_jadwal_kegiatan j')
+            ->select('j.tanggal, j.peran_petugas, p.nama_lengkap as nama_mubaligh, p.no_hp, p.foto')
+            ->join('tbl_personil p', 'p.id = j.id_personil', 'left')
+            ->where('j.jenis_kegiatan', 'maghrib_mengaji')
+            ->where('j.id_masjid_mushola', $idMasjid)
+            ->where('j.id_personil IS NOT NULL', null, false)
+            ->whereIn('j.tanggal', [date('Y-m-d'), date('Y-m-d', strtotime('+1 day'))])
+            ->orderBy('j.tanggal', 'ASC')
+            ->get()->getResultArray();
+
+        // 6. Jadwal Khotib Jumat di masjid ini (3 minggu ke depan)
+        $jadwalJumat = $db->table('tbl_jadwal_kegiatan j')
+            ->select('j.tanggal, j.peran_petugas, p.nama_lengkap as nama_mubaligh, p.no_hp, p.foto')
+            ->join('tbl_personil p', 'p.id = j.id_personil', 'left')
+            ->where('j.jenis_kegiatan', 'jumat')
+            ->where('j.id_masjid_mushola', $idMasjid)
+            ->where('j.id_personil IS NOT NULL', null, false)
+            ->where('j.tanggal >=', date('Y-m-d'))
+            ->where('j.tanggal <=', date('Y-m-d', strtotime('+21 days')))
+            ->orderBy('j.tanggal', 'ASC')
+            ->get()->getResultArray();
+
+        // 7. Agenda mandiri masjid yang akan datang (7 hari ke depan)
+        $agendaModel      = new AgendaKegiatanModel();
+        $agendaMendatang  = $agendaModel->getAgendaMendatang('masjid_mushola', $idMasjid, 7);
+
+        return view('backend/dashboard/operator_masjid', [
+            'title'            => 'Dashboard ' . ($masjid['jenis'] ?? 'Masjid'),
+            'masjid'           => $masjid,
+            'displays'         => $displays,
+            'saldoKas'         => $saldoKas,
+            'jmlKonten'        => $jmlKonten,
+            'jadwalMaghrib'    => $jadwalMaghrib,
+            'jadwalJumat'      => $jadwalJumat,
+            'agendaMendatang'  => $agendaMendatang,
+            'belumSetup'       => false,
+        ]);
+    }
+
+    /**
+     * Dashboard khusus untuk OperatorMajelisTaklim
+     */
+    private function dashboardMajelisTaklim()
+    {
+        $currentUser = user();
+        $db          = \Config\Database::connect();
+
+        if (empty($currentUser->entitas_id) || $currentUser->entitas_type !== 'majelis_taklim') {
+            return view('backend/dashboard/operator_majelis_taklim', [
+                'title'          => 'Dashboard Majelis Taklim',
+                'majelis'        => null,
+                'saldoKas'       => 0,
+                'agendaTerdekat' => [],
+                'belumSetup'     => true,
+            ]);
+        }
+
+        $idMajelis = $currentUser->entitas_id;
+
+        // 1. Profil Majelis
+        $majelis = $db->table('tbl_majelis_taklim')
+            ->where('id_majelis_taklim', $idMajelis)
+            ->get()->getRowArray();
+
+        // 2. Total Saldo Kas (tbl_keuangan_kas)
+        $kasModel = new \App\Models\KeuanganKasModel();
+        $listKas  = $kasModel->where('entitas_type', 'majelis_taklim')
+                             ->groupStart()
+                                ->where('entitas_id', $idMajelis)
+                                ->orWhere('entitas_id IS NULL')
+                             ->groupEnd()
+                             ->where('is_active', 1)
+                             ->findAll();
+        
+        $saldoKas = 0;
+        foreach ($listKas as $k) {
+            $saldoKas += (float)$kasModel->hitungSaldo($k['id']);
+        }
+
+        // 3. Agenda Terdekat (30 hari ke depan)
+        $agendaModel = new \App\Models\AgendaKegiatanModel();
+        $agendaTerdekat = $agendaModel->getAgendaMendatang('majelis_taklim', $idMajelis, 30);
+
+        return view('backend/dashboard/operator_majelis_taklim', [
+            'title'          => 'Dashboard',
+            'majelis'        => $majelis,
+            'saldoKas'       => $saldoKas,
+            'agendaTerdekat' => $agendaTerdekat,
+            'belumSetup'     => false,
+        ]);
     }
 }

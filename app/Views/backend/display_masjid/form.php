@@ -34,15 +34,25 @@ $formUrl   = $isEdit ? base_url('admin/display-masjid/update/' . $display['id'])
                     <!-- Pilih Masjid -->
                     <div class="form-group">
                         <label for="id_masjid_mushola">Masjid / Mushola <span class="text-danger">*</span></label>
-                        <select name="id_masjid_mushola" id="id_masjid_mushola" class="form-control select2" required>
-                            <option value="">-- Pilih Masjid/Mushola --</option>
+                        <?php $isOperatorMode = in_groups('OperatorMasjidMushola') && !in_groups('SuperAdmin') && !in_groups('Admin'); ?>
+                        
+                        <select name="id_masjid_mushola" id="id_masjid_mushola" class="form-control <?= $isOperatorMode ? '' : 'select2' ?>" required <?= $isOperatorMode || count($masjidList) == 1 ? 'disabled' : '' ?>>
+                            <?php if (!$isOperatorMode): ?>
+                                <option value="">-- Pilih Masjid/Mushola --</option>
+                            <?php endif; ?>
+                            
                             <?php foreach ($masjidList as $m): ?>
                                 <option value="<?= $m['id_masjid_mushola'] ?>"
-                                    <?= old('id_masjid_mushola', $display['id_masjid_mushola'] ?? '') == $m['id_masjid_mushola'] ? 'selected' : '' ?>>
+                                    <?= old('id_masjid_mushola', $display['id_masjid_mushola'] ?? ($selectedMasjidId ?? '')) == $m['id_masjid_mushola'] ? 'selected' : '' ?>>
                                     <?= esc($m['nama']) ?> (<?= esc($m['jenis']) ?>)
                                 </option>
                             <?php endforeach; ?>
                         </select>
+                        
+                        <?php if ($isOperatorMode || count($masjidList) == 1): ?>
+                            <!-- Kirim value tersembunyi karena select disabled tidak ikut tersubmit (meski backend sudah antisipasi) -->
+                            <input type="hidden" name="id_masjid_mushola" value="<?= $selectedMasjidId ?? ($display['id_masjid_mushola'] ?? $masjidList[0]['id_masjid_mushola']) ?>">
+                        <?php endif; ?>
                     </div>
 
                     <!-- Nama Display -->
@@ -243,59 +253,97 @@ $formUrl   = $isEdit ? base_url('admin/display-masjid/update/' . $display['id'])
                     </div>
 
                     <!-- Koreksi Waktu Sholat -->
-                    <h6 class="text-primary font-weight-bold mt-3 mb-2">
-                        <i class="fas fa-sliders-h mr-1"></i> Koreksi Waktu Sholat (menit)
-                    </h6>
-                    <p class="text-muted small mb-2">Penyesuaian waktu sholat. Contoh: +2 untuk ihtiyati.</p>
+                    <div style="border-left: 4px solid #007bff; background: #f0f7ff; border-radius: 0 8px 8px 0; padding: 12px 16px; margin-top:14px; margin-bottom:10px;">
+                        <h6 class="font-weight-bold mb-2" style="color: #0056b3;">
+                            <i class="fas fa-sliders-h mr-1"></i> Koreksi Waktu Sholat (menit)
+                        </h6>
+                        <p class="text-muted small mb-2">Penyesuaian waktu sholat. Contoh: +2 untuk ihtiyati Kemenag, +7 untuk Maghrib Bintan.</p>
 
-                    <?php
-                    // Parse koreksi waktu dari JSON
-                    $koreksiData = !empty($display['koreksi_waktu']) ? json_decode($display['koreksi_waktu'], true) : [];
-                    ?>
-                    <div class="row">
                         <?php
-                        $koreksiFields = [
-                            'koreksi_subuh'   => ['Subuh', 'subuh'],
-                            'koreksi_dzuhur'  => ['Dzuhur', 'dzuhur'],
-                            'koreksi_ashar'   => ['Ashar', 'ashar'],
-                            'koreksi_maghrib' => ['Maghrib', 'maghrib'],
-                            'koreksi_isya'    => ['Isya', 'isya'],
-                        ];
-                        foreach ($koreksiFields as $field => $info):
+                        // Parse koreksi waktu dari JSON
+                        $koreksiData = !empty($display['koreksi_waktu']) ? json_decode($display['koreksi_waktu'], true) : [];
                         ?>
-                        <div class="col-6 col-md-4">
-                            <div class="form-group">
-                                <label for="<?= $field ?>" class="small"><?= $info[0] ?></label>
-                                <input type="number" name="<?= $field ?>" id="<?= $field ?>" class="form-control form-control-sm"
-                                       value="<?= old($field, $koreksiData[$info[1]] ?? 0) ?>" min="-60" max="60">
+                        <div class="row">
+                            <?php
+                            $koreksiFields = [
+                                'koreksi_subuh'   => ['Subuh', 'subuh'],
+                                'koreksi_dzuhur'  => ['Dzuhur', 'dzuhur'],
+                                'koreksi_ashar'   => ['Ashar', 'ashar'],
+                                'koreksi_maghrib' => ['Maghrib', 'maghrib'],
+                                'koreksi_isya'    => ['Isya', 'isya'],
+                            ];
+                            foreach ($koreksiFields as $field => $info):
+                            ?>
+                            <div class="col-6 col-md-4">
+                                <div class="form-group mb-2">
+                                    <label for="<?= $field ?>" class="small font-weight-bold" style="color:#0056b3;"><?= $info[0] ?></label>
+                                    <input type="number" name="<?= $field ?>" id="<?= $field ?>" class="form-control form-control-sm"
+                                           value="<?= old($field, $koreksiData[$info[1]] ?? 0) ?>" min="-60" max="60">
+                                </div>
                             </div>
+                            <?php endforeach; ?>
                         </div>
-                        <?php endforeach; ?>
                     </div>
 
                     <?php
                     // Parse timer iqomah dari JSON
                     $iqomahData = !empty($display['timer_iqomah']) ? json_decode($display['timer_iqomah'], true) : [];
                     ?>
-                    <div class="row">
-                        <?php
-                        $iqomahFields = [
-                            'durasi_iqomah_subuh'   => ['Subuh', 'subuh', 10],
-                            'durasi_iqomah_dzuhur'  => ['Dzuhur', 'dzuhur', 10],
-                            'durasi_iqomah_ashar'   => ['Ashar', 'ashar', 10],
-                            'durasi_iqomah_maghrib' => ['Maghrib', 'maghrib', 5],
-                            'durasi_iqomah_isya'    => ['Isya', 'isya', 10],
-                        ];
-                        foreach ($iqomahFields as $field => $info):
-                        ?>
-                        <div class="col-6 col-md-4">
-                            <div class="form-group">
-                                <label for="<?= $field ?>" class="small"><?= $info[0] ?></label>
-                                <input type="number" name="<?= $field ?>" id="<?= $field ?>" class="form-control form-control-sm"
-                                       value="<?= old($field, $iqomahData[$info[1]] ?? $info[2]) ?>" min="1" max="60">
+
+                    <div style="border-left: 4px solid #fd7e14; background: #fff8f3; border-radius: 0 8px 8px 0; padding: 12px 16px; margin-bottom:10px;">
+                        <h6 class="font-weight-bold mb-2" style="color: #fd7e14;">
+                            <i class="fas fa-stopwatch mr-1"></i> Durasi Iqomah (menit)
+                        </h6>
+                        <p class="text-muted small mb-2">Lama waktu tampil layar iqomah sebelum sholat dimulai.</p>
+                        <div class="row">
+                            <?php
+                            $iqomahFields = [
+                                'durasi_iqomah_subuh'   => ['Subuh', 'subuh', 10],
+                                'durasi_iqomah_dzuhur'  => ['Dzuhur', 'dzuhur', 10],
+                                'durasi_iqomah_ashar'   => ['Ashar', 'ashar', 10],
+                                'durasi_iqomah_maghrib' => ['Maghrib', 'maghrib', 5],
+                                'durasi_iqomah_isya'    => ['Isya', 'isya', 10],
+                            ];
+                            foreach ($iqomahFields as $field => $info):
+                            ?>
+                            <div class="col-6 col-md-4">
+                                <div class="form-group mb-2">
+                                    <label for="<?= $field ?>" class="small font-weight-bold" style="color:#b85c00;"><?= $info[0] ?></label>
+                                    <input type="number" name="<?= $field ?>" id="<?= $field ?>" class="form-control form-control-sm"
+                                           value="<?= old($field, $iqomahData[$info[1]] ?? $info[2]) ?>" min="1" max="60">
+                                </div>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+
+                    <div style="border-left: 4px solid #28a745; background: #f3fbf5; border-radius: 0 8px 8px 0; padding: 12px 16px; margin-bottom:4px;">
+                        <h6 class="font-weight-bold mb-2" style="color: #1e7e34;">
+                            <i class="fas fa-calendar-alt mr-1"></i> Koreksi Tanggal Hijriah
+                        </h6>
+                        <p class="text-muted small mb-2">
+                            Sesuaikan jika penetapan 1 Ramadhan / Idul Fitri berbeda dari perhitungan otomatis.<br>
+                            <small><i class="fas fa-info-circle text-info mr-1"></i>Tanggal Hijriah di TV juga akan otomatis berganti setelah waktu Maghrib (sesuai kaidah Islami).</small>
+                        </p>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-0">
+                                    <label for="koreksi_hijriah" class="small font-weight-bold" style="color:#1e7e34;">Koreksi Hari</label>
+                                    <select name="koreksi_hijriah" id="koreksi_hijriah" class="form-control form-control-sm">
+                                        <?php
+                                        $valHijri = old('koreksi_hijriah', $koreksiData['hijriah'] ?? 0);
+                                        for ($h = -2; $h <= 2; $h++):
+                                            $labelH = $h == 0 ? '0 — Default (Sesuai Masehi)' : ($h > 0 ? "+$h Hari" : "$h Hari");
+                                        ?>
+                                            <option value="<?= $h ?>" <?= $valHijri == $h ? 'selected' : '' ?>><?= $labelH ?></option>
+                                        <?php endfor; ?>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6 d-flex align-items-end">
+                                <small class="text-muted pb-1"><i class="fas fa-mosque mr-1 text-success"></i>Berguna saat ada keputusan sidang isbat Kemenag / NU / Muhammadiyah berbeda.</small>
                             </div>
                         </div>
-                        <?php endforeach; ?>
                     </div>
                 </div>
             </div>
@@ -569,6 +617,15 @@ $formUrl   = $isEdit ? base_url('admin/display-masjid/update/' . $display['id'])
             </a>
             <div class="text-right">
                 <!-- Notifikasi menggunakan SweetAlert popup topside -->
+                <?php if (!$isEdit): ?>
+                    <button type="submit" class="btn btn-primary" id="btn-save-new">
+                        <i class="fas fa-save mr-1"></i> Simpan Display
+                    </button>
+                <?php else: ?>
+                    <span class="text-success small mr-2 d-none d-md-inline-block">
+                        <i class="fas fa-check-circle"></i> Auto-save aktif
+                    </span>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -747,11 +804,16 @@ $(document).ready(function() {
         });
     }
 
-    // Mencegah form disubmit secara tradisional (ENTER key)
+    // Mencegah form disubmit secara tradisional (ENTER key) hanya pada mode edit
     $('#form-display').on('submit', function(e) {
-        e.preventDefault();
-        isDirty = true;
-        triggerAutoSave(true);
+        <?php if ($isEdit): ?>
+            e.preventDefault();
+            isDirty = true;
+            triggerAutoSave(true);
+        <?php else: ?>
+            // Izinkan form disubmit untuk data baru
+            $('#btn-save-new').html('<i class="fas fa-spinner fa-spin mr-1"></i> Menyimpan...').prop('disabled', true);
+        <?php endif; ?>
     });
 
     // ============================================================

@@ -21,6 +21,33 @@
             $groups = $groupModel->getGroupsForUser($currentUser->id);
             $userGroups = array_column($groups, 'name');
         }
+
+        /**
+         * Fungsi helper: Ambil jenis masjid/mushola dari database untuk operator yang sedang login.
+         * Mengembalikan string 'Masjid' atau 'Mushola' jika ditemukan, atau null jika tidak.
+         * Berguna untuk membuat label dinamis di seluruh sidebar.
+         */
+        function getJenisMasjidOperator(array $userGroups): ?string
+        {
+            if (!in_array('OperatorMasjidMushola', $userGroups)
+                || in_array('SuperAdmin', $userGroups)
+                || in_array('Admin', $userGroups)) {
+                return null; // Bukan operator, tidak perlu query
+            }
+
+            $u = (function_exists('user') && logged_in()) ? user() : null;
+            if (!$u || empty($u->entitas_id)) {
+                return null;
+            }
+
+            $db  = \Config\Database::connect();
+            $row = $db->table('tbl_masjid_mushola')
+                      ->select('jenis')
+                      ->where('id_masjid_mushola', $u->entitas_id)
+                      ->get()->getRow();
+
+            return ($row && !empty($row->jenis)) ? $row->jenis : null;
+        }
         ?>
         <!-- User Panel -->
         <div class="user-panel mt-3 pb-3 mb-3 d-flex">
@@ -62,6 +89,11 @@
                 ?>
                 <?php foreach ($entitasTypes as $et): ?>
                 <?php
+                    // Sembunyikan masjid_mushola dan majelis_taklim dari menu loop PENDATAAN
+                    // majelis_taklim punya blok menu tersendiri di bawah
+                    if ($et['kode'] === 'masjid_mushola') continue;
+                    if ($et['kode'] === 'majelis_taklim') continue;
+
                     $personilUrl  = 'admin/personil/' . $et['kode'];
                     $berkasUrl    = 'admin/personil/' . $et['kode'] . '/berkas-lampiran';
                     $insentifUrl  = 'admin/pengajuan-insentif/' . $et['kode'];
@@ -101,23 +133,128 @@
                 </li>
                 <?php endforeach; ?>
 
-                <?php if (in_array('SuperAdmin', $userGroups) || in_array('Admin', $userGroups) || in_array('OperatorMasjidMushola', $userGroups)): ?>
-                <!-- Masjid & Mushola -->
-                <li class="nav-item">
-                    <a href="<?= base_url('admin/masjid-mushola') ?>" class="nav-link <?= strpos(uri_string(), 'admin/masjid-mushola') !== false ? 'active' : '' ?>">
-                        <i class="nav-icon fas fa-mosque"></i>
-                        <p>Masjid & Mushola</p>
-                    </a>
-                </li>
-                <?php endif; ?>
 
+
+                <?php
+                    $isMajelisAreaOpen = strpos(uri_string(), 'admin/majelis-taklim') !== false
+                                      || (strpos(uri_string(), 'admin/agenda-masjid') !== false && isset($_GET['entitas_type']) && $_GET['entitas_type'] === 'majelis_taklim')
+                                      || (strpos(uri_string(), 'admin/keuangan/laporan') !== false && isset($_GET['entitas_type']) && $_GET['entitas_type'] === 'majelis_taklim');
+                    $isMajelisDataActive = strpos(uri_string(), 'admin/majelis-taklim') !== false
+                                        && strpos(uri_string(), '/users') === false;
+                    $isMajelisAgendaActive = strpos(uri_string(), 'admin/agenda-masjid') !== false && isset($_GET['entitas_type']) && $_GET['entitas_type'] === 'majelis_taklim';
+                    $isMajelisKeuanganActive = strpos(uri_string(), 'admin/keuangan/laporan') !== false && isset($_GET['entitas_type']) && $_GET['entitas_type'] === 'majelis_taklim';
+                    $isMajelisUserActive = strpos(uri_string(), 'admin/majelis-taklim/users') !== false;
+                ?>
                 <?php if (in_array('SuperAdmin', $userGroups) || in_array('Admin', $userGroups) || in_array('OperatorMajelisTaklim', $userGroups)): ?>
-                <!-- Majelis Taklim -->
-                <li class="nav-item">
-                    <a href="<?= base_url('admin/majelis-taklim') ?>" class="nav-link <?= strpos(uri_string(), 'admin/majelis-taklim') !== false ? 'active' : '' ?>">
+                <!-- Majelis Taklim (Treeview) -->
+                <li class="nav-item has-treeview <?= $isMajelisAreaOpen ? 'menu-open' : '' ?>">
+                    <a href="#" class="nav-link <?= $isMajelisAreaOpen ? 'active' : '' ?>">
                         <i class="nav-icon fas fa-chalkboard-teacher"></i>
-                        <p>Majelis Taklim</p>
+                        <p>
+                            Majelis Taklim
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
                     </a>
+                    <ul class="nav nav-treeview">
+                        <!-- Sub-menu: Data Majelis Taklim -->
+                        <li class="nav-item">
+                            <a href="<?= base_url('admin/majelis-taklim') ?>" class="nav-link <?= $isMajelisDataActive ? 'active' : '' ?>">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Data Majelis Taklim</p>
+                            </a>
+                        </li>
+
+                        <!-- Sub-menu: Agenda Kegiatan -->
+                        <li class="nav-item">
+                            <a href="<?= base_url('admin/agenda-masjid?entitas_type=majelis_taklim') ?>" class="nav-link <?= $isMajelisAgendaActive ? 'active' : '' ?>">
+                                <i class="far fa-circle nav-icon text-success"></i>
+                                <p>Agenda Kegiatan</p>
+                            </a>
+                        </li>
+
+                        <!-- Sub-menu: Laporan Keuangan -->
+                        <li class="nav-item">
+                            <a href="<?= base_url('admin/keuangan/laporan?entitas_type=majelis_taklim') ?>" class="nav-link <?= $isMajelisKeuanganActive ? 'active' : '' ?>">
+                                <i class="far fa-circle nav-icon text-info"></i>
+                                <p>Laporan Keuangan</p>
+                            </a>
+                        </li>
+
+                        <?php if (in_array('SuperAdmin', $userGroups) || in_array('Admin', $userGroups)): ?>
+                        <!-- Sub-menu: User Akun (Admin/SuperAdmin) -->
+                        <li class="nav-item">
+                            <a href="<?= base_url('admin/majelis-taklim/users') ?>" class="nav-link <?= $isMajelisUserActive ? 'active' : '' ?>">
+                                <i class="far fa-circle nav-icon text-warning"></i>
+                                <p>User Akun Majelis</p>
+                            </a>
+                        </li>
+                <?php endif; ?>
+                    </ul>
+                </li>
+                <?php endif; // end Majelis Taklim menu ?>
+
+                <?php if (in_array('SuperAdmin', $userGroups) || in_array('Admin', $userGroups) || in_array('OperatorMasjidMushola', $userGroups)): ?>
+                <?php
+                    // Cek apakah sedang di area Masjid & Mushola atau Display Masjid
+                    $isMasjidAreaOpen = strpos(uri_string(), 'admin/masjid-mushola') !== false
+                                     || strpos(uri_string(), 'admin/display-masjid') !== false;
+                    $isMasjidDataActive    = strpos(uri_string(), 'admin/masjid-mushola') !== false
+                                          && strpos(uri_string(), '/users') === false
+                                          && strpos(uri_string(), 'admin/masjid-mushola/create') === false; // Exclude create page
+                    $isMasjidDisplayActive = strpos(uri_string(), 'admin/display-masjid') !== false;
+                    $isMasjidUserActive    = strpos(uri_string(), 'admin/masjid-mushola/users') !== false;
+
+                    // Label dinamis pakai fungsi helper
+                    $jenisMasjid      = getJenisMasjidOperator($userGroups);
+                    $menuLabelMasjid  = $jenisMasjid ?? 'Masjid &amp; Mushola';
+                    $subMenuLabelData = 'Data ' . ($jenisMasjid ?? 'Masjid &amp; Mushola');
+                ?>
+                <!-- Masjid & Mushola (Treeview) -->
+                <li class="nav-item has-treeview <?= $isMasjidAreaOpen ? 'menu-open' : '' ?>">
+                    <a href="#" class="nav-link <?= $isMasjidAreaOpen ? 'active' : '' ?>">
+                        <i class="nav-icon fas fa-mosque"></i>
+                        <p>
+                            <?= $menuLabelMasjid ?>
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <!-- Sub-menu: Data Masjid & Mushola -->
+                        <li class="nav-item">
+                            <a href="<?= base_url('admin/masjid-mushola') ?>" class="nav-link <?= $isMasjidDataActive ? 'active' : '' ?>">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p><?= $subMenuLabelData ?></p>
+                            </a>
+                        </li>
+
+                        <?php if (in_array('SuperAdmin', $userGroups) || in_array('Admin', $userGroups) || in_array('OperatorMasjidMushola', $userGroups)): ?>
+                        <!-- Sub-menu: Display Masjid (Admin, SuperAdmin, dan OperatorMasjidMushola) -->
+                        <li class="nav-item">
+                            <a href="<?= base_url('admin/display-masjid') ?>" class="nav-link <?= $isMasjidDisplayActive ? 'active' : '' ?>">
+                                <i class="far fa-circle nav-icon text-info"></i>
+                                <p>Display Masjid</p>
+                            </a>
+                        </li>
+
+                        <!-- Sub-menu: Agenda Kegiatan Ramadhan (Admin, SuperAdmin, OperatorMasjidMushola) -->
+                        <li class="nav-item">
+                            <a href="<?= base_url('admin/agenda-masjid') ?>" class="nav-link <?= strpos(uri_string(), 'admin/agenda-masjid') !== false ? 'active' : '' ?>">
+                                <i class="far fa-circle nav-icon text-success"></i>
+                                <p>Agenda Ramadhan</p>
+                            </a>
+                        </li>
+                        <?php endif; ?>
+
+                        <?php if (in_array('SuperAdmin', $userGroups) || in_array('Admin', $userGroups)): ?>
+                        <!-- Sub-menu: User Operator (Admin/SuperAdmin saja yang lihat) -->
+                        <li class="nav-item">
+                            <a href="<?= base_url('admin/masjid-mushola/users') ?>" class="nav-link <?= $isMasjidUserActive ? 'active' : '' ?>">
+                                <i class="far fa-circle nav-icon text-warning"></i>
+                                <p>User Operator Masjid</p>
+                            </a>
+                        </li>
+                        <?php endif; ?>
+                    </ul>
                 </li>
                 <?php endif; ?>
 
@@ -128,36 +265,6 @@
                         <i class="nav-icon fas fa-school"></i>
                         <p>TPQ & MDTA</p>
                     </a>
-                </li>
-                <?php endif; ?>
-
-                <?php if (in_array('SuperAdmin', $userGroups) || in_array('Admin', $userGroups)): ?>
-                <!-- Display Masjid -->
-                <?php
-                    $isDisplayMasjidActive = strpos(uri_string(), 'admin/display-masjid') !== false;
-                ?>
-                <li class="nav-item has-treeview <?= $isDisplayMasjidActive ? 'menu-open' : '' ?>">
-                    <a href="#" class="nav-link <?= $isDisplayMasjidActive ? 'active' : '' ?>">
-                        <i class="nav-icon fas fa-tv text-info"></i>
-                        <p>
-                            Display Masjid
-                            <i class="right fas fa-angle-left"></i>
-                        </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="<?= base_url('admin/display-masjid') ?>" class="nav-link <?= url_is('admin/display-masjid') ? 'active' : '' ?>">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Daftar Display</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="<?= base_url('admin/display-masjid/create') ?>" class="nav-link <?= url_is('admin/display-masjid/create') ? 'active' : '' ?>">
-                                <i class="far fa-circle nav-icon text-success"></i>
-                                <p>Tambah Display</p>
-                            </a>
-                        </li>
-                    </ul>
                 </li>
                 <?php endif; ?>
 
@@ -213,6 +320,17 @@
                         <p>Maghrib Mengaji</p>
                     </a>
                 </li>
+
+                <?php if (in_array('SuperAdmin', $userGroups) || in_array('Admin', $userGroups)): ?>
+                <!-- Menu User Mubaligh -->
+                <li class="nav-item">
+                    <a href="<?= base_url('admin/mubaligh-users') ?>" class="nav-link <?= strpos(uri_string(), 'admin/mubaligh-users') !== false ? 'active' : '' ?>">
+                        <i class="nav-icon fas fa-users text-warning"></i>
+                        <p>User Akun Mubaligh</p>
+                    </a>
+                </li>
+                <?php endif; ?>
+
                 <?php endif; ?>
 
                 <!-- ============================== -->
@@ -221,6 +339,14 @@
                 <?php
                 // Menu keuangan tampil jika user punya akses ke minimal satu entitas
                 $keuanganEntitas = $entitasTypeModel->getAccessibleForUser($userGroups);
+                
+                // Jika user adalah Operator Masjid, pastikan hanya Kas Masjid yang tampil di sidebar Keuangan (sembunyikan kas Imam Masjid dsb)
+                if (in_array('OperatorMasjidMushola', $userGroups) && !in_array('SuperAdmin', $userGroups) && !in_array('Admin', $userGroups)) {
+                    $keuanganEntitas = array_filter($keuanganEntitas, function($k) {
+                        return $k['kode'] === 'masjid_mushola';
+                    });
+                }
+
                 $isKeuanganOpen  = strpos(uri_string(), 'admin/keuangan') !== false;
                 if (!empty($keuanganEntitas)):
                 ?>
@@ -248,18 +374,30 @@
                     $kTransUrl = 'admin/keuangan/transaksi/' . $ke['kode'];
                     $kIuranUrl = 'admin/keuangan/iuran/' . $ke['kode'];
                     $kKasUrl   = 'admin/keuangan/kas/' . $ke['kode'];
+                    $kKategoriUrl = 'admin/keuangan/kategori/' . $ke['kode'];
                     $isKEntitasOpen = strpos(uri_string(), $kTransUrl) !== false
                                   || strpos(uri_string(), $kIuranUrl) !== false
-                                  || strpos(uri_string(), $kKasUrl) !== false;
+                                  || strpos(uri_string(), $kKasUrl) !== false
+                                  || strpos(uri_string(), $kKategoriUrl) !== false;
+
+                    // Label dinamis pakai fungsi helper
+                    $kLabel = $ke['nama_label'];
+                    if ($ke['kode'] === 'masjid_mushola') {
+                        $jenisMasjidK = getJenisMasjidOperator($userGroups);
+                        if ($jenisMasjidK) {
+                            $kLabel = 'Keuangan ' . $jenisMasjidK;
+                        }
+                    }
                 ?>
                 <li class="nav-item has-treeview <?= $isKEntitasOpen ? 'menu-open' : '' ?>">
                     <a href="#" class="nav-link <?= $isKEntitasOpen ? 'active' : '' ?>">
                         <i class="nav-icon <?= esc($ke['icon'] ?? 'fas fa-coins') ?>"></i>
                         <p>
-                            <?= esc($ke['nama_label']) ?>
+                            <?= $kLabel ?>
                             <i class="right fas fa-angle-left"></i>
                         </p>
                     </a>
+
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
                             <a href="<?= base_url($kTransUrl) ?>" class="nav-link <?= strpos(uri_string(), $kTransUrl) !== false ? 'active' : '' ?>">
@@ -277,6 +415,12 @@
                             <a href="<?= base_url($kKasUrl) ?>" class="nav-link <?= strpos(uri_string(), $kKasUrl) !== false ? 'active' : '' ?>">
                                 <i class="far fa-circle nav-icon text-info"></i>
                                 <p>Kelola Kas</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="<?= base_url($kKategoriUrl) ?>" class="nav-link <?= strpos(uri_string(), $kKategoriUrl) !== false ? 'active' : '' ?>">
+                                <i class="far fa-circle nav-icon text-secondary"></i>
+                                <p>Kelola Kategori</p>
                             </a>
                         </li>
                     </ul>
@@ -396,7 +540,15 @@
 
                 <!-- Separator AKUN -->
                 <li class="nav-header">AKUN</li>
-                
+
+                <!-- Ganti Password (semua user yang login) -->
+                <li class="nav-item">
+                    <a href="<?= base_url('admin/akun/ganti-password') ?>" class="nav-link <?= strpos(uri_string(), 'admin/akun/ganti-password') !== false ? 'active' : '' ?>">
+                        <i class="nav-icon fas fa-key text-warning"></i>
+                        <p>Ganti Password</p>
+                    </a>
+                </li>
+
                 <!-- Logout -->
                 <li class="nav-item">
                     <a href="<?= base_url('logout') ?>" class="nav-link">

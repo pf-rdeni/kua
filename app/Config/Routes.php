@@ -109,6 +109,30 @@ $routes->group('admin', ['filter' => 'login'], function ($routes) {
         $routes->post('delete-profil', 'Backend\BerkasController::deleteProfil');
     });
 
+    // --- User Manajemen Entitas (Majelis Taklim) ---
+    $routes->group('majelis-taklim', ['filter' => 'role:SuperAdmin,Admin'], function ($routes) {
+        $routes->get('users', 'Backend\EntitasUserController::overview/majelis_taklim');
+        $routes->group('(:num)/users', function ($routes) {
+            $routes->get('/', 'Backend\EntitasUserController::index/majelis_taklim/$1');
+            $routes->post('store', 'Backend\EntitasUserController::store/majelis_taklim/$1');
+            $routes->post('reset-password/(:num)', 'Backend\EntitasUserController::resetPassword/majelis_taklim/$1/$2');
+            $routes->post('toggle-active/(:num)', 'Backend\EntitasUserController::toggleActive/majelis_taklim/$1/$2');
+            $routes->post('delete/(:num)', 'Backend\EntitasUserController::delete/majelis_taklim/$1/$2');
+        });
+    });
+
+    // --- User Manajemen Entitas (Mubaligh) ---
+    $routes->group('mubaligh-users', ['filter' => 'role:SuperAdmin,Admin'], function ($routes) {
+        $routes->get('/', 'Backend\EntitasUserController::overview/mubaligh');
+        $routes->group('(:num)/users', function ($routes) {
+            $routes->get('/', 'Backend\EntitasUserController::index/mubaligh/$1');
+            $routes->post('store', 'Backend\EntitasUserController::store/mubaligh/$1');
+            $routes->post('reset-password/(:num)', 'Backend\EntitasUserController::resetPassword/mubaligh/$1/$2');
+            $routes->post('toggle-active/(:num)', 'Backend\EntitasUserController::toggleActive/mubaligh/$1/$2');
+            $routes->post('delete/(:num)', 'Backend\EntitasUserController::delete/mubaligh/$1/$2');
+        });
+    });
+
     // --- Setting Berkas Lampiran (SuperAdmin, Admin) ---
     $routes->group('setting-berkas', ['filter' => 'role:SuperAdmin,Admin'], function ($routes) {
         $routes->get('/', 'Backend\SettingBerkasController::index');
@@ -174,6 +198,17 @@ $routes->group('admin', ['filter' => 'login'], function ($routes) {
         $routes->post('save-absensi', 'Backend\AbsensiRamadhanController::save_absensi_admin');
     });
 
+    // --- Agenda Kegiatan (Masjid / Majelis Taklim) ---
+    $routes->group('agenda-masjid', ['filter' => 'role:SuperAdmin,Admin,OperatorMasjidMushola,OperatorMajelisTaklim'], function ($routes) {
+        $routes->get('/', 'Backend\AgendaMasjidController::index');
+        $routes->get('create', 'Backend\AgendaMasjidController::create');
+        $routes->post('store', 'Backend\AgendaMasjidController::store');
+        $routes->get('edit/(:num)', 'Backend\AgendaMasjidController::edit/$1');
+        $routes->post('update/(:num)', 'Backend\AgendaMasjidController::update/$1');
+        $routes->get('delete/(:num)', 'Backend\AgendaMasjidController::delete/$1');
+        $routes->get('search-mubaligh', 'Backend\AgendaMasjidController::searchMubaligh');
+    });
+
     // --- Maghrib Mengaji ---
     $routes->group('maghrib-mengaji', ['filter' => 'role:SuperAdmin,Admin,OperatorMubaligh'], function ($routes) {
         $routes->get('/', 'Backend\MaghribMengajiController::index');
@@ -209,6 +244,12 @@ $routes->group('admin', ['filter' => 'login'], function ($routes) {
         $routes->get('dashboard', 'Backend\KeuanganController::index');
         $routes->get('laporan', 'Backend\KeuanganController::laporan');
 
+        // --- Rute Baru Kategori Kustom ---
+        $routes->get('kategori/(:segment)', 'Backend\KeuanganKategoriController::index/$1');
+        $routes->post('kategori/(:segment)/store', 'Backend\KeuanganKategoriController::store/$1');
+        $routes->post('kategori/(:segment)/delete/(:num)', 'Backend\KeuanganKategoriController::delete/$1/$2');
+        $routes->post('kategori/(:segment)/toggle/(:num)', 'Backend\KeuanganKategoriController::toggleHidden/$1/$2');
+
         // Transaksi per entitas type
         $routes->get('transaksi/(:segment)', 'Backend\KeuanganTransaksiController::index/$1');
         $routes->get('transaksi/(:segment)/create', 'Backend\KeuanganTransaksiController::create/$1');
@@ -221,6 +262,7 @@ $routes->group('admin', ['filter' => 'login'], function ($routes) {
         $routes->get('kas/(:segment)', 'Backend\KeuanganTransaksiController::kas/$1');
         $routes->post('kas/(:segment)/store', 'Backend\KeuanganTransaksiController::storeKas/$1');
         $routes->post('kas/(:segment)/update/(:num)', 'Backend\KeuanganTransaksiController::updateKas/$1/$2');
+        $routes->post('kas/(:segment)/delete/(:num)', 'Backend\KeuanganTransaksiController::deleteKas/$1/$2');
 
         // Iuran Setting per entitas type
         $routes->get('iuran/(:segment)', 'Backend\KeuanganIuranController::setting/$1');
@@ -243,10 +285,28 @@ $routes->group('admin', ['filter' => 'login'], function ($routes) {
         $routes->post('update/(:num)', 'Backend\MasjidMusholaController::update/$1');
         $routes->get('delete/(:num)', 'Backend\MasjidMusholaController::delete/$1');
         $routes->get('show/(:num)', 'Backend\MasjidMusholaController::show/$1');
+
+        // --- Overview Semua User Operator (SuperAdmin & Admin saja) ---
+        // Route ini harus didefinisikan SEBELUM (:num)/users agar tidak bentrok
+        $routes->get('users', 'Backend\MasjidUserController::overview', ['filter' => 'role:SuperAdmin,Admin']);
+
+        // --- User Operator per Masjid (SuperAdmin & Admin saja) ---
+        $routes->group('(:num)/users', ['filter' => 'role:SuperAdmin,Admin'], function ($routes) {
+            // Daftar user operator untuk masjid tertentu
+            $routes->get('/', 'Backend\MasjidUserController::index/$1');
+            // Proses tambah user operator baru
+            $routes->post('store', 'Backend\MasjidUserController::store/$1');
+            // Reset password ke default
+            $routes->post('reset-password/(:num)', 'Backend\MasjidUserController::resetPassword/$1/$2');
+            // Toggle aktif/nonaktif user
+            $routes->post('toggle-active/(:num)', 'Backend\MasjidUserController::toggleActive/$1/$2');
+            // Hapus user operator
+            $routes->post('delete/(:num)', 'Backend\MasjidUserController::delete/$1/$2');
+        });
     });
 
-    // --- Display Masjid (Konfigurasi Admin) ---
-    $routes->group('display-masjid', ['filter' => 'role:SuperAdmin,Admin'], function ($routes) {
+    // --- Display Masjid (Konfigurasi Admin - juga OperatorMasjidMushola bisa akses) ---
+    $routes->group('display-masjid', ['filter' => 'role:SuperAdmin,Admin,OperatorMasjidMushola'], function ($routes) {
         $routes->get('/', 'Backend\DisplayMasjidController::index');
         $routes->get('create', 'Backend\DisplayMasjidController::create');
         $routes->post('store', 'Backend\DisplayMasjidController::store');
@@ -257,6 +317,12 @@ $routes->group('admin', ['filter' => 'login'], function ($routes) {
         $routes->post('konten/(:num)/store', 'Backend\DisplayMasjidController::storeKonten/$1');
         $routes->post('konten/(:num)/update/(:num)', 'Backend\DisplayMasjidController::updateKonten/$1/$2');
         $routes->post('konten/(:num)/delete/(:num)', 'Backend\DisplayMasjidController::deleteKonten/$1/$2');
+    });
+
+    // --- Akun: Ganti Password (semua user yang sudah login) ---
+    $routes->group('akun', function ($routes) {
+        $routes->get('ganti-password', 'Backend\AkunController::gantiPassword');
+        $routes->post('ganti-password', 'Backend\AkunController::prosesGantiPassword');
     });
 
     // --- Majelis Taklim (SuperAdmin, Admin, OperatorMajelisTaklim) ---

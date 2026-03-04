@@ -55,6 +55,19 @@ class KeuanganController extends BaseController
         return $currentUser ? $currentUser->id : null;
     }
 
+    private function isOperatorEntitas(array $config): bool
+    {
+        if (empty($config['operator_group'])) return false;
+        return in_groups($config['operator_group']) && !in_groups('SuperAdmin') && !in_groups('Admin');
+    }
+
+    private function getOperatorEntitasId(array $config): ?int
+    {
+        if (!$this->isOperatorEntitas($config)) return null;
+        $u = user();
+        return ($u && $u->entitas_type === $config['kode']) ? (int)$u->entitas_id : null;
+    }
+
     /**
      * Ambil daftar entitas yang bisa diakses user berdasarkan grupnya
      */
@@ -91,13 +104,15 @@ class KeuanganController extends BaseController
         // Rekap per entitas yang dapat diakses
         $rekapEntitas = [];
         foreach ($accessibleEntitas as $et) {
+            $operatorEntitasId = $this->getOperatorEntitasId($et);
             $rekap = $this->transaksiModel->getRekap([
                 'entitas_type' => $et['kode'],
+                'entitas_id'   => $operatorEntitasId,
                 'tahun'        => $tahunSekarang,
             ]);
             $rekapEntitas[] = [
-                'entitas'          => $et,
-                'total_pemasukan'  => $rekap['total_pemasukan'],
+                'entitas'           => $et,
+                'total_pemasukan'   => $rekap['total_pemasukan'],
                 'total_pengeluaran' => $rekap['total_pengeluaran'],
                 'saldo'             => $rekap['saldo'],
             ];
@@ -110,13 +125,17 @@ class KeuanganController extends BaseController
         // Ambil 10 transaksi terakhir dari semua entitas yang bisa diakses
         $transaksiTerakhir = [];
         if (!empty($accessibleEntitas)) {
-            $kodeEntitas = array_column($accessibleEntitas, 'kode');
-            $transaksiTerakhir = $this->transaksiModel->getWithDetail([]);;
-            // Filter manual agar sesuai entitas yang bisa diakses
-            $transaksiTerakhir = array_filter($transaksiTerakhir, function ($t) use ($kodeEntitas) {
-                return in_array($t['entitas_type'], $kodeEntitas);
-            });
-            $transaksiTerakhir = array_slice(array_values($transaksiTerakhir), 0, 10);
+            $semuaTransaksi = [];
+            foreach ($accessibleEntitas as $et) {
+                $operatorEntitasId = $this->getOperatorEntitasId($et);
+                $rows = $this->transaksiModel->getWithDetail([
+                    'entitas_type' => $et['kode'],
+                    'entitas_id'   => $operatorEntitasId,
+                ]);
+                $semuaTransaksi = array_merge($semuaTransaksi, $rows);
+            }
+            usort($semuaTransaksi, fn($a, $b) => strtotime($b['tanggal_transaksi']) - strtotime($a['tanggal_transaksi']));
+            $transaksiTerakhir = array_slice($semuaTransaksi, 0, 10);
         }
 
         $data = [
@@ -162,6 +181,7 @@ class KeuanganController extends BaseController
             foreach ($accessibleEntitas as $et) {
                 $f = $filters;
                 $f['entitas_type'] = $et['kode'];
+                $f['entitas_id'] = $this->getOperatorEntitasId($et);
                 $rows = $this->transaksiModel->getWithDetail($f);
                 $semuaTransaksi = array_merge($semuaTransaksi, $rows);
             }
@@ -169,6 +189,12 @@ class KeuanganController extends BaseController
             usort($semuaTransaksi, fn($a, $b) => strtotime($b['tanggal_transaksi']) - strtotime($a['tanggal_transaksi']));
             $transaksiList = $semuaTransaksi;
         } else {
+            if (!empty($filters['entitas_type'])) {
+                $configFiltered = $this->entitasTypeModel->getByKode($filters['entitas_type']);
+                if ($configFiltered) {
+                    $filters['entitas_id'] = $this->getOperatorEntitasId($configFiltered);
+                }
+            }
             $transaksiList = $this->transaksiModel->getWithDetail($filters);
         }
 

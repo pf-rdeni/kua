@@ -94,7 +94,19 @@ class PersonilController extends BaseController
         ];
 
         if ($config['has_masjid_link']) {
-            $data['masjidList'] = $this->masjidModel->findAll();
+            // Deteksi apakah user adalah operator spesifik (bukan Admin/SuperAdmin)
+            $currentUser = user();
+            $isOperator  = in_groups($config['operator_group'] ?? '') && !in_groups('SuperAdmin') && !in_groups('Admin');
+            $operatorMasjidId = null;
+
+            if ($isOperator && $currentUser && !empty($currentUser->entitas_id)) {
+                // Hanya kirim masjid milik operator
+                $operatorMasjidId = (int) $currentUser->entitas_id;
+                $data['masjidList'] = $this->masjidModel->where('id_masjid_mushola', $operatorMasjidId)->findAll();
+            } else {
+                $data['masjidList'] = $this->masjidModel->findAll();
+            }
+            $data['operatorMasjidId'] = $operatorMasjidId;
         }
 
         return view('backend/personil/form', $data);
@@ -250,7 +262,19 @@ class PersonilController extends BaseController
         ];
 
         if ($config['has_masjid_link']) {
-            $data['masjidList'] = $this->masjidModel->findAll();
+            // Deteksi apakah user adalah operator spesifik (bukan Admin/SuperAdmin)
+            $currentUser = user();
+            $isOperator  = in_groups($config['operator_group'] ?? '') && !in_groups('SuperAdmin') && !in_groups('Admin');
+            $operatorMasjidId = null;
+
+            if ($isOperator && $currentUser && !empty($currentUser->entitas_id)) {
+                // Hanya kirim masjid milik operator
+                $operatorMasjidId = (int) $currentUser->entitas_id;
+                $data['masjidList'] = $this->masjidModel->where('id_masjid_mushola', $operatorMasjidId)->findAll();
+            } else {
+                $data['masjidList'] = $this->masjidModel->findAll();
+            }
+            $data['operatorMasjidId'] = $operatorMasjidId;
         }
 
         return view('backend/personil/form', $data);

@@ -118,16 +118,9 @@ $opsiBadiyah  = $opsiWaktu['badiyah']  ?? ['subuh'=>0, 'dzuhur'=>1, 'ashar'=>0, 
                         </div>
                     </div>
 
-                    <!-- Visual Chart Sederhana -->
-                    <div class="chart-placeholder" id="keuangan-chart">
-                        <div class="chart-bar" style="height: 80px; background: linear-gradient(to top, #059669, #4ade80);">
-                            <div class="bar-value" style="color:#4ade80;" id="chart-pemasukan-val">0</div>
-                            <div class="bar-label">Pemasukan</div>
-                        </div>
-                        <div class="chart-bar" style="height: 50px; background: linear-gradient(to top, #dc2626, #f87171);">
-                            <div class="bar-value" style="color:#f87171;" id="chart-pengeluaran-val">0</div>
-                            <div class="bar-label">Pengeluaran</div>
-                        </div>
+                    <!-- Visual Chart Rekap Kategori -->
+                    <div class="chart-container" style="position: relative; height:300px; width:100%; margin-top:20px;">
+                        <canvas id="kategoriChart"></canvas>
                     </div>
                 </div>
 
@@ -236,7 +229,97 @@ $opsiBadiyah  = $opsiWaktu['badiyah']  ?? ['subuh'=>0, 'dzuhur'=>1, 'ashar'=>0, 
 <!-- Scripts -->
 <script src="<?= base_url('assets/display/js/praytimes.js') ?>"></script>
 <script src="<?= base_url('assets/display/js/display-engine.js') ?>"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    var kategoriChart = null;
+
+    function formatRupiah(number) {
+        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
+    }
+    
+    function formatRupiahShort(number) {
+        if(number >= 1000000000) return (number/1000000000).toFixed(1) + 'M';
+        if(number >= 1000000) return (number/1000000).toFixed(1) + 'Jt';
+        if(number >= 1000) return (number/1000).toFixed(1) + 'rb';
+        return number.toString();
+    }
+
+    function initKategoriChart(rekapKategori) {
+        var ctx = document.getElementById('kategoriChart').getContext('2d');
+        
+        // Kumpulkan label unik
+        var labelsSet = new Set();
+        rekapKategori.forEach(function(item) {
+            labelsSet.add(item.nama_kategori || 'Tanpa Kategori');
+        });
+        var labels = Array.from(labelsSet);
+
+        // Siapkan data array
+        var dataPemasukan = new Array(labels.length).fill(0);
+        var dataPengeluaran = new Array(labels.length).fill(0);
+
+        rekapKategori.forEach(function(item) {
+            var labelName = item.nama_kategori || 'Tanpa Kategori';
+            var index = labels.indexOf(labelName);
+            if (item.jenis === 'pemasukan') {
+                dataPemasukan[index] = parseFloat(item.total);
+            } else {
+                dataPengeluaran[index] = parseFloat(item.total);
+            }
+        });
+
+        if (kategoriChart) {
+            kategoriChart.destroy();
+        }
+
+        kategoriChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Pemasukan',
+                        data: dataPemasukan,
+                        backgroundColor: '#4ade80',
+                        borderColor: '#059669',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Pengeluaran',
+                        data: dataPengeluaran,
+                        backgroundColor: '#f87171',
+                        borderColor: '#dc2626',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        ticks: { color: 'rgba(255,255,255,0.7)' },
+                        grid: { display: false }
+                    },
+                    y: {
+                        ticks: {
+                            color: 'rgba(255,255,255,0.7)',
+                            callback: function(value) {
+                                return formatRupiahShort(value);
+                            }
+                        },
+                        grid: { color: 'rgba(255,255,255,0.1)' }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: { color: 'rgba(255,255,255,0.9)' }
+                    }
+                }
+            }
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         // Inisialisasi Display Engine
         DisplayEngine.init({
@@ -255,7 +338,8 @@ $opsiBadiyah  = $opsiWaktu['badiyah']  ?? ['subuh'=>0, 'dzuhur'=>1, 'ashar'=>0, 
                 dzuhur: <?= (int)($display['koreksi_dzuhur'] ?? 0) ?>,
                 ashar: <?= (int)($display['koreksi_ashar'] ?? 0) ?>,
                 maghrib: <?= (int)($display['koreksi_maghrib'] ?? 0) ?>,
-                isya: <?= (int)($display['koreksi_isya'] ?? 0) ?>
+                isya: <?= (int)($display['koreksi_isya'] ?? 0) ?>,
+                hijriah: <?= (int)($koreksiHijriah ?? 0) ?>
             },
             iqomah: {
                 subuh: <?= (int)($display['durasi_iqomah_subuh'] ?? 10) ?>,
@@ -303,17 +387,13 @@ $opsiBadiyah  = $opsiWaktu['badiyah']  ?? ['subuh'=>0, 'dzuhur'=>1, 'ashar'=>0, 
                     if (elPengeluaran) elPengeluaran.textContent = formatRupiah(k.pengeluaran);
                     if (elSaldo) elSaldo.textContent = formatRupiah(k.saldo);
 
-                    // Update chart bars
-                    var maxVal = Math.max(k.pemasukan, k.pengeluaran, 1);
-                    var barPemasukan = document.querySelector('.chart-bar:first-child');
-                    var barPengeluaran = document.querySelector('.chart-bar:last-child');
-                    if (barPemasukan) barPemasukan.style.height = Math.max(20, (k.pemasukan / maxVal) * 150) + 'px';
-                    if (barPengeluaran) barPengeluaran.style.height = Math.max(20, (k.pengeluaran / maxVal) * 150) + 'px';
-
-                    var chartPVal = document.getElementById('chart-pemasukan-val');
-                    var chartEVal = document.getElementById('chart-pengeluaran-val');
-                    if (chartPVal) chartPVal.textContent = formatRupiahShort(k.pemasukan);
-                    if (chartEVal) chartEVal.textContent = formatRupiahShort(k.pengeluaran);
+                    // Initialize or Update Chart
+                    if (k.rekap_kategori && k.rekap_kategori.length > 0) {
+                        initKategoriChart(k.rekap_kategori);
+                    } else {
+                        // fallback render empty chart mostly
+                        initKategoriChart([]);
+                    }
 
                     // Update tabel transaksi
                     var tbody = document.getElementById('tabel-transaksi-body');
@@ -327,7 +407,11 @@ $opsiBadiyah  = $opsiWaktu['badiyah']  ?? ['subuh'=>0, 'dzuhur'=>1, 'ashar'=>0, 
                                 var sign = t.jenis === 'pemasukan' ? '+' : '-';
                                 html += '<tr>';
                                 html += '<td>' + t.tanggal + '</td>';
-                                html += '<td>' + escHtml(t.keterangan) + '</td>';
+                                html += '<td><div style="font-weight:bold;">' + escHtml(t.keterangan) + '</div>';
+                                if (t.kategori) {
+                                    html += '<span style="font-size:0.75rem; color:rgba(255,255,255,0.6);"><i class="fas fa-tag" style="margin-right:3px;"></i> ' + escHtml(t.kategori) + '</span>';
+                                }
+                                html += '</td>';
                                 html += '<td class="' + cls + '" style="text-align:right;white-space:nowrap;">' + sign + ' ' + formatRupiah(t.jumlah) + '</td>';
                                 html += '</tr>';
                             });
@@ -358,16 +442,6 @@ $opsiBadiyah  = $opsiWaktu['badiyah']  ?? ['subuh'=>0, 'dzuhur'=>1, 'ashar'=>0, 
                     }
                 } catch(e2) {}
             });
-    }
-
-    function formatRupiah(angka) {
-        return 'Rp ' + Number(angka).toLocaleString('id-ID');
-    }
-
-    function formatRupiahShort(angka) {
-        if (angka >= 1000000) return 'Rp ' + (angka / 1000000).toFixed(1) + 'Jt';
-        if (angka >= 1000) return 'Rp ' + (angka / 1000).toFixed(0) + 'Rb';
-        return 'Rp ' + angka;
     }
 
     function escHtml(str) {

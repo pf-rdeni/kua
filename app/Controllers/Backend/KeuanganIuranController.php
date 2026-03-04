@@ -64,6 +64,19 @@ class KeuanganIuranController extends BaseController
         return $currentUser ? $currentUser->id : null;
     }
 
+    private function isOperatorEntitas(array $config): bool
+    {
+        if (empty($config['operator_group'])) return false;
+        return in_groups($config['operator_group']) && !in_groups('SuperAdmin') && !in_groups('Admin');
+    }
+
+    private function getOperatorEntitasId(array $config): ?int
+    {
+        if (!$this->isOperatorEntitas($config)) return null;
+        $u = user();
+        return ($u && $u->entitas_type === $config['kode']) ? (int)$u->entitas_id : null;
+    }
+
     /**
      * Halaman daftar setting iuran per entitas.
      * Menampilkan semua jenis iuran dan link ke laporan anggota masing-masing.
@@ -71,12 +84,20 @@ class KeuanganIuranController extends BaseController
     public function setting(string $entitasType)
     {
         $config    = $this->getEntitasConfig($entitasType);
-        $iuranList = $this->iuranSettingModel->getAllByEntitasType($entitasType);
+        $entitasId = $this->getOperatorEntitasId($config);
+        $iuranList = $this->iuranSettingModel->getAllByEntitasType($entitasType, $entitasId);
 
         // Hitung jumlah anggota aktif untuk entitas ini
-        $jumlahAnggota = $this->personilModel->where('entitas_type', $entitasType)
-                                              ->where('status_aktif', 1)
-                                              ->countAllResults();
+        $builder = $this->personilModel->where('entitas_type', $entitasType)
+                                       ->where('status_aktif', 1);
+        if ($entitasId !== null) {
+            // Tabel Personil saat ini hanya memiliki foreign key id_masjid_mushola
+            if ($entitasType === 'masjid_mushola') {
+                $builder->where('id_masjid_mushola', $entitasId);
+            }
+            // TODO: Jika tabel personil ditambahkan kolom id_majelis_taklim, tambahkan else if di sini
+        }
+        $jumlahAnggota = $builder->countAllResults();
 
         $data = [
             'title'         => 'Setting Iuran - ' . $config['nama_label'],
@@ -96,6 +117,7 @@ class KeuanganIuranController extends BaseController
     public function storeSetting(string $entitasType)
     {
         $config = $this->getEntitasConfig($entitasType);
+        $entitasId = $this->getOperatorEntitasId($config);
 
         $rules = [
             'nama_iuran'     => 'required|min_length[3]|max_length[150]',
@@ -111,7 +133,7 @@ class KeuanganIuranController extends BaseController
 
         $this->iuranSettingModel->save([
             'entitas_type'    => $entitasType,
-            'entitas_id'      => $this->request->getPost('entitas_id') ?: null,
+            'entitas_id'      => $entitasId ?? ($this->request->getPost('entitas_id') ?: null),
             'nama_iuran'      => $this->request->getPost('nama_iuran'),
             'periode'         => $this->request->getPost('periode'),
             'nominal'         => $this->request->getPost('nominal'),
@@ -132,10 +154,15 @@ class KeuanganIuranController extends BaseController
     public function updateSetting(string $entitasType, int $id)
     {
         $config  = $this->getEntitasConfig($entitasType);
+        $entitasId = $this->getOperatorEntitasId($config);
         $setting = $this->iuranSettingModel->find($id);
 
         if (!$setting || $setting['entitas_type'] !== $entitasType) {
             return redirect()->back()->with('error', 'Setting iuran tidak ditemukan.');
+        }
+
+        if ($entitasId !== null && $setting['entitas_id'] !== null && (int)$setting['entitas_id'] !== $entitasId) {
+            return redirect()->back()->with('error', 'Akses ditolak.');
         }
 
         $rules = [
@@ -170,10 +197,15 @@ class KeuanganIuranController extends BaseController
     public function deleteSetting(string $entitasType, int $id)
     {
         $config  = $this->getEntitasConfig($entitasType);
+        $entitasId = $this->getOperatorEntitasId($config);
         $setting = $this->iuranSettingModel->find($id);
 
         if (!$setting || $setting['entitas_type'] !== $entitasType) {
             return redirect()->back()->with('error', 'Setting iuran tidak ditemukan.');
+        }
+
+        if ($entitasId !== null && $setting['entitas_id'] !== null && (int)$setting['entitas_id'] !== $entitasId) {
+            return redirect()->back()->with('error', 'Akses ditolak.');
         }
 
         // Cek apakah sudah ada data pembayaran
@@ -194,10 +226,15 @@ class KeuanganIuranController extends BaseController
     public function anggota(string $entitasType, int $idSetting)
     {
         $config  = $this->getEntitasConfig($entitasType);
+        $entitasId = $this->getOperatorEntitasId($config);
         $setting = $this->iuranSettingModel->find($idSetting);
 
         if (!$setting || $setting['entitas_type'] !== $entitasType) {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound('Setting iuran tidak ditemukan.');
+        }
+
+        if ($entitasId !== null && $setting['entitas_id'] !== null && (int)$setting['entitas_id'] !== $entitasId) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound('Akses ditolak.');
         }
 
         // Generate semua periode berdasarkan setting
@@ -227,11 +264,17 @@ class KeuanganIuranController extends BaseController
         $filterPeriode = implode(',', $filterPeriodeArray);
 
         // Ambil semua personil aktif untuk entitas ini
-        $personilList = $this->personilModel
+        $builder = $this->personilModel
             ->where('entitas_type', $entitasType)
-            ->where('status_aktif', 1)
-            ->orderBy('nama_lengkap', 'ASC')
-            ->findAll();
+            ->where('status_aktif', 1);
+        if ($entitasId !== null) {
+            // Tabel Personil saat ini hanya memiliki foreign key id_masjid_mushola
+            if ($entitasType === 'masjid_mushola') {
+                $builder->where('id_masjid_mushola', $entitasId);
+            }
+            // TODO: Jika tabel personil ditambahkan kolom id_majelis_taklim, tambahkan else if di sini
+        }
+        $personilList = $builder->orderBy('nama_lengkap', 'ASC')->findAll();
 
         // Ambil semua data bayar untuk setting ini
         $bayaranRows = $this->iuranAnggotaModel->where('id_iuran_setting', $idSetting)->findAll();
@@ -279,7 +322,8 @@ class KeuanganIuranController extends BaseController
      */
     public function bayar(string $entitasType)
     {
-        $this->getEntitasConfig($entitasType);
+        $config = $this->getEntitasConfig($entitasType);
+        $entitasId = $this->getOperatorEntitasId($config);
 
         $rules = [
             'id_iuran_setting' => 'required|numeric',
@@ -341,7 +385,8 @@ class KeuanganIuranController extends BaseController
      */
     public function deleteBayar(string $entitasType, int $id)
     {
-        $this->getEntitasConfig($entitasType);
+        $config = $this->getEntitasConfig($entitasType);
+        $entitasId = $this->getOperatorEntitasId($config);
         $bayar = $this->iuranAnggotaModel->find($id);
 
         if (!$bayar) {

@@ -48,17 +48,36 @@ $breadcrumb = [
                     <!-- Masjid/Mushola -->
                     <div class="form-group">
                         <label for="id_masjid_mushola">Masjid/Mushola <span class="text-danger">*</span></label>
+                        <?php
+                        $operatorMasjidId = $operatorMasjidId ?? null;
+                        $selectedMasjidId = old('id_masjid_mushola', $personil['id_masjid_mushola'] ?? '');
+                        // Jika operator: paksa set ke masjid miliknya
+                        if ($operatorMasjidId) $selectedMasjidId = $operatorMasjidId;
+                        ?>
+                        <?php if ($operatorMasjidId): ?>
+                            <?php $masjidSendiri = $masjidList[0] ?? null; ?>
+                            <?php if ($masjidSendiri): ?>
+                            <input type="hidden" name="id_masjid_mushola" value="<?= $masjidSendiri['id_masjid_mushola'] ?>">
+                            <div class="form-control bg-light" style="cursor: not-allowed;">
+                                <i class="fas fa-mosque mr-2 text-primary"></i>
+                                <strong><?= esc($masjidSendiri['nama']) ?></strong>
+                                <small class="text-muted ml-2">(Masjid/Mushola Anda)</small>
+                            </div>
+                            <?php endif; ?>
+                        <?php else: ?>
                         <select class="form-control" id="id_masjid_mushola" name="id_masjid_mushola" required>
                             <option value="">-- Pilih Masjid/Mushola --</option>
                             <?php foreach ($masjidList as $masjid): ?>
                                 <option value="<?= $masjid['id_masjid_mushola'] ?>"
-                                    <?= old('id_masjid_mushola', $personil['id_masjid_mushola'] ?? '') == $masjid['id_masjid_mushola'] ? 'selected' : '' ?>>
+                                    <?= $selectedMasjidId == $masjid['id_masjid_mushola'] ? 'selected' : '' ?>>
                                     <?= esc($masjid['nama']) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
+                        <?php endif; ?>
                     </div>
                     <?php endif; ?>
+
 
                     <div class="row">
                         <!-- NIK -->

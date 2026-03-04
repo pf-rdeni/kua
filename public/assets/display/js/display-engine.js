@@ -1044,16 +1044,36 @@ var DisplayEngine = (function () {
      * Akurasi: ±1-2 hari dari kalender observasi
      */
     function getHijriDate(date) {
+        // Clone object date agar tidak merubah referensi aslinya
+        var baseDate = new Date(date.getTime());
+
+        // --- LOGIKA 1: Pergantian hari Islam (Ba'da Maghrib) ---
+        // Jika jam saat ini sudah melewati jam Maghrib hari ini, maka kalender Hijriah sudah masuk hari esok.
+        if (state.jadwalSholat && state.jadwalSholat.maghrib) {
+            var maghribMins = timeToMinutes(state.jadwalSholat.maghrib);
+            var currentMins = baseDate.getHours() * 60 + baseDate.getMinutes();
+            if (currentMins >= maghribMins) {
+                baseDate.setDate(baseDate.getDate() + 1);
+            }
+        }
+
+        // --- LOGIKA 2: Koreksi Manual dari Admin ---
+        // Penyesuaian +1 atau -1 hari sesuai input form Admin.
+        var koreksiHijriah = (config.koreksi && config.koreksi.hijriah) ? parseInt(config.koreksi.hijriah) : 0;
+        if (koreksiHijriah !== 0 && !isNaN(koreksiHijriah)) {
+            baseDate.setDate(baseDate.getDate() + koreksiHijriah);
+        }
+
         var namaBulanHijri = [
             'Muharram', 'Safar', 'Rabiul Awal', 'Rabiul Akhir',
             'Jumadil Awal', 'Jumadil Akhir', 'Rajab', 'Syaban',
             'Ramadhan', 'Syawal', 'Dzulqaidah', 'Dzulhijjah'
         ];
 
-        // Langkah 1: Hitung Julian Day Number dari tanggal Masehi (Gregorian)
-        var gYear = date.getFullYear();
-        var gMonth = date.getMonth() + 1;
-        var gDay = date.getDate();
+        // Langkah 1: Hitung Julian Day Number dari tanggal Masehi (Gregorian) yang sudah dimodifikasi
+        var gYear = baseDate.getFullYear();
+        var gMonth = baseDate.getMonth() + 1;
+        var gDay = baseDate.getDate();
 
         var a = Math.floor((14 - gMonth) / 12);
         var y = gYear + 4800 - a;

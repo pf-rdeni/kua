@@ -59,15 +59,20 @@ class DisplayMasjidController extends BaseController
         $finalLat = ($manualLat !== null && $manualLat !== '') ? $manualLat : ($display['latitude'] ?? 1.0408);
         $finalLon = ($manualLon !== null && $manualLon !== '') ? $manualLon : ($display['longitude'] ?? 104.2417);
 
+        // Parse koreksi_waktu JSON untuk mendapatkan koreksi_hijriah
+        $koreksiWaktu = !empty($display['koreksi_waktu']) ? json_decode($display['koreksi_waktu'], true) : [];
+        $koreksiHijriah = (int)($koreksiWaktu['hijriah'] ?? 0);
+
         // Data untuk view
         $data = [
-            'display'       => $display,
-            'kontens'       => $kontens,
-            'kontenByTipe'  => $kontenByTipe,
-            'namaMasjid'    => $namaMasjid,
-            'alamatDisplay' => $alamatDisplay,
-            'latitude'      => (float)$finalLat,
-            'longitude'     => (float)$finalLon,
+            'display'          => $display,
+            'kontens'          => $kontens,
+            'kontenByTipe'     => $kontenByTipe,
+            'namaMasjid'       => $namaMasjid,
+            'alamatDisplay'    => $alamatDisplay,
+            'latitude'         => (float)$finalLat,
+            'longitude'        => (float)$finalLon,
+            'koreksiHijriah'   => $koreksiHijriah,
         ];
 
         // Pilih template sesuai pengaturan
@@ -148,6 +153,7 @@ class DisplayMasjidController extends BaseController
                     'ashar'   => (int)($koreksi['ashar'] ?? 0),
                     'maghrib' => (int)($koreksi['maghrib'] ?? 0),
                     'isya'    => (int)($koreksi['isya'] ?? 0),
+                    'hijriah' => (int)($koreksi['hijriah'] ?? 0),
                 ],
                 // Durasi iqomah (dari JSON)
                 'iqomah' => [
@@ -247,10 +253,11 @@ class DisplayMasjidController extends BaseController
 
         // Coba ambil data keuangan jika model tersedia
         $keuanganData = [
-            'pemasukan'   => 0,
-            'pengeluaran' => 0,
-            'saldo'       => 0,
-            'transaksi'   => [],
+            'pemasukan'      => 0,
+            'pengeluaran'    => 0,
+            'saldo'          => 0,
+            'transaksi'      => [],
+            'rekap_kategori' => [],
         ];
 
         try {
@@ -259,9 +266,12 @@ class DisplayMasjidController extends BaseController
 
             // Ambil ringkasan keuangan bulan ini untuk masjid terkait
             $transaksis = $transaksiModel
-                ->where('id_entitas', $idMasjid)
-                ->where("DATE_FORMAT(tanggal, '%Y-%m')", $bulanIni)
-                ->orderBy('tanggal', 'DESC')
+                ->select('tbl_keuangan_transaksi.*, tbl_keuangan_kategori.nama_kategori')
+                ->join('tbl_keuangan_kategori', 'tbl_keuangan_kategori.id = tbl_keuangan_transaksi.id_kategori', 'left')
+                ->where('tbl_keuangan_transaksi.entitas_type', 'masjid_mushola')
+                ->where('tbl_keuangan_transaksi.entitas_id', $idMasjid)
+                ->where("DATE_FORMAT(tbl_keuangan_transaksi.tanggal_transaksi, '%Y-%m')", $bulanIni)
+                ->orderBy('tbl_keuangan_transaksi.tanggal_transaksi', 'DESC')
                 ->findAll(10); // 10 transaksi terakhir
 
             $pemasukan = 0;
@@ -273,16 +283,21 @@ class DisplayMasjidController extends BaseController
                     $pengeluaran += (float)$t['jumlah'];
                 }
             }
+            
+            // Ambil data rekap kategori untuk Chart
+            $rekapKategori = $transaksiModel->getRekapKategori('masjid_mushola', $idMasjid, (int)date('Y'), (int)date('m'));
 
             $keuanganData = [
-                'pemasukan'   => $pemasukan,
-                'pengeluaran' => $pengeluaran,
-                'saldo'       => $pemasukan - $pengeluaran,
-                'periode'     => date('F Y'),
-                'transaksi'   => array_map(function($t) {
+                'pemasukan'      => $pemasukan,
+                'pengeluaran'    => $pengeluaran,
+                'saldo'          => $pemasukan - $pengeluaran,
+                'periode'        => date('F Y'),
+                'rekap_kategori' => $rekapKategori,
+                'transaksi'      => array_map(function($t) {
                     return [
-                        'tanggal'    => $t['tanggal'],
+                        'tanggal'    => $t['tanggal_transaksi'],
                         'keterangan' => $t['keterangan'] ?? '',
+                        'kategori'   => $t['nama_kategori'] ?? '',
                         'jenis'      => $t['jenis'],
                         'jumlah'     => (float)$t['jumlah'],
                     ];

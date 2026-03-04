@@ -69,11 +69,32 @@ class KeuanganTransaksiController extends BaseController
     }
 
     /**
+     * Apakah user login adalah Operator untuk entitas spesifik (bukan Admin/SuperAdmin)?
+     */
+    private function isOperatorEntitas(array $config): bool
+    {
+        if (empty($config['operator_group'])) return false;
+        return in_groups($config['operator_group']) && !in_groups('SuperAdmin') && !in_groups('Admin');
+    }
+
+    /**
+     * Ambil entitas_id milik operator yang login, atau null jika admin.
+     */
+    private function getOperatorEntitasId(array $config): ?int
+    {
+        if (!$this->isOperatorEntitas($config)) return null;
+        $u = user();
+        return ($u && $u->entitas_type === $config['kode']) ? (int)$u->entitas_id : null;
+    }
+
+    /**
      * Tampilkan daftar transaksi per entitas
      */
     public function index(string $entitasType)
     {
         $config = $this->getEntitasConfig($entitasType);
+
+        $operatorEntitasId = $this->getOperatorEntitasId($config);
 
         // Ambil filter dari GET
         $filters = [
@@ -84,38 +105,63 @@ class KeuanganTransaksiController extends BaseController
             'id_kategori'    => $this->request->getGet('id_kategori') ?? '',
         ];
 
-        // Untuk masjid/mushola: ambil list masjid untuk filter tambahan
-        $masjidList   = [];
+        // Ambil list entitas (masjid/majelis) untuk dropdown filter
+        $entitasList     = [];
         $filterEntitasId = $this->request->getGet('entitas_id') ?? '';
+        
+        $modelEntitas = null;
+        $pkRow = '';
         if ($entitasType === 'masjid_mushola') {
-            $masjidList = $this->masjidModel->findAll();
-            if ($filterEntitasId !== '') {
-                $filters['entitas_id'] = $filterEntitasId;
+            $modelEntitas = $this->masjidModel;
+            $pkRow = 'id_masjid_mushola';
+        } elseif ($entitasType === 'majelis_taklim') {
+            $modelEntitas = new \App\Models\MajelisTaklimModel();
+            $pkRow = 'id_majelis_taklim';
+        }
+
+        if ($modelEntitas) {
+            if ($operatorEntitasId) {
+                // Operator hanya lihat data entitas sendiri — kunci tanpa pilihan
+                $entitasList = $modelEntitas->where($pkRow, $operatorEntitasId)->findAll();
+                $filterEntitasId = $operatorEntitasId;
+                $filters['entitas_id'] = $operatorEntitasId;
+            } else {
+                $entitasList = $modelEntitas->findAll();
+                if ($filterEntitasId !== '') {
+                    $filters['entitas_id'] = $filterEntitasId;
+                }
             }
         }
 
         $transaksiList = $this->transaksiModel->getWithDetail($filters);
         $rekap         = $this->transaksiModel->getRekap($filters);
 
-        // Ambil data kas untuk entitas ini
-        $kasList = $this->kasModel->getByEntitasType($entitasType);
+        // Ambil data kas untuk entitas ini (filter per entitas jika operator)
+        $kasList = $operatorEntitasId
+            ? $this->kasModel->where('entitas_id', $operatorEntitasId)->where('entitas_type', $entitasType)->findAll()
+            : $this->kasModel->getByEntitasType($entitasType);
+
+        // Siapkan Entitas ID untuk mengambil list Kategori
+        $entitasIdForCategory = $operatorEntitasId ?? (logged_in() ? user()->entitas_id : null);
 
         // Data tren bulanan untuk grafik mini
-        $trenBulanan = $this->transaksiModel->getTrenBulanan($entitasType, null, (int)($filters['tahun'] ?: date('Y')));
+        $trenBulanan = $this->transaksiModel->getTrenBulanan($entitasType, $operatorEntitasId, (int)($filters['tahun'] ?: date('Y')));
 
         $data = [
-            'title'          => 'Keuangan ' . $config['nama_label'],
-            'entitasType'    => $entitasType,
-            'entitasConfig'  => $config,
-            'transaksiList'  => $transaksiList,
-            'filters'        => $filters,
-            'rekap'          => $rekap,
-            'kasList'        => $kasList,
-            'kategoriList'   => $this->kategoriModel->getActive(),
-            'masjidList'     => $masjidList,
-            'filterEntitasId'=> $filterEntitasId,
-            'trenBulanan'    => $trenBulanan,
-            'tahunList'      => range(date('Y'), date('Y') - 5),
+            'title'           => 'Keuangan ' . $config['nama_label'],
+            'entitasType'     => $entitasType,
+            'entitasConfig'   => $config,
+            'transaksiList'   => $transaksiList,
+            'filters'         => $filters,
+            'rekap'           => $rekap,
+            'kasList'         => $kasList,
+            'kategoriList'    => $this->kategoriModel->getActiveForEntitas($entitasType, $entitasIdForCategory),
+            'entitasList'     => $entitasList,
+            'pkRow'           => $pkRow,
+            'filterEntitasId' => $filterEntitasId,
+            'trenBulanan'     => $trenBulanan,
+            'tahunList'       => range(date('Y'), date('Y') - 5),
+            'isOperatorEntitas'=> $this->isOperatorEntitas($config),
         ];
 
         return view('backend/keuangan/transaksi/index', $data);
@@ -127,21 +173,43 @@ class KeuanganTransaksiController extends BaseController
     public function create(string $entitasType)
     {
         $config = $this->getEntitasConfig($entitasType);
+        $operatorEntitasId = $this->getOperatorEntitasId($config);
 
-        $masjidList = [];
+        $entitasList = [];
+        $pkRow = '';
         if ($entitasType === 'masjid_mushola') {
-            $masjidList = $this->masjidModel->findAll();
+            $entitasList = $operatorEntitasId
+                ? $this->masjidModel->where('id_masjid_mushola', $operatorEntitasId)->findAll()
+                : $this->masjidModel->findAll();
+            $pkRow = 'id_masjid_mushola';
+        } elseif ($entitasType === 'majelis_taklim') {
+            $modelMt = new \App\Models\MajelisTaklimModel();
+            $entitasList = $operatorEntitasId
+                ? $modelMt->where('id_majelis_taklim', $operatorEntitasId)->findAll()
+                : $modelMt->findAll();
+            $pkRow = 'id_majelis_taklim';
+        }
+
+        $entitasIdForCategory = $operatorEntitasId ?? user()->entitas_id;
+        $kasList = $operatorEntitasId
+            ? $this->kasModel->where('entitas_id', $operatorEntitasId)->where('entitas_type', $entitasType)->findAll()
+            : $this->kasModel->getByEntitasType($entitasType);
+        foreach ($kasList as &$k) {
+            $k['saldo_berjalan'] = $this->kasModel->hitungSaldo($k['id']);
         }
 
         $data = [
-            'title'         => 'Tambah Transaksi - ' . $config['nama_label'],
-            'entitasType'   => $entitasType,
-            'entitasConfig' => $config,
-            'kasList'       => $this->kasModel->getByEntitasType($entitasType),
-            'kategoriList'  => $this->kategoriModel->getActive(),
-            'masjidList'    => $masjidList,
-            'transaksi'     => null, // mode tambah
-            'validation'    => \Config\Services::validation(),
+            'title'             => 'Tambah Transaksi - ' . $config['nama_label'],
+            'entitasType'       => $entitasType,
+            'entitasConfig'     => $config,
+            'kasList'           => $kasList,
+            'kategoriList'      => $this->kategoriModel->getActiveForEntitas($entitasType, $entitasIdForCategory),
+            'entitasList'       => $entitasList,
+            'pkRow'             => $pkRow,
+            'transaksi'         => null,
+            'jenis'             => $this->request->getGet('jenis'),
+            'validation'        => \Config\Services::validation(),
+            'operatorEntitasId' => $operatorEntitasId,
         ];
 
         return view('backend/keuangan/transaksi/form', $data);
@@ -166,6 +234,24 @@ class KeuanganTransaksiController extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
+        // --- VALIDASI SISA KAS UNTUK PENGELUARAN ---
+        $jenis = $this->request->getPost('jenis');
+        $idKas = $this->request->getPost('id_kas');
+        $jumlah = (float)$this->request->getPost('jumlah');
+
+        if ($jenis === 'pengeluaran' && !empty($idKas)) {
+            $dataKas = $this->kasModel->find($idKas);
+            if ($dataKas) {
+                $saldoSaatIni = $this->kasModel->hitungSaldo($idKas);
+                if ($jumlah > $saldoSaatIni) {
+                    return redirect()->back()
+                        ->withInput()
+                        ->with('error', 'Transaksi gagal disimpan. Saldo kas saat ini (Rp ' . number_format($saldoSaatIni, 0, ',', '.') . ') tidak mencukupi untuk jumlah pengeluaran ini.');
+                }
+            }
+        }
+        // -------------------------------------------
+
         // Handle upload bukti pembayaran
         $buktiName = null;
         $bukti = $this->request->getFile('bukti');
@@ -179,6 +265,11 @@ class KeuanganTransaksiController extends BaseController
         }
 
         $entitasId = $this->request->getPost('entitas_id') ?? null;
+        // Jika operator, paksa gunakan id entitas sendiri (keamanan: cegah manipulasi POST)
+        $operatorEntitasId = $this->getOperatorEntitasId($config);
+        if ($operatorEntitasId) {
+            $entitasId = $operatorEntitasId;
+        }
 
         $saveData = [
             'id_kas'            => $this->request->getPost('id_kas') ?: null,
@@ -205,27 +296,54 @@ class KeuanganTransaksiController extends BaseController
      */
     public function edit(string $entitasType, int $id)
     {
-        $config    = $this->getEntitasConfig($entitasType);
-        $transaksi = $this->transaksiModel->find($id);
+        $config = $this->getEntitasConfig($entitasType);
+        $operatorEntitasId = $this->getOperatorEntitasId($config);
 
+        $transaksi = $this->transaksiModel->find($id);
         if (!$transaksi || $transaksi['entitas_type'] !== $entitasType) {
-            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound('Data transaksi tidak ditemukan.');
+            return redirect()->to('admin/keuangan/transaksi/'.$entitasType)->with('error', 'Transaksi tidak ditemukan.');
         }
 
-        $masjidList = [];
+        // Keamanan: cegah operator edit transaksi entitas lain
+        if ($operatorEntitasId && (int)$transaksi['entitas_id'] !== $operatorEntitasId) {
+            return redirect()->to('admin/keuangan/transaksi/'.$entitasType)->with('error', 'Akses ditolak.');
+        }
+
+        $entitasList = [];
+        $pkRow = '';
         if ($entitasType === 'masjid_mushola') {
-            $masjidList = $this->masjidModel->findAll();
+            $entitasList = $operatorEntitasId
+                ? $this->masjidModel->where('id_masjid_mushola', $operatorEntitasId)->findAll()
+                : $this->masjidModel->findAll();
+            $pkRow = 'id_masjid_mushola';
+        } elseif ($entitasType === 'majelis_taklim') {
+            $modelMt = new \App\Models\MajelisTaklimModel();
+            $entitasList = $operatorEntitasId
+                ? $modelMt->where('id_majelis_taklim', $operatorEntitasId)->findAll()
+                : $modelMt->findAll();
+            $pkRow = 'id_majelis_taklim';
+        }
+
+        $entitasIdForCategory = $operatorEntitasId ?? (logged_in() ? user()->entitas_id : null);
+        $kasList = $operatorEntitasId
+            ? $this->kasModel->where('entitas_id', $operatorEntitasId)->where('entitas_type', $entitasType)->findAll()
+            : $this->kasModel->getByEntitasType($entitasType);
+        foreach ($kasList as &$k) {
+            $k['saldo_berjalan'] = $this->kasModel->hitungSaldo($k['id']);
         }
 
         $data = [
-            'title'         => 'Edit Transaksi - ' . $config['nama_label'],
-            'entitasType'   => $entitasType,
-            'entitasConfig' => $config,
-            'kasList'       => $this->kasModel->getByEntitasType($entitasType),
-            'kategoriList'  => $this->kategoriModel->getActive(),
-            'masjidList'    => $masjidList,
-            'transaksi'     => $transaksi,
-            'validation'    => \Config\Services::validation(),
+            'title'             => 'Edit Transaksi - ' . $config['nama_label'],
+            'entitasType'       => $entitasType,
+            'entitasConfig'     => $config,
+            'kasList'           => $kasList,
+            'kategoriList'      => $this->kategoriModel->getActiveForEntitas($entitasType, $entitasIdForCategory),
+            'entitasList'       => $entitasList,
+            'pkRow'             => $pkRow,
+            'transaksi'         => $transaksi,
+            'jenis'             => $transaksi['jenis'],
+            'validation'        => \Config\Services::validation(),
+            'operatorEntitasId' => $operatorEntitasId,
         ];
 
         return view('backend/keuangan/transaksi/form', $data);
@@ -237,10 +355,16 @@ class KeuanganTransaksiController extends BaseController
     public function update(string $entitasType, int $id)
     {
         $config    = $this->getEntitasConfig($entitasType);
+        $operatorEntitasId = $this->getOperatorEntitasId($config);
         $transaksi = $this->transaksiModel->find($id);
 
         if (!$transaksi || $transaksi['entitas_type'] !== $entitasType) {
-            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound('Data transaksi tidak ditemukan.');
+            return redirect()->to('admin/keuangan/transaksi/'.$entitasType)->with('error', 'Transaksi tidak ditemukan.');
+        }
+
+        // Keamanan: cegah operator update transaksi entitas lain
+        if ($operatorEntitasId && (int)$transaksi['entitas_id'] !== $operatorEntitasId) {
+            return redirect()->to('admin/keuangan/transaksi/'.$entitasType)->with('error', 'Akses ditolak.');
         }
 
         $rules = [
@@ -252,6 +376,33 @@ class KeuanganTransaksiController extends BaseController
         if (!$this->validate($rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
+
+        // --- VALIDASI SISA KAS UNTUK PENGELUARAN SAAT UPDATE ---
+        $jenis     = $this->request->getPost('jenis');
+        $idKasBaru = $this->request->getPost('id_kas');
+        $jumlahTrx = (float)$this->request->getPost('jumlah');
+
+        if ($jenis === 'pengeluaran' && !empty($idKasBaru)) {
+            $dataKas = $this->kasModel->find($idKasBaru);
+            if ($dataKas) {
+                // Kalkulasi Saldo Real Terakhir sebelum Update (jika kas yang digunakan sama)
+                // Jika ganti kas, periksa saldo utuh kas baru.
+                // Jika kas tetap sama, tambahkan kembali nilai pengeluaran lama seolah-olah dibatalkan terlebih dulu
+                $saldoReal = $this->kasModel->hitungSaldo($idKasBaru);
+                if ($transaksi['jenis'] === 'pengeluaran' && (string)$transaksi['id_kas'] === (string)$idKasBaru) {
+                    $saldoReal += (float)$transaksi['jumlah'];
+                } else if ($transaksi['jenis'] === 'pemasukan' && (string)$transaksi['id_kas'] === (string)$idKasBaru) {
+                    $saldoReal -= (float)$transaksi['jumlah'];
+                }
+
+                if ($jumlahTrx > $saldoReal) {
+                    return redirect()->back()
+                        ->withInput()
+                        ->with('error', 'Transaksi gagal diupdate. Total Saldo kas (Rp ' . number_format($saldoReal, 0, ',', '.') . ') tidak mencukupi untuk jumlah pengeluaran ini.');
+                }
+            }
+        }
+        // -------------------------------------------------------
 
         // Handle upload bukti (ganti file jika ada yang baru)
         $buktiName = $transaksi['bukti'];
@@ -270,6 +421,10 @@ class KeuanganTransaksiController extends BaseController
         }
 
         $entitasId = $this->request->getPost('entitas_id') ?? null;
+        // Jika operator, paksa gunakan id entitas sendiri (keamanan: cegah manipulasi POST)
+        if ($operatorEntitasId) {
+            $entitasId = $operatorEntitasId;
+        }
 
         $updateData = [
             'id_kas'            => $this->request->getPost('id_kas') ?: null,
@@ -294,11 +449,17 @@ class KeuanganTransaksiController extends BaseController
      */
     public function delete(string $entitasType, int $id)
     {
-        $config    = $this->getEntitasConfig($entitasType);
-        $transaksi = $this->transaksiModel->find($id);
+        $config = $this->getEntitasConfig($entitasType);
+        $operatorEntitasId = $this->getOperatorEntitasId($config);
 
+        $transaksi = $this->transaksiModel->find($id);
         if (!$transaksi || $transaksi['entitas_type'] !== $entitasType) {
             return redirect()->back()->with('error', 'Data transaksi tidak ditemukan.');
+        }
+
+        // Keamanan: cegah operator hapus transaksi entitas lain
+        if ($operatorEntitasId && (int)$transaksi['entitas_id'] !== $operatorEntitasId) {
+            return redirect()->to('admin/keuangan/transaksi/'.$entitasType)->with('error', 'Akses ditolak.');
         }
 
         // Hapus file bukti jika ada
@@ -319,26 +480,40 @@ class KeuanganTransaksiController extends BaseController
     public function kas(string $entitasType)
     {
         $config = $this->getEntitasConfig($entitasType);
+        $operatorEntitasId = $this->getOperatorEntitasId($config);
 
-        $masjidList = [];
+        $kasList = $operatorEntitasId
+            ? $this->kasModel->where('entitas_id', $operatorEntitasId)->where('entitas_type', $entitasType)->findAll()
+            : $this->kasModel->getByEntitasType($entitasType);
+
+        foreach ($kasList as &$k) {
+            $k['saldo_berjalan'] = $this->kasModel->hitungSaldo($k['id']);
+        }
+        
+        $entitasList = [];
+        $pkRow = '';
         if ($entitasType === 'masjid_mushola') {
-            $masjidList = $this->masjidModel->findAll();
+            $entitasList = $operatorEntitasId
+                ? $this->masjidModel->where('id_masjid_mushola', $operatorEntitasId)->findAll()
+                : $this->masjidModel->findAll();
+            $pkRow = 'id_masjid_mushola';
+        } elseif ($entitasType === 'majelis_taklim') {
+            $modelMt = new \App\Models\MajelisTaklimModel();
+            $entitasList = $operatorEntitasId
+                ? $modelMt->where('id_majelis_taklim', $operatorEntitasId)->findAll()
+                : $modelMt->findAll();
+            $pkRow = 'id_majelis_taklim';
         }
-
-        // Ambil semua kas untuk entitas ini dengan saldo berjalan
-        $kasList = $this->kasModel->getByEntitasType($entitasType);
-        foreach ($kasList as &$kas) {
-            $kas['saldo_berjalan'] = $this->kasModel->hitungSaldo($kas['id']);
-        }
-        unset($kas);
 
         $data = [
-            'title'         => 'Manajemen Kas - ' . $config['nama_label'],
-            'entitasType'   => $entitasType,
-            'entitasConfig' => $config,
-            'kasList'       => $kasList,
-            'masjidList'    => $masjidList,
-            'validation'    => \Config\Services::validation(),
+            'title'             => 'Kelola Kas - ' . $config['nama_label'],
+            'entitasType'       => $entitasType,
+            'entitasConfig'     => $config,
+            'kasList'           => $kasList,
+            'entitasList'       => $entitasList,
+            'pkRow'             => $pkRow,
+            'operatorEntitasId' => $operatorEntitasId,
+            'validation'        => \Config\Services::validation(),
         ];
 
         return view('backend/keuangan/kas/index', $data);
@@ -349,7 +524,7 @@ class KeuanganTransaksiController extends BaseController
      */
     public function storeKas(string $entitasType)
     {
-        $this->getEntitasConfig($entitasType);
+        $config = $this->getEntitasConfig($entitasType);
 
         $rules = [
             'nama_kas'   => 'required|min_length[3]|max_length[150]',
@@ -360,9 +535,13 @@ class KeuanganTransaksiController extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
+        // Jika operator, paksa gunakan id entitas sendiri (keamanan)
+        $operatorEntitasId = $this->getOperatorEntitasId($config);
+        $entitasIdKas = $operatorEntitasId ?? ($this->request->getPost('entitas_id') ?: null);
+
         $this->kasModel->save([
             'entitas_type' => $entitasType,
-            'entitas_id'   => $this->request->getPost('entitas_id') ?: null,
+            'entitas_id'   => $entitasIdKas,
             'nama_kas'     => $this->request->getPost('nama_kas'),
             'saldo_awal'   => $this->request->getPost('saldo_awal') ?? 0,
             'keterangan'   => $this->request->getPost('keterangan') ?: null,
@@ -379,16 +558,21 @@ class KeuanganTransaksiController extends BaseController
      */
     public function updateKas(string $entitasType, int $id)
     {
-        $this->getEntitasConfig($entitasType);
-        $kas = $this->kasModel->find($id);
+        $config = $this->getEntitasConfig($entitasType);
+        $operatorEntitasId = $this->getOperatorEntitasId($config);
 
+        $kas = $this->kasModel->find($id);
         if (!$kas || $kas['entitas_type'] !== $entitasType) {
-            return redirect()->back()->with('error', 'Data kas tidak ditemukan.');
+            return redirect()->back()->with('error', 'Rekening kas tidak ditemukan.');
+        }
+
+        // Keamanan: cegah operator edit kas entitas lain
+        if ($operatorEntitasId && (int)$kas['entitas_id'] !== $operatorEntitasId) {
+            return redirect()->back()->with('error', 'Akses ditolak.');
         }
 
         $rules = [
             'nama_kas'   => 'required|min_length[3]|max_length[150]',
-            'saldo_awal' => 'permit_empty|numeric',
         ];
 
         if (!$this->validate($rules)) {
@@ -397,12 +581,41 @@ class KeuanganTransaksiController extends BaseController
 
         $this->kasModel->update($id, [
             'nama_kas'   => $this->request->getPost('nama_kas'),
-            'saldo_awal' => $this->request->getPost('saldo_awal') ?? 0,
-            'keterangan' => $this->request->getPost('keterangan') ?: null,
             'entitas_id' => $this->request->getPost('entitas_id') ?: null,
+            'keterangan' => $this->request->getPost('keterangan') ?: null,
         ]);
 
         return redirect()->to('/admin/keuangan/kas/' . $entitasType)
-                         ->with('success', 'Kas berhasil diperbarui.');
+                         ->with('success', 'Data kas berhasil diperbarui.');
+    }
+
+    /**
+     * Hapus kas (jika tidak ada transaksi terkait)
+     */
+    public function deleteKas(string $entitasType, int $id)
+    {
+        $config = $this->getEntitasConfig($entitasType);
+        $operatorEntitasId = $this->getOperatorEntitasId($config);
+
+        $kas = $this->kasModel->find($id);
+        if (!$kas || $kas['entitas_type'] !== $entitasType) {
+            return redirect()->back()->with('error', 'Rekening kas tidak ditemukan.');
+        }
+
+        // Keamanan: cegah operator hapus kas entitas lain
+        if ($operatorEntitasId && (int)$kas['entitas_id'] !== $operatorEntitasId) {
+            return redirect()->back()->with('error', 'Akses ditolak.');
+        }
+
+        // Cek apakah kas sudah memiliki transaksi
+        $jumlahTransaksi = $this->transaksiModel->where('id_kas', $id)->countAllResults();
+        if ($jumlahTransaksi > 0) {
+            return redirect()->back()->with('error', 'Kas tidak bisa dihapus karena memiliki ' . $jumlahTransaksi . ' riwayat transaksi.');
+        }
+
+        $this->kasModel->delete($id);
+
+        return redirect()->to('/admin/keuangan/kas/' . $entitasType)
+                         ->with('success', 'Rekening kas berhasil dihapus.');
     }
 }

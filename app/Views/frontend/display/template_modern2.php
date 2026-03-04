@@ -443,7 +443,8 @@ $opsiBadiyah  = $opsiWaktu['badiyah']  ?? ['subuh'=>0, 'dzuhur'=>1, 'ashar'=>0, 
                 dzuhur: <?= (int)($display['koreksi_dzuhur'] ?? 0) ?>,
                 ashar: <?= (int)($display['koreksi_ashar'] ?? 0) ?>,
                 maghrib: <?= (int)($display['koreksi_maghrib'] ?? 0) ?>,
-                isya: <?= (int)($display['koreksi_isya'] ?? 0) ?>
+                isya: <?= (int)($display['koreksi_isya'] ?? 0) ?>,
+                hijriah: <?= (int)($koreksiHijriah ?? 0) ?>
             },
             iqomah: {
                 subuh: <?= (int)($display['durasi_iqomah_subuh'] ?? 10) ?>,
