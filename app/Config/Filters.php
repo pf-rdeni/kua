@@ -41,7 +41,6 @@ class Filters extends BaseFilters
         'login'         => LoginFilter::class,
         'role'          => RoleFilter::class,
         'permission'    => PermissionFilter::class,
-        'swallowed'     => ServiceWorkerFilter::class, // Header Service-Worker-Allowed untuk SW scope /display/
     ];
 
     /**
@@ -114,9 +113,5 @@ class Filters extends BaseFilters
      *
      * @var array<string, array<string, list<string>>>
      */
-    public array $filters = [
-        'swallowed' => [
-            'after' => ['sw-display.js'],
-        ],
-    ];
+    public array $filters = [];
 }

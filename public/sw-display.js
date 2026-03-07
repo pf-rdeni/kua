@@ -2,17 +2,14 @@ const CACHE_NAME = 'display-kua-v2';
 
 // Aset statis yang WAJIB di-cache saat pertama kali diakses.
 // Hanya aset untuk halaman display (TV), BUKAN admin/backend!
-// CATATAN: Menggunakan path absolut (/) bukan relative (./) karena
-// scope SW dibatasi ke /display/, sehingga relative path akan resolve
-// ke /display/assets/... yang salah.
 const STATIC_ASSETS = [
-    '/assets/display/css/display-style.css',
-    '/assets/display/js/praytimes.js',
-    '/assets/display/js/display-engine.js',
+    './assets/display/css/display-style.css',
+    './assets/display/js/praytimes.js',
+    './assets/display/js/display-engine.js',
     // Fallback jika gambar hilang
-    '/assets/img/default-masjid.jpg',
-    '/assets/img/logo-kemenag.png',
-    '/favicon.ico',
+    './assets/img/default-masjid.jpg',
+    './assets/img/logo-kemenag.png',
+    './favicon.ico',
 ];
 
 // Install Event: Cache aset statis awal

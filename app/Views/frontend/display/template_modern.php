@@ -272,11 +272,9 @@ $opsiBadiyah  = $opsiWaktu['badiyah']  ?? ['subuh'=>0, 'dzuhur'=>1, 'ashar'=>0, 
         });
     });
     // Register Service Worker untuk Web Offline App (PWA)
-    // Scope dibatasi ke /display/ agar tidak mencegat request app lain
-    // yang berjalan di port yang sama (misalnya saat development multi-project)
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
-            navigator.serviceWorker.register('<?= base_url('sw-display.js') ?>', { scope: '<?= base_url('display/') ?>' })
+            navigator.serviceWorker.register('<?= base_url('sw-display.js') ?>', { scope: '/' })
                 .then(function(registration) {
                     console.log('[ServiceWorker] Registrasi berhasil dengan scope:', registration.scope);
                 })
