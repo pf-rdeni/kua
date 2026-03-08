@@ -123,6 +123,10 @@ class DisplayMasjidController extends BaseController
         $opsiQobliyah = $opsiWaktu['qobliyah'] ?? ['subuh'=>1, 'dzuhur'=>1, 'ashar'=>0, 'maghrib'=>1, 'isya'=>1];
         $opsiBadiyah  = $opsiWaktu['badiyah']  ?? ['subuh'=>0, 'dzuhur'=>1, 'ashar'=>0, 'maghrib'=>1, 'isya'=>1];
 
+        // Parse modern1 specific settings
+        $displaySetting = !empty($display['display_setting']) ? json_decode($display['display_setting'], true) : [];
+        $modern1Config  = $displaySetting['modern1'] ?? null;
+
         // Helper: resolve gambar path ke base_url
         $resolveGambar = function($path) {
             return !empty($path) ? base_url($path) : null;
@@ -146,6 +150,7 @@ class DisplayMasjidController extends BaseController
                 'longitude'       => (float)(($opsiWaktu['koordinat']['longitude'] ?? null) !== null && ($opsiWaktu['koordinat']['longitude'] ?? null) !== '' ? $opsiWaktu['koordinat']['longitude'] : ($display['longitude'] ?? 104.2417)),
                 'interval_sync'   => (int)$display['interval_sync'],
                 'sholat_jumat'    => (int)$display['sholat_jumat'],
+                'modern1'         => $modern1Config,
                 // Koreksi jadwal (dari JSON)
                 'koreksi' => [
                     'subuh'   => (int)($koreksi['subuh'] ?? 0),

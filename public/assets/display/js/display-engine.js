@@ -393,25 +393,30 @@ var DisplayEngine = (function () {
         if (elEventContainer && elEventWaktu) {
             var targetDateStr = elEventContainer.getAttribute('data-target-date');
             if (targetDateStr) {
-                // Konversi string YYYY-MM-DD HH:mm:ss ke format javascript (replace '-' jadi '/' utk iOS)
-                var targetDate = new Date(targetDateStr.replace(/-/g, '/'));
+                // Konversi string YYYY-MM-DD HH:mm:ss ke format javascript (replace '-' jadi '/' utk iOS, handle 'T' dari datetime-local)
+                var parsedStr = targetDateStr.replace('T', ' ').replace(/-/g, '/');
+                var targetDate = new Date(parsedStr);
                 var selisihEventMs = targetDate.getTime() - now.getTime();
 
-                if (selisihEventMs > 0) {
-                    var h = Math.floor(selisihEventMs / (1000 * 60 * 60 * 24));
-                    var jam = Math.floor((selisihEventMs / (1000 * 60 * 60)) % 24);
-                    var mnt = Math.floor((selisihEventMs / 1000 / 60) % 60);
-                    var dtk = Math.floor((selisihEventMs / 1000) % 60);
+                if (!isNaN(selisihEventMs)) {
+                    if (selisihEventMs > 0) {
+                        var h = Math.floor(selisihEventMs / (1000 * 60 * 60 * 24));
+                        var jam = Math.floor((selisihEventMs / (1000 * 60 * 60)) % 24);
+                        var mnt = Math.floor((selisihEventMs / 1000 / 60) % 60);
+                        var dtk = Math.floor((selisihEventMs / 1000) % 60);
 
-                    if (h > 0) {
-                        elEventWaktu.textContent = '-' + h + ' Hari ' + jam + ' Jam';
-                    } else if (jam > 0) {
-                        elEventWaktu.textContent = '-' + jam + ' Jam ' + mnt + ' Mnt';
+                        if (h > 0) {
+                            elEventWaktu.textContent = '-' + h + ' Hari ' + jam + ' Jam';
+                        } else if (jam > 0) {
+                            elEventWaktu.textContent = '-' + jam + ' Jam ' + mnt + ' Mnt';
+                        } else {
+                            elEventWaktu.textContent = '-' + mnt + ' Mnt ' + dtk + ' Dtk';
+                        }
                     } else {
-                        elEventWaktu.textContent = '-' + mnt + ' Mnt ' + dtk + ' Dtk';
+                        elEventWaktu.textContent = 'Waktunya Tiba!';
                     }
                 } else {
-                    elEventWaktu.textContent = 'Waktunya Tiba!';
+                    elEventWaktu.textContent = '-';
                 }
             }
         }
@@ -827,9 +832,36 @@ var DisplayEngine = (function () {
 
                         // Update wallpaper
                         if (d.wallpaper) {
-                            var body = document.querySelector('.display-container');
+                            var body = document.querySelector('.display-container') || document.querySelector('.m1-container');
                             if (body) {
                                 body.style.backgroundImage = 'url(' + d.wallpaper + ')';
+                            }
+                        }
+
+                        // Update Modern 1 config if provided
+                        if (d.modern1) {
+                            var elEventContainer = document.querySelector('.m1-event-countdown');
+                            var elEventWaktu = document.getElementById('event-waktu');
+                            var eventLabel = document.getElementById('event-label');
+                            if (d.modern1.event_countdown) {
+                                if (elEventContainer) {
+                                    if (d.modern1.event_countdown.tampilkan) {
+                                        elEventContainer.style.display = 'flex';
+                                        elEventContainer.setAttribute('data-target-date', d.modern1.event_countdown.tanggal_target || '');
+                                    } else {
+                                        elEventContainer.style.display = 'none';
+                                    }
+                                }
+                                if (eventLabel) eventLabel.textContent = d.modern1.event_countdown.label || 'Kegiataan';
+                            }
+
+                            var elQuoteContainer = document.querySelector('.m1-quote-bar');
+                            var elQuoteText = document.getElementById('quote-text-content');
+                            if (d.modern1.kutipan) {
+                                if (elQuoteContainer) {
+                                    elQuoteContainer.style.display = d.modern1.kutipan.tampilkan ? 'block' : 'none';
+                                }
+                                if (elQuoteText) elQuoteText.textContent = d.modern1.kutipan.teks || '';
                             }
                         }
                     }
