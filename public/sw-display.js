@@ -1,4 +1,4 @@
-const CACHE_NAME = 'display-kua-v4';
+const CACHE_NAME = 'display-kua-v5';
 
 // Aset statis yang WAJIB di-cache saat pertama kali diakses.
 // Hanya aset untuk halaman display (TV), BUKAN admin/backend!

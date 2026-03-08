@@ -790,7 +790,11 @@ var DisplayEngine = (function () {
                     }
                 }
             })
-            .catch(function (err) { /* ignore polling errors */ });
+            .catch(function (err) {
+                // Jika koneksi internet ke API gagal, set jadi offline
+                state.isOnline = false;
+                updateStatusIndikator(false);
+            });
     }
 
     function syncData() {
@@ -886,6 +890,7 @@ var DisplayEngine = (function () {
             })
             .catch(function (err) {
                 console.warn('[DisplayEngine] Sync gagal:', err);
+                state.isOnline = false;
                 updateStatusIndikator(false);
             });
     }
@@ -1082,7 +1087,7 @@ var DisplayEngine = (function () {
                 el.innerHTML = '<i class="fas fa-wifi"></i>';
                 el.className = 'status-online';
             } else {
-                el.innerHTML = '<i class="fas fa-wifi-slash"></i> Offline';
+                el.innerHTML = '<i class="fas fa-wifi"></i>';
                 el.className = 'status-offline';
             }
         }

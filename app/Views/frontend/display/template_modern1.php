@@ -44,6 +44,10 @@
             background: transparent;
         }
 
+        /* Status Koneksi Online/Offline */
+        .status-online { color: #4ade80; } /* Hijau terang */
+        .status-offline { color: #ff4d4d; } /* Merah terang */
+
         /* === bagian Header === */
         .m1-topbar {
             position: relative;
@@ -234,7 +238,7 @@
             display: flex;
             align-items: stretch;
             gap: 0;
-            background: rgba(255, 255, 255, 0.5); /* Latar belakang bar transparan 50% */
+            background: rgba(255, 255, 255, 0.6); /* Latar belakang bar transparan 50% */
             border-top: 1px solid #faf9f7ff;
         }
         .m1-prayer-item {
@@ -394,7 +398,10 @@ $m1Quote = $modern1Data['kutipan'] ?? ['tampilkan' => true, 'teks' => '"Barangsi
     <!-- TOP BAR: Logo + Tanggal | Nama Masjid | Jam Digital -->
     <div class="m1-topbar">
         <div class="m1-topbar-left">
-            <div class="jam-besar" id="jam-digital">00:00:00</div>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div id="status-koneksi" class="status-online" style="font-size:1.5rem;"></div>
+                <div class="jam-besar" id="jam-digital">00:00:00</div>
+            </div>
         </div>
         <div class="m1-topbar-center">
             <div style="display:flex; align-items:center; justify-content:center; gap:15px;">
