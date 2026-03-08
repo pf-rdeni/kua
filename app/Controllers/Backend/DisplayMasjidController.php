@@ -163,7 +163,7 @@ class DisplayMasjidController extends BaseController
         // Deteksi apakah request AJAX (auto-save)
         $isAjax = $this->_isAjaxRequest();
 
-        $dataInput = $this->_getFormData();
+        $dataInput = $this->_getFormData($display);
 
         // Upload logo baru jika ada
         $logo = $this->request->getFile('logo');
@@ -451,14 +451,14 @@ class DisplayMasjidController extends BaseController
      * Helper: Ambil data form pengaturan display
      * Mengonsolidasikan form inputs menjadi JSON grouped columns
      */
-    private function _getFormData()
+    private function _getFormData(?array $existingDisplay = null)
     {
         $idMasjidMushola = $this->request->getPost('id_masjid_mushola');
         if (in_groups('OperatorMasjidMushola') && !in_groups('SuperAdmin') && !in_groups('Admin')) {
             $idMasjidMushola = user()->entitas_id;
         }
 
-        return [
+        $dataInput = [
             'id_masjid_mushola'    => $idMasjidMushola,
             'nama_display'         => $this->request->getPost('nama_display'),
             'template_aktif'       => $this->request->getPost('template_aktif'),
@@ -547,6 +547,28 @@ class DisplayMasjidController extends BaseController
                 ]
             ]),
         ];
+
+        // JSON: General Display Setting (merging old JSON configuration with new inputs for specific namespaces)
+        $oldDisplaySetting = [];
+        if ($existingDisplay && !empty($existingDisplay['display_setting'])) {
+            $oldDisplaySetting = json_decode($existingDisplay['display_setting'], true) ?: [];
+        }
+
+        $oldDisplaySetting['modern1'] = [
+            'event_countdown' => [
+                'tampilkan' => (bool)$this->request->getPost('modern1_event_tampilkan'),
+                'label' => $this->request->getPost('modern1_event_label') ?: 'Ramadhan',
+                'tanggal_target' => $this->request->getPost('modern1_event_tanggal_target') ?: date('Y-m-d H:i:s')
+            ],
+            'kutipan' => [
+                'tampilkan' => (bool)$this->request->getPost('modern1_kutipan_tampilkan'),
+                'teks' => $this->request->getPost('modern1_kutipan_teks') ?: '"Barangsiapa yang menempuh jalan untuk mencari ilmu, maka Allah akan mudahkan baginya jalan menuju surga." (HR. Muslim)'
+            ]
+        ];
+
+        $dataInput['display_setting'] = json_encode($oldDisplaySetting);
+
+        return $dataInput;
     }
 
     /**

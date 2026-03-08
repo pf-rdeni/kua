@@ -28,6 +28,7 @@ class DisplaySettingModel extends Model
         'mode_tarawih_json',   // JSON: {aktif, durasi, gambar}
         'mode_hari_raya',      // JSON: {idul_adha:{...}, idul_fitri:{...}}
         'opsi_waktu_sholat',   // JSON: {qobliyah:{...}, badiyah:{...}}
+        'display_setting',     // JSON: General settings per template namespace {modern1:{...}}
     ];
 
     // Timestamps

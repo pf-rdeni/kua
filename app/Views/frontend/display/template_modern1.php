@@ -41,71 +41,84 @@
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(180deg,
-                rgba(0,20,40,0.85) 0%,
-                rgba(0,20,40,0.5) 40%,
-                rgba(0,20,40,0.5) 60%,
-                rgba(0,20,40,0.9) 100%);
+            background: transparent;
         }
 
-        /* === TOP BAR === */
+        /* === bagian Header === */
         .m1-topbar {
             position: relative;
             z-index: 2;
             display: flex;
-            align-items: center;
+            align-items: stretch; 
             justify-content: space-between;
-            padding: 12px 30px;
-            background: linear-gradient(90deg, rgba(0,40,80,0.95), rgba(0,60,100,0.9));
-            border-bottom: 3px solid #ffd700;
+            padding: 15px 30px;
+            /* Transparansi background 65% */
+            background: rgba(255, 255, 255, 0.65); 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            /* Border radius bottom */
+            border-bottom-left-radius: 25px;
+            border-bottom-right-radius: 25px;
         }
+        /* === Bagian Kiri Jam Besar === */
         .m1-topbar-left {
             display: flex;
             align-items: center;
-            gap: 15px;
-            width: 300px; /* Fixed width to prevent center from moving */
+            justify-content: center;
+            width: 420px;
+            border-right: 3px solid #dda02b;
+            padding-right: 20px;
         }
-        .m1-topbar-left-text {
-            display: flex;
-            flex-direction: column;
-        }
-        .m1-topbar-left .tanggal-masehi {
-            font-size: 1rem;
-            color: rgba(255,255,255,0.8);
-            font-weight: 400;
-        }
-        .m1-topbar-left .tanggal-hijri {
-            font-size: 0.85rem;
-            color: #ffd700;
-            font-weight: 600;
-        }
-        .m1-topbar-center {
-            text-align: center;
-        }
-        .m1-topbar-center .masjid-name {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: #ffffff;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.5);
-        }
-        .m1-topbar-center .masjid-alamat {
-            font-size: 0.75rem;
-            color: rgba(255,255,255,0.6);
-        }
-        .m1-topbar-right {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            width: 300px; /* Lebar tetap agar tidak geser */
-        }
-        .m1-topbar-right .jam-besar {
-            font-size: 2.5rem;
+        .m1-topbar-left .jam-besar {
+            font-size: 4rem;
             font-weight: 800;
-            color: #ffffff;
+            color: #222222;
             font-variant-numeric: tabular-nums;
             line-height: 1;
-            width: 170px; /* Lebar tetap untuk jam */
-            text-align: left; /* Teks rata kiri di dalam kotaknya */
+            width: 220px;
+            text-align: center;
+        }
+        /* === Bagian Tengah Nama Masjid === */
+        .m1-topbar-center {
+            flex: 1;
+            text-align: center;
+            padding: 0 20px;
+        }
+        .m1-topbar-center .masjid-name {
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: #222222;
+        }
+        .m1-topbar-center .masjid-alamat {
+            font-size: 1rem;
+            color: #555555;
+            margin-top: 5px;
+            font-weight: 600;
+        }
+        /* === Bagian Kanan Tanggal === */
+        .m1-topbar-right {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 420px;
+            border-left: 3px solid #dda02b;
+            padding-left: 20px;
+        }
+        .m1-topbar-right-text {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .m1-topbar-right .tanggal-masehi {
+            font-size: 2.2rem;
+            color: #222222;
+            font-weight: 800;
+        }
+        .m1-topbar-right .tanggal-hijri {
+            font-size: 1.5rem;
+            color: #555555;
+            font-weight: 600;
+            margin-top: 5px;
         }
 
         /* === CENTER CONTENT (Slide/Kaligrafi) === */
@@ -154,32 +167,64 @@
             line-height: 1.4;
         }
 
-        /* === COUNTDOWN BAR (tengah bawah) === */
-        .m1-countdown-bar {
+        /* === WRAPPER COUNTDOWN (Statis di atas jadwal) === */
+        .m1-countdown-wrapper {
             position: relative;
             z-index: 2;
             display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0; /* Menempel di ujung kiri, kanan, bawah */
+            width: 100%;
+        }
+
+        /* === COUNTDOWN BAR SHOLAT === */
+        .m1-countdown-bar {
+            display: flex;
             align-items: center;
             justify-content: center;
-            gap: 15px;
+            gap: 5px; /* Jarak dibuat rapat */
             padding: 8px 30px;
-            background: rgba(0,0,0,0.6);
-            border-top: 1px solid rgba(255,215,0,0.2);
+            background: rgba(255, 255, 255, 0.80); /* Background putih transparan 50% */
+            border-top-right-radius: 25px; /* Ujung kanan atas melengkung */
         }
         .m1-countdown-bar .countdown-label {
-            font-size: 0.95rem;
-            color: #ffd700;
-            font-weight: 600;
-            min-width: 130px; /* Lebar tetap agar tidak geser */
-            text-align: right;
+            font-size: 1.8rem;
+            color: #222222; /* Teks Hitam */
+            font-weight: 800;
         }
         .m1-countdown-bar .countdown-waktu {
-            font-size: 1.3rem;
+            font-size: 1.8rem;
             font-weight: 800;
-            color: #ffffffff;
+            color: #b8860b; /* Teks Kuning Keemasan */
             font-variant-numeric: tabular-nums;
-            min-width: 95px; /* Lebar tetap agar tidak geser */
+            min-width: 105px; /* Lebar statis agar kotak tidak memanjang/memendek saat angka detik berubah */
             text-align: left;
+            display: inline-block;
+        }
+
+        /* === EVENT COUNTDOWN BAR === */
+        .m1-event-countdown {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            padding: 8px 30px;
+            background: rgba(255, 255, 255, 0.8); /* Background putih transparan 50% */
+            border-top-left-radius: 25px; /* Ujung kiri atas melengkung */
+        }
+        .m1-event-countdown .event-label {
+            font-size: 1.8rem;
+            color: #222222; /* Teks Hitam */
+            font-weight: 800;
+        }
+        .m1-event-countdown .event-waktu {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #b8860b; /* Teks Kuning Keemasan */
+            font-variant-numeric: tabular-nums;
+            text-align: left;
+            display: inline-block;
         }
 
         /* === BOTTOM: Jadwal Sholat Horizontal Bar === */
@@ -189,16 +234,31 @@
             display: flex;
             align-items: stretch;
             gap: 0;
-            background: linear-gradient(90deg, rgba(0,40,80,0.95), rgba(0,50,90,0.95));
-            border-top: 3px solid #faf9f7ff;
+            background: rgba(255, 255, 255, 0.5); /* Latar belakang bar transparan 50% */
+            border-top: 1px solid #faf9f7ff;
         }
         .m1-prayer-item {
             flex: 1;
             text-align: center;
-            padding: 12px 8px;
+            padding: 0; /* Padding dihilangkan semua untuk mengecilkan jarak ruang */
             position: relative;
             transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            border-right: 3px solid rgba(255,255,255,0.9); /* Garis pemisah antar jadwal */
         }
+        .m1-prayer-item:last-child {
+            border-right: none;
+        }
+        /* Static colors for each prayer time */
+        .m1-prayer-item.bg-imsak   .prayer-nama { background: #0b8a3e; color: #fff; } /* Hijau Imsak */
+        .m1-prayer-item.bg-subuh   .prayer-nama { background: #1c7ed6; color: #fff; } /* Biru Subuh */
+        .m1-prayer-item.bg-terbit .prayer-nama { background: #12b886; color: #fff; } /* Teal Syuruq/Terbit */
+        .m1-prayer-item.bg-dzuhur  .prayer-nama { background: #f59f00; color: #fff; } /* Oranye Dzuhur */
+        .m1-prayer-item.bg-ashar   .prayer-nama { background: #be4bdb; color: #fff; } /* Ungu Ashar */
+        .m1-prayer-item.bg-maghrib .prayer-nama { background: #e8590c; color: #fff; } /* Merah/Oranye-tua Maghrib */
+        .m1-prayer-item.bg-isya    .prayer-nama { background: #5f3dc4; color: #fff; } /* Ungu-Tua Isya */
+
         .m1-prayer-item::after {
             content: '';
             position: absolute;
@@ -225,34 +285,59 @@
             color: #000 !important;
         }
         .m1-prayer-item .prayer-nama {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: rgba(255,255,255,0.7);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 2px;
+            font-size: 1.9rem;
+            font-weight: 550;
+            color: rgba(255,255,255,0.8);
+            text-transform: capitalize;
+            letter-spacing: 0.5px;
+            margin: 0; /* Full width tidak ada margin luar */
+            padding: 3px 0;
+            /* Border radius bottom */
+            border-bottom-left-radius: 15px;
+            border-bottom-right-radius: 15px;
+            display: block;   /* Berubah dari inline-block menjadi full block */
+            width: 100%;      /* Memenuhi ruangan kontainer .m1-prayer-item */
+            margin-bottom: 1px; /* Jarak dibuat sangat rapat dengan angka jam */
         }
+        /* Jam waktu sholat */
         .m1-prayer-item .prayer-jam {
-            font-size: 1.4rem;
-            font-weight: 800;
-            color: #ffffff;
+            font-size: 4.8rem;
+            font-weight: 650;
+            color: #222222; /* Warna teks jam menjadi hitam gelap untuk kontras di base putih */
             font-variant-numeric: tabular-nums;
+        }
+
+        /* === QUOTE BAR (Kutipan Statis) === */
+        .m1-quote-bar {
+            position: relative;
+            z-index: 2;
+            background: #d32f2f; /* Merah pekat ala Kemenag */
+            padding: 8px 15px;
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            border-bottom: 2px solid #b71c1c;
+        }
+        .m1-quote-bar .quote-text {
+            color: #ffffff;
+            font-size: 1.5rem;
+            font-weight: 500;
+            margin: 0;
+            letter-spacing: 0.5px;
         }
 
         /* === RUNNING TEXT === */
         .m1-footer {
             position: relative;
             z-index: 2;
-            background: #f7ec8bff;
-            padding: 6px 0;
+            background: rgba(255, 255, 255, 0.55);
             overflow: hidden;
         }
         .m1-footer .running-text-content {
             display: inline-block;
             white-space: nowrap;
-            animation: m1-scroll 30s linear infinite;
-            font-size: 0.9rem;
-            font-weight: 600;
+            animation: m1-scroll 45s linear infinite; /* Kecepatan diperlambat dari 30s ke 45s */
+            font-size: 2rem; /* Ukuran font diperbesar dari 0.9rem ke 1.5rem */
+            font-weight: 500;
             color: #000;
         }
         @keyframes m1-scroll {
@@ -290,6 +375,12 @@ $wallpaper = !empty($display['wallpaper']) ? base_url($display['wallpaper']) : b
 $opsiWaktu = !empty($display['opsi_waktu_sholat']) ? json_decode($display['opsi_waktu_sholat'], true) : [];
 $opsiQobliyah = $opsiWaktu['qobliyah'] ?? ['subuh'=>1, 'dzuhur'=>1, 'ashar'=>0, 'maghrib'=>1, 'isya'=>1];
 $opsiBadiyah  = $opsiWaktu['badiyah']  ?? ['subuh'=>0, 'dzuhur'=>1, 'ashar'=>0, 'maghrib'=>1, 'isya'=>1];
+
+// Parse Pengaturan Khusus Modern 1
+$displaySettingArr = !empty($display['display_setting']) ? json_decode($display['display_setting'], true) : [];
+$modern1Data = $displaySettingArr['modern1'] ?? [];
+$m1Event = $modern1Data['event_countdown'] ?? ['tampilkan' => true, 'label' => 'Ramadhan', 'tanggal_target' => date('Y') . '-03-01 18:00:00'];
+$m1Quote = $modern1Data['kutipan'] ?? ['tampilkan' => true, 'teks' => '"Barangsiapa yang menempuh jalan untuk mencari ilmu, maka Allah akan mudahkan baginya jalan menuju surga." (HR. Muslim)'];
 ?>
 
 <div class="m1-container <?= ($display['orientasi'] ?? 'horizontal') === 'vertikal' ? 'orientasi-vertikal' : '' ?>">
@@ -303,27 +394,25 @@ $opsiBadiyah  = $opsiWaktu['badiyah']  ?? ['subuh'=>0, 'dzuhur'=>1, 'ashar'=>0, 
     <!-- TOP BAR: Logo + Tanggal | Nama Masjid | Jam Digital -->
     <div class="m1-topbar">
         <div class="m1-topbar-left">
-            <?php if (!empty($display['logo'])): ?>
-                <!-- Logo dibiarkan proporsi asli, tinggi max 50px -->
-                <img src="<?= base_url($display['logo']) ?>" alt="Logo" style="height:50px; max-width:80px; object-fit:contain;">
-            <?php else: ?>
-                <div style="width:50px; height:50px; border-radius:5px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; border:2px solid #ffd700;">
-                    <i class="fas fa-mosque" style="font-size:1.5rem; color:#ffd700;"></i>
-                </div>
-            <?php endif; ?>
-            <div class="m1-topbar-left-text">
-                <span class="tanggal-masehi" id="tanggal-masehi">Memuat...</span>
-                <span class="tanggal-hijri" id="tanggal-hijriah">...</span>
-            </div>
+            <div class="jam-besar" id="jam-digital">00:00:00</div>
         </div>
         <div class="m1-topbar-center">
-            <div class="masjid-name"><?= esc($namaMasjid) ?></div>
+            <div style="display:flex; align-items:center; justify-content:center; gap:15px;">
+                <?php if (!empty($display['logo'])): ?>
+                    <!-- Logo dibiarkan proporsi asli, tinggi max 70px -->
+                    <img src="<?= base_url($display['logo']) ?>" alt="Logo" style="height:70px; max-width:100px; object-fit:contain;">
+                <?php endif; ?>
+                <div class="masjid-name"><?= esc($namaMasjid) ?></div>
+            </div>
             <?php if (!empty($alamatDisplay)): ?>
                 <div class="masjid-alamat"><?= esc($alamatDisplay) ?></div>
             <?php endif; ?>
         </div>
         <div class="m1-topbar-right">
-            <div class="jam-besar" id="jam-digital">00:00:00</div>
+            <div class="m1-topbar-right-text">
+                <span class="tanggal-masehi" id="tanggal-masehi">Memuat...</span>
+                <span class="tanggal-hijri" id="tanggal-hijriah">...</span>
+            </div>
         </div>
     </div>
 
@@ -370,42 +459,62 @@ $opsiBadiyah  = $opsiWaktu['badiyah']  ?? ['subuh'=>0, 'dzuhur'=>1, 'ashar'=>0, 
         </div>
     </div>
 
-    <!-- COUNTDOWN BAR -->
-    <div class="m1-countdown-bar">
-        <span class="countdown-label" id="countdown-label">Menuju Sholat</span>
-        <span class="countdown-waktu" id="countdown-waktu">00:00:00</span>
+    <!-- WRAPPER COUNTDOWN KIRI & KANAN -->
+    <div class="m1-countdown-wrapper">
+        <!-- COUNTDOWN BAR -->
+        <div class="m1-countdown-bar">
+            <span class="countdown-label" id="countdown-label">Menuju Sholat</span>
+            <span class="countdown-waktu" id="countdown-waktu">00:00:00</span>
+        </div>
+
+        <!-- EVENT COUNTDOWN BAR -->
+        <?php if ($m1Event['tampilkan']): ?>
+        <div class="m1-event-countdown" data-target-date="<?= esc($m1Event['tanggal_target']) ?>">
+            <span class="event-label" id="event-label"><?= esc($m1Event['label']) ?></span>
+            <span class="event-waktu" id="event-waktu">... Menghitung ...</span>
+        </div>
+        <?php endif; ?>
     </div>
 
     <!-- PRAYER TIME BAR (Horizontal) -->
     <div class="m1-prayer-bar">
-        <div class="m1-prayer-item jadwal-row" data-waktu="subuh">
+        <!-- Default imsak hidden, will be shown via JS -->
+        <div class="m1-prayer-item jadwal-row bg-imsak" data-waktu="imsak" style="display:none;" id="box-imsak">
+            <div class="prayer-nama">Imsyak</div>
+            <div class="prayer-jam" id="jadwal-imsak">--:--</div>
+        </div>
+        <div class="m1-prayer-item jadwal-row bg-subuh" data-waktu="subuh">
             <div class="prayer-nama">Subuh</div>
             <div class="prayer-jam" id="jadwal-subuh">--:--</div>
         </div>
-        <div class="m1-prayer-item jadwal-row" data-waktu="terbit">
-            <div class="prayer-nama">Terbit</div>
+        <div class="m1-prayer-item jadwal-row bg-terbit" data-waktu="terbit">
+            <div class="prayer-nama">Syuruq</div>
             <div class="prayer-jam" id="jadwal-terbit">--:--</div>
         </div>
-        <div class="m1-prayer-item jadwal-row" data-waktu="dzuhur">
+        <div class="m1-prayer-item jadwal-row bg-dzuhur" data-waktu="dzuhur">
             <div class="prayer-nama">Dzuhur</div>
             <div class="prayer-jam" id="jadwal-dzuhur">--:--</div>
         </div>
-        <div class="m1-prayer-item jadwal-row" data-waktu="ashar">
+        <div class="m1-prayer-item jadwal-row bg-ashar" data-waktu="ashar">
             <div class="prayer-nama">Ashar</div>
             <div class="prayer-jam" id="jadwal-ashar">--:--</div>
         </div>
-        <div class="m1-prayer-item jadwal-row" data-waktu="maghrib">
+        <div class="m1-prayer-item jadwal-row bg-maghrib" data-waktu="maghrib">
             <div class="prayer-nama">Maghrib</div>
             <div class="prayer-jam" id="jadwal-maghrib">--:--</div>
         </div>
-        <div class="m1-prayer-item jadwal-row" data-waktu="isya">
+        <div class="m1-prayer-item jadwal-row bg-isya" data-waktu="isya">
             <div class="prayer-nama">Isya</div>
             <div class="prayer-jam" id="jadwal-isya">--:--</div>
         </div>
     </div>
 
-    <!-- Hidden elements untuk kompatibilitas display-engine.js -->
-    <span id="jadwal-imsak" style="display:none">--:--</span>
+    <!-- QUOTE BAR (Kutipan Statis Dinamis) -->
+    <?php if ($m1Quote['tampilkan']): ?>
+    <div class="m1-quote-bar">
+        <p class="quote-text" id="quote-text-content"><?= esc($m1Quote['teks']) ?></p>
+    </div>
+    <?php endif; ?>
 
     <!-- RUNNING TEXT -->
     <div class="m1-footer">

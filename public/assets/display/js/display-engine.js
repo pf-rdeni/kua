@@ -303,8 +303,20 @@ var DisplayEngine = (function () {
 
         // Tanggal Hijriah (perkiraan sederhana)
         var elHijriah = document.getElementById('tanggal-hijriah');
+        var strHijriah = '';
         if (elHijriah) {
-            elHijriah.textContent = getHijriDate(now);
+            strHijriah = getHijriDate(now);
+            elHijriah.textContent = strHijriah;
+        }
+
+        // Tampilkan box Imsak khusus bila sedang bulan Ramadhan
+        var boxImsak = document.getElementById('box-imsak');
+        if (boxImsak) {
+            if (strHijriah.toLowerCase().indexOf('ramadhan') !== -1) {
+                boxImsak.style.display = 'flex';
+            } else {
+                boxImsak.style.display = 'none';
+            }
         }
 
         // Cek pergantian hari (recalc jadwal)
@@ -372,7 +384,36 @@ var DisplayEngine = (function () {
 
         var elCountdownLabel = document.getElementById('countdown-label');
         if (elCountdownLabel) {
-            elCountdownLabel.textContent = 'Menuju ' + nextNama;
+            elCountdownLabel.textContent = capitalizeFirst(nextNama) + ' -';
+        }
+
+        // Update elemen event countdown (Template Modern 1 khusus)
+        var elEventContainer = document.querySelector('.m1-event-countdown');
+        var elEventWaktu = document.getElementById('event-waktu');
+        if (elEventContainer && elEventWaktu) {
+            var targetDateStr = elEventContainer.getAttribute('data-target-date');
+            if (targetDateStr) {
+                // Konversi string YYYY-MM-DD HH:mm:ss ke format javascript (replace '-' jadi '/' utk iOS)
+                var targetDate = new Date(targetDateStr.replace(/-/g, '/'));
+                var selisihEventMs = targetDate.getTime() - now.getTime();
+
+                if (selisihEventMs > 0) {
+                    var h = Math.floor(selisihEventMs / (1000 * 60 * 60 * 24));
+                    var jam = Math.floor((selisihEventMs / (1000 * 60 * 60)) % 24);
+                    var mnt = Math.floor((selisihEventMs / 1000 / 60) % 60);
+                    var dtk = Math.floor((selisihEventMs / 1000) % 60);
+
+                    if (h > 0) {
+                        elEventWaktu.textContent = '-' + h + ' Hari ' + jam + ' Jam';
+                    } else if (jam > 0) {
+                        elEventWaktu.textContent = '-' + jam + ' Jam ' + mnt + ' Mnt';
+                    } else {
+                        elEventWaktu.textContent = '-' + mnt + ' Mnt ' + dtk + ' Dtk';
+                    }
+                } else {
+                    elEventWaktu.textContent = 'Waktunya Tiba!';
+                }
+            }
         }
 
         // Update waktu berikutnya

@@ -347,6 +347,50 @@ $formUrl   = $isEdit ? base_url('admin/display-masjid/update/' . $display['id'])
                     </div>
                 </div>
             </div>
+
+            <!-- Pengaturan Khusus Template Modern 1 -->
+            <?php
+            $displaySettingStr = $display['display_setting'] ?? '{}';
+            $displaySettingArr = json_decode($displaySettingStr, true) ?: [];
+            $modern1Data = $displaySettingArr['modern1'] ?? [];
+            $m1Event = $modern1Data['event_countdown'] ?? [];
+            $m1Quote = $modern1Data['kutipan'] ?? [];
+            ?>
+            <div class="card card-outline card-info" id="card-modern1-settings" style="display: none;">
+                <div class="card-header border-bottom-0">
+                    <h3 class="card-title"><i class="fas fa-magic mr-2"></i>Pengaturan Khusus (Modern 1)</h3>
+                </div>
+                <div class="card-body pt-0">
+                    <div style="border-left: 4px solid #17a2b8; background: #f4f8f9; padding: 12px 16px; margin-bottom:15px;">
+                        <div class="custom-control custom-switch mb-2">
+                            <input type="hidden" name="modern1_event_tampilkan" value="0">
+                            <input type="checkbox" name="modern1_event_tampilkan" value="1" class="custom-control-input" id="modern1_event_tampilkan" <?= ($m1Event['tampilkan'] ?? true) ? 'checked' : '' ?>>
+                            <label class="custom-control-label font-weight-bold" for="modern1_event_tampilkan">Tampilkan Hitung Mundur Kegiatan</label>
+                        </div>
+                        <div class="form-group mb-2">
+                            <label class="small text-muted mb-1">Label Kegiatan</label>
+                            <input type="text" name="modern1_event_label" class="form-control form-control-sm" value="<?= old('modern1_event_label', $m1Event['label'] ?? 'Ramadhan') ?>" placeholder="Misal: Ramadhan">
+                        </div>
+                        <div class="form-group mb-0">
+                            <label class="small text-muted mb-1">Tanggal & Waktu Target</label>
+                            <input type="datetime-local" step="1" name="modern1_event_tanggal_target" class="form-control form-control-sm" value="<?= old('modern1_event_tanggal_target', $m1Event['tanggal_target'] ?? '') ?>">
+                        </div>
+                    </div>
+
+                    <div style="border-left: 4px solid #dc3545; background: #fdf5f6; padding: 12px 16px;">
+                        <div class="custom-control custom-switch mb-2">
+                            <input type="hidden" name="modern1_kutipan_tampilkan" value="0">
+                            <input type="checkbox" name="modern1_kutipan_tampilkan" value="1" class="custom-control-input" id="modern1_kutipan_tampilkan" <?= ($m1Quote['tampilkan'] ?? true) ? 'checked' : '' ?>>
+                            <label class="custom-control-label font-weight-bold text-danger" for="modern1_kutipan_tampilkan">Tampilkan Baris Kutipan Bawah</label>
+                        </div>
+                        <div class="form-group mb-0">
+                            <label class="small text-muted mb-1">Teks Kutipan / Hadis</label>
+                            <textarea name="modern1_kutipan_teks" class="form-control form-control-sm" rows="3" placeholder="Masukkan kutipan..."><?= old('modern1_kutipan_teks', $m1Quote['teks'] ?? '"Barangsiapa yang menempuh jalan untuk mencari ilmu..." (HR. Muslim)') ?></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -714,6 +758,18 @@ $(document).ready(function() {
             triggerAutoSave(true);
         }
     });
+
+    // Toggle tampilan pengaturan Modern 1
+    function toggleModern1Settings() {
+        if ($('#template_aktif').val() === 'modern1') {
+            $('#card-modern1-settings').slideDown();
+        } else {
+            $('#card-modern1-settings').slideUp();
+        }
+    }
+    
+    $('#template_aktif').on('change', toggleModern1Settings);
+    toggleModern1Settings(); // Jalankan saat pertama load
 
     // AUTO-SAVE FUNCTIONALITY
     let saveTimeout;
