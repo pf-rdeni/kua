@@ -118,10 +118,13 @@ $breadcrumb = [
 <div class="row mt-4">
     <div class="col-12">
         <div class="card card-outline card-warning">
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <h3 class="card-title">
                     <i class="fas fa-bell text-warning mr-1"></i> Reminder Jadwal Ramadhan Terdekat
                 </h3>
+                <div class="card-tools ml-auto">
+                    <button type="button" class="btn btn-sm btn-success btn-open-wa-group-modal" data-jenis="ramadhan"><i class="fab fa-whatsapp"></i> Bagikan List WA (Pilih Hari)</button>
+                </div>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -208,10 +211,13 @@ $breadcrumb = [
 <div class="row mt-3">
     <div class="col-12">
         <div class="card card-outline card-success">
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <h3 class="card-title">
                     <i class="fas fa-bullhorn text-success mr-1"></i> Reminder Khotib Jumat Terdekat
                 </h3>
+                <div class="card-tools ml-auto">
+                    <button type="button" class="btn btn-sm btn-success btn-open-wa-group-modal" data-jenis="jumat"><i class="fab fa-whatsapp"></i> Bagikan List WA (Pilih Hari)</button>
+                </div>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -289,10 +295,13 @@ $breadcrumb = [
 <div class="row mt-3">
     <div class="col-12">
         <div class="card card-outline card-primary">
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <h3 class="card-title">
                     <i class="fas fa-book-reader text-primary mr-1"></i> Reminder Maghrib Mengaji Terdekat
                 </h3>
+                <div class="card-tools ml-auto">
+                    <button type="button" class="btn btn-sm btn-success btn-open-wa-group-modal" data-jenis="maghrib_mengaji"><i class="fab fa-whatsapp"></i> Bagikan List WA (Pilih Hari)</button>
+                </div>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -742,6 +751,145 @@ document.addEventListener('DOMContentLoaded', function() {
         if(locations.length > 0) {
             map.fitBounds(markersGroup.getBounds(), { padding: [40, 40], maxZoom: 16 });
             map.closePopup();
+        }
+    });
+});
+</script>
+
+<!-- ==========================================
+     Modal: Bagikan Jadwal ke Grup WhatsApp
+     ========================================== -->
+<div class="modal fade" id="modalWaGrup" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fab fa-whatsapp"></i> Bagikan List Jadwal ke Grup WhatsApp</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-5">
+                        <label class="font-weight-bold">Pilih Hari / Tanggal</label>
+                        <input type="date" class="form-control" id="inputTanggalWaGrup" value="<?= date('Y-m-d') ?>">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="font-weight-bold">Jenis Kegiatan</label>
+                        <select class="form-control" id="selectJenisWaGrup">
+                            <option value="semua">Semua Kegiatan</option>
+                            <option value="jumat">Khotib Jumat</option>
+                            <option value="ramadhan">Ceramah Ramadhan</option>
+                            <option value="maghrib_mengaji">Maghrib Mengaji</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="button" class="btn btn-primary btn-block" id="btnGenerateWaGrup">
+                            <i class="fas fa-sync-alt"></i> Generate Pesan
+                        </button>
+                    </div>
+                </div>
+
+                <div id="waGrupResult" style="display:none;">
+                    <div class="alert alert-success py-2 mb-2" id="waGrupInfo"></div>
+                    <div class="form-group mb-2">
+                        <label class="font-weight-bold">Preview Pesan WhatsApp:</label>
+                        <textarea class="form-control" id="waGrupPesanPreview" rows="12" 
+                                  style="font-family: monospace; font-size: 13px; background:#f8fff8;"></textarea>
+                    </div>
+                </div>
+
+                <div id="waGrupEmpty" class="alert alert-warning" style="display:none;">
+                    <i class="fas fa-info-circle"></i> <span id="waGrupEmptyMsg"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+                <button type="button" class="btn btn-info" id="btnCopyWaGrup" style="display:none;">
+                    <i class="fas fa-copy"></i> Salin Teks
+                </button>
+                <a href="#" target="_blank" class="btn btn-success" id="btnOpenWaGrup" style="display:none;">
+                    <i class="fab fa-whatsapp"></i> Buka WhatsApp
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function () {
+    // Buka modal saat tombol di header Reminder diklik
+    $(document).on('click', '.btn-open-wa-group-modal', function () {
+        var jenis = $(this).data('jenis');
+        $('#selectJenisWaGrup').val(jenis);
+        $('#waGrupResult').hide();
+        $('#waGrupEmpty').hide();
+        $('#btnCopyWaGrup').hide();
+        $('#btnOpenWaGrup').hide();
+        $('#modalWaGrup').modal('show');
+    });
+
+    // Generate pesan
+    $('#btnGenerateWaGrup').on('click', function () {
+        var tanggal = $('#inputTanggalWaGrup').val();
+        var jenis   = $('#selectJenisWaGrup').val();
+
+        if (!tanggal) {
+            alert('Harap pilih tanggal terlebih dahulu.');
+            return;
+        }
+
+        var $btn = $(this);
+        $btn.attr('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Memuat...');
+        $('#waGrupResult').hide();
+        $('#waGrupEmpty').hide();
+        $('#btnCopyWaGrup').hide();
+        $('#btnOpenWaGrup').hide();
+
+        $.ajax({
+            url: '<?= base_url('admin/dashboard/get-group-wa-schedule') ?>',
+            type: 'GET',
+            data: { tanggal: tanggal, jenis: jenis },
+            dataType: 'json',
+            success: function (res) {
+                if (res.status === 'success') {
+                    $('#waGrupInfo').html('<i class="fas fa-check-circle"></i> Ditemukan <strong>' + res.count + ' jadwal</strong> pada <strong>' + res.tgl_indo + '</strong>.');
+                    $('#waGrupPesanPreview').val(res.pesan);
+                    $('#btnOpenWaGrup').attr('href', res.wa_url);
+                    $('#waGrupResult').show();
+                    $('#btnCopyWaGrup').show();
+                    $('#btnOpenWaGrup').show();
+                } else {
+                    $('#waGrupEmptyMsg').text(res.message);
+                    $('#waGrupEmpty').show();
+                    // Still show copyable empty message
+                    $('#waGrupInfo').html('<i class="fas fa-info-circle"></i> Tidak ada jadwal pada tanggal tersebut.');
+                    $('#waGrupPesanPreview').val(res.pesan);
+                    $('#waGrupResult').show();
+                    $('#btnCopyWaGrup').show();
+                }
+            },
+            error: function () {
+                alert('Terjadi kesalahan saat mengambil data jadwal.');
+            },
+            complete: function () {
+                $btn.attr('disabled', false).html('<i class="fas fa-sync-alt"></i> Generate Pesan');
+            }
+        });
+    });
+
+    // Salin teks ke clipboard
+    $('#btnCopyWaGrup').on('click', function () {
+        var text = $('#waGrupPesanPreview').val();
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(text).then(function () {
+                var $b = $('#btnCopyWaGrup');
+                $b.html('<i class="fas fa-check"></i> Tersalin!').addClass('btn-success').removeClass('btn-info');
+                setTimeout(function () {
+                    $b.html('<i class="fas fa-copy"></i> Salin Teks').addClass('btn-info').removeClass('btn-success');
+                }, 2000);
+            });
+        } else {
+            $('#waGrupPesanPreview').select();
+            document.execCommand('copy');
         }
     });
 });

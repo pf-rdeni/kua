@@ -420,4 +420,141 @@ class DashboardController extends BaseController
             'belumSetup'     => false,
         ]);
     }
+
+    public function getGroupWaSchedule()
+    {
+        $db = \Config\Database::connect();
+        $tanggal = $this->request->getGet('tanggal') ?? date('Y-m-d');
+        $jenis   = $this->request->getGet('jenis') ?? 'semua';
+
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $tanggal)) {
+            $tanggal = date('Y-m-d');
+        }
+
+        $builder = $db->table('tbl_jadwal_kegiatan j')
+            ->select('
+                j.id,
+                j.jenis_kegiatan,
+                j.peran_petugas,
+                j.tanggal as tanggal_j,
+                j.hari_ke,
+                j.tahun_hijriah,
+                m.nama as nama_masjid,
+                m.jenis as jenis_masjid,
+                m.alamat as alamat_masjid,
+                m.nama_ketua_dkm,
+                m.no_hp_ketua,
+                p.nama_lengkap as nama_mubaligh,
+                p.no_hp as no_hp_mubaligh,
+                p.nia as nia_mubaligh,
+                a.status_kehadiran,
+                a.id_personil_pengganti,
+                p2.nama_lengkap as nama_pengganti,
+                p2.no_hp as no_hp_pengganti,
+                t.tema,
+                t.tanggal as tanggal_t
+            ')
+            ->join('tbl_masjid_mushola m', 'm.id_masjid_mushola = j.id_masjid_mushola', 'left')
+            ->join('tbl_personil p', 'p.id = j.id_personil', 'left')
+            ->join('tbl_absensi a', 'a.id_jadwal = j.id', 'left')
+            ->join('tbl_personil p2', 'p2.id = a.id_personil_pengganti', 'left')
+            ->join('tbl_tema_ceramah t', 't.hari_ke = j.hari_ke AND t.tahun_hijriah = j.tahun_hijriah', 'left');
+
+        if ($jenis !== 'semua' && in_array($jenis, ['jumat', 'ramadhan', 'maghrib_mengaji'])) {
+            $builder->where('j.jenis_kegiatan', $jenis);
+        } else {
+            $builder->whereIn('j.jenis_kegiatan', ['jumat', 'ramadhan', 'maghrib_mengaji']);
+        }
+
+        $builder->where('j.id_personil IS NOT NULL');
+
+        $escapedTgl = $db->escape($tanggal);
+        $builder->groupStart()
+                    ->where('j.tanggal', $tanggal)
+                    ->orWhere("(j.jenis_kegiatan = 'ramadhan' AND t.tanggal = {$escapedTgl})")
+                ->groupEnd();
+
+        $builder->orderBy('m.nama', 'ASC');
+
+        $list = $builder->get()->getResultArray();
+
+        helper('tanggal');
+        $tglIndo = function_exists('tanggal_indo_panjang') ? tanggal_indo_panjang($tanggal) : $tanggal;
+
+        $jenisMap = [
+            'jumat'           => 'Khotib Sholat Jumat',
+            'ramadhan'        => 'Ceramah Tarawih Ramadhan',
+            'maghrib_mengaji' => 'Maghrib Mengaji',
+            'semua'           => 'Jadwal Kegiatan Keagamaan'
+        ];
+        $judulKegiatan = $jenisMap[$jenis] ?? 'Jadwal Kegiatan Keagamaan';
+
+        if (empty($list)) {
+            return $this->response->setJSON([
+                'status'   => 'empty',
+                'message'  => 'Tidak ada jadwal kegiatan untuk tanggal ' . $tglIndo,
+                'tanggal'  => $tanggal,
+                'tgl_indo' => $tglIndo,
+                'pesan'    => "Assalamualaikum Wr Wb.\n\nInformasi Jadwal " . $judulKegiatan . ":\nHari/Tanggal: " . $tglIndo . "\n\n(Belum ada jadwal terdaftar untuk tanggal ini)\n\n_Pesan otomatis Sistem KUA_",
+                'wa_url'   => ''
+            ]);
+        }
+
+        $msg = "Assalamualaikum Wr Wb.\n";
+        $msg .= "Berikut List *Jadwal " . $judulKegiatan . "*\n";
+        $msg .= "🗓 *Hari/Tanggal:* " . $tglIndo . "\n";
+        $msg .= "----------------------------------------\n\n";
+
+        $no = 1;
+        foreach ($list as $item) {
+            $jenisPrefix = !empty($item['jenis_masjid']) ? $item['jenis_masjid'] . ' ' : '';
+            $msg .= $no . ". *" . $jenisPrefix . $item['nama_masjid'] . "*\n";
+            if (!empty($item['alamat_masjid'])) {
+                $msg .= "   📍 " . $item['alamat_masjid'] . "\n";
+            }
+
+            // Pengurus / Ketua DKM masjid
+            if (!empty($item['nama_ketua_dkm'])) {
+                $hpKetuaStr = !empty($item['no_hp_ketua']) ? " 📱 " . $item['no_hp_ketua'] : "";
+                $msg .= "   🏠 *Pengurus/Ketua DKM:* " . $item['nama_ketua_dkm'] . $hpKetuaStr . "\n";
+            }
+
+            if ($item['status_kehadiran'] == 'diganti' && !empty($item['nama_pengganti'])) {
+                $petugasStr = $item['nama_pengganti'] . " (Pengganti)";
+                $noHp = $item['no_hp_pengganti'];
+            } else {
+                $petugasStr = $item['nama_mubaligh'];
+                $noHp = $item['no_hp_mubaligh'];
+            }
+            $hpStr = !empty($noHp) ? " 📱 " . $noHp : "";
+
+            if ($item['jenis_kegiatan'] == 'jumat') {
+                $msg .= "   👤 *Khotib:* " . $petugasStr . $hpStr . "\n";
+            } else if ($item['jenis_kegiatan'] == 'maghrib_mengaji') {
+                $peranStr = !empty($item['peran_petugas']) ? strtoupper($item['peran_petugas']) : 'PETUGAS';
+                $msg .= "   👤 *" . $peranStr . ":* " . $petugasStr . $hpStr . "\n";
+            } else if ($item['jenis_kegiatan'] == 'ramadhan') {
+                $malamKe = intval($item['hari_ke']) + 1;
+                $msg .= "   🌙 *Malam Ke-" . $malamKe . ":* " . $petugasStr . $hpStr . "\n";
+                if (!empty($item['tema'])) {
+                    $msg .= "   📖 *Tema:* " . $item['tema'] . "\n";
+                }
+            }
+
+            $msg .= "\n";
+            $no++;
+        }
+
+        $msg .= "----------------------------------------\n";
+        $msg .= "_Pesan ini di-generate otomatis dari Sistem KUA_";
+
+        return $this->response->setJSON([
+            'status'   => 'success',
+            'tanggal'  => $tanggal,
+            'tgl_indo' => $tglIndo,
+            'count'    => count($list),
+            'pesan'    => $msg,
+            'wa_url'   => 'https://api.whatsapp.com/send?text=' . rawurlencode($msg)
+        ]);
+    }
 }

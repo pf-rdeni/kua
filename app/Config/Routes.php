@@ -77,6 +77,7 @@ $routes->group('admin', ['filter' => 'login'], function ($routes) {
     // -- General --
     // --- Dashboard ---
     $routes->get('dashboard', 'Backend\DashboardController::index');
+    $routes->get('dashboard/get-group-wa-schedule', 'Backend\DashboardController::getGroupWaSchedule');
 
     // Grup Dokumentasi Developer (Khusus SuperAdmin)
     $routes->group('dokumentasi', ['filter' => 'role:SuperAdmin'], static function ($routes) {
