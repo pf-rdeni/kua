@@ -72,8 +72,9 @@ class KhotibJumatController extends BaseController
         if (!empty($personilIds)) {
             $personils = $this->db->table('tbl_personil')->whereIn('id', $personilIds)->get()->getResultArray();
             foreach ($personils as $p) {
+                $displayName = (!empty($p['nia']) ? $p['nia'] . ' - ' : '') . $p['nama_lengkap'];
                 $personilNames[$p['id']] = [
-                    'nama' => $p['nama_lengkap'],
+                    'nama' => $displayName,
                     'foto' => $p['foto'] ? base_url('uploads/personil/' . $p['foto']) : base_url('template/backend/dist/img/default-150x150.png')
                 ];
             }
@@ -220,10 +221,11 @@ class KhotibJumatController extends BaseController
         
         $results = [];
         foreach ($mubalighs as $m) {
+            $displayName = (!empty($m['nia']) ? $m['nia'] . ' - ' : '') . $m['nama_lengkap'];
             $results[] = [
                 'id'   => $m['id'],
-                'text' => $m['nia'] . ' - ' . $m['nama_lengkap'],
-                'nama' => $m['nama_lengkap'],
+                'text' => $displayName,
+                'nama' => $displayName,
                 'foto' => $m['foto'] ? base_url('uploads/personil/' . $m['foto']) : base_url('template/backend/dist/img/default-150x150.png')
             ];
         }
@@ -291,5 +293,176 @@ class KhotibJumatController extends BaseController
         ];
 
         return view('backend/khotib_jumat/print_masjid', $data);
+    }
+
+    public function get_wa_mubaligh()
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setStatusCode(403)->setJSON(['status' => 'error', 'message' => 'Forbidden']);
+        }
+
+        helper(['tanggal', 'general']);
+
+        $idPersonil = $this->request->getGet('id_personil');
+        $tahunPilih = $this->request->getGet('tahun') ?? date('Y');
+        $kuartalPilih = $this->request->getGet('kuartal') ?? ceil(date('n') / 3);
+
+        $db = \Config\Database::connect();
+        $mubaligh = $db->table('tbl_personil')->where('id', $idPersonil)->get()->getRowArray();
+
+        if (!$mubaligh) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Khotib tidak ditemukan']);
+        }
+
+        // Pastikan token_jadwal ada
+        if (empty($mubaligh['token_jadwal'])) {
+            $tokenJadwal = bin2hex(random_bytes(4));
+            $db->table('tbl_personil')
+               ->where('id', $idPersonil)
+               ->update(['token_jadwal' => $tokenJadwal]);
+            $mubaligh['token_jadwal'] = $tokenJadwal;
+        }
+
+        $linkJadwal = base_url('jadwal-mubaligh/' . $mubaligh['token_jadwal']);
+
+        $fridays = $this->getFridays($tahunPilih, $kuartalPilih);
+
+        $jadwalList = [];
+        if (!empty($fridays)) {
+            $jadwalList = $db->table('tbl_jadwal_kegiatan j')
+                ->select('j.tanggal, m.nama as nama_masjid, m.alamat as alamat_masjid')
+                ->join('tbl_masjid_mushola m', 'm.id_masjid_mushola = j.id_masjid_mushola', 'left')
+                ->where('j.jenis_kegiatan', 'jumat')
+                ->where('j.tahun_masehi', $tahunPilih)
+                ->whereIn('j.tanggal', $fridays)
+                ->where('j.id_personil', $idPersonil)
+                ->orderBy('j.tanggal', 'ASC')
+                ->get()->getResultArray();
+        }
+
+        // Format Pesan WhatsApp secara ringkas
+        $pesan = "*JADWAL KHOTIB JUMAT*\n";
+        $pesan .= "*Kuartal " . $kuartalPilih . " Tahun " . $tahunPilih . "*\n\n";
+        $pesan .= "Nama Khotib: *" . $mubaligh['nama_lengkap'] . "*\n\n";
+        $pesan .= "*Detail Jadwal Penugasan:*\n";
+
+        if (empty($jadwalList)) {
+            $pesan .= "_Belum ada jadwal penugasan pada Kuartal " . $kuartalPilih . " Tahun " . $tahunPilih . "._\n\n";
+        } else {
+            $no = 1;
+            foreach ($jadwalList as $row) {
+                $tglStr = function_exists('tanggal_indo_panjang') ? tanggal_indo_panjang($row['tanggal']) : $row['tanggal'];
+                $pesan .= $no . ". *" . $tglStr . "*\n";
+                $pesan .= "   \u{1F4CC} Tempat: " . $row['nama_masjid'] . "\n";
+                $pesan .= "   \u{1F3E0} Alamat: " . ($row['alamat_masjid'] ?: '-') . "\n\n";
+                $no++;
+            }
+        }
+
+        $pesan .= "\u{1F517} *Cek Jadwal & Konfirmasi Kehadiran:*\n";
+        $pesan .= $linkJadwal . "\n\n";
+        $pesan .= "----------------------------------------\n";
+        $pesan .= "_Pesan otomatis dari Sistem Bantu-KUA-SKL_\n";
+
+        // Format nomor hp
+        $noHp = $mubaligh['no_hp'] ?? '';
+        $hpFormatted = preg_replace('/[^0-9]/', '', $noHp);
+        if (str_starts_with($hpFormatted, '0')) {
+            $hpFormatted = '62' . substr($hpFormatted, 1);
+        }
+
+        $waLink = "https://api.whatsapp.com/send?" . ($hpFormatted ? "phone=" . $hpFormatted . "&" : "") . "text=" . rawurlencode($pesan);
+
+        return $this->response->setJSON([
+            'status'       => 'success',
+            'nama'         => $mubaligh['nama_lengkap'],
+            'no_hp'        => $noHp ?: 'Tidak Ada No HP',
+            'hp_formatted' => $hpFormatted,
+            'pesan'        => $pesan,
+            'wa_link'      => $waLink
+        ]);
+    }
+
+    private function getExportData()
+    {
+        $tahunPilih = $this->request->getGet('tahun') ?? date('Y');
+        $kuartalPilih = $this->request->getGet('kuartal') ?? ceil(date('n') / 3);
+
+        $fridays = $this->getFridays($tahunPilih, $kuartalPilih);
+
+        // Ambil Data Master Masjid
+        $allMasjid = $this->db->table('tbl_masjid_mushola')
+            ->where('jenis', 'Masjid')
+            ->orderBy('nama', 'ASC')->get()->getResultArray();
+
+        // Ambil Data Jadwal Jumat untuk kuartal ini
+        $jadwalData = [];
+        if (!empty($fridays)) {
+            $jadwalData = $this->db->table('tbl_jadwal_kegiatan')
+                ->where('jenis_kegiatan', 'jumat')
+                ->where('tahun_masehi', $tahunPilih)
+                ->whereIn('tanggal', $fridays)
+                ->get()->getResultArray();
+        }
+
+        // Siapkan struktur mapping [id_masjid][tanggal] = id_personil & filter masjid yang ada jadwal
+        $matrixIds = [];
+        $personilIds = [];
+        $scheduledMasjidIds = [];
+        foreach ($jadwalData as $row) {
+            if (!empty($row['id_personil'])) {
+                $matrixIds[$row['id_masjid_mushola']][$row['tanggal']] = $row['id_personil'];
+                if (!in_array($row['id_personil'], $personilIds)) {
+                    $personilIds[] = $row['id_personil'];
+                }
+                if (!in_array($row['id_masjid_mushola'], $scheduledMasjidIds)) {
+                    $scheduledMasjidIds[] = $row['id_masjid_mushola'];
+                }
+            }
+        }
+
+        // Hanya sertakan Masjid yang memiliki jadwal
+        $masjidList = array_filter($allMasjid, function($m) use ($scheduledMasjidIds) {
+            return in_array($m['id_masjid_mushola'], $scheduledMasjidIds);
+        });
+
+        // Ambil data personil (mubaligh) yang ada di jadwal kuartal ini
+        $personils = [];
+        if (!empty($personilIds)) {
+            $personils = $this->db->table('tbl_personil')
+                ->whereIn('id', $personilIds)
+                ->orderBy('nia', 'ASC')
+                ->orderBy('nama_lengkap', 'ASC')
+                ->get()->getResultArray();
+        }
+
+        // Map personil by ID
+        $personilMap = [];
+        foreach ($personils as $p) {
+            $personilMap[$p['id']] = $p;
+        }
+
+        return [
+            'tahunPilih'   => $tahunPilih,
+            'kuartalPilih' => $kuartalPilih,
+            'fridays'      => $fridays,
+            'masjidList'   => array_values($masjidList),
+            'matrixIds'    => $matrixIds,
+            'personils'    => $personils,
+            'personilMap'  => $personilMap
+        ];
+    }
+
+    public function export_excel()
+    {
+        $data = $this->getExportData();
+        return view('backend/khotib_jumat/export_excel', $data);
+    }
+
+    public function export_pdf()
+    {
+        $data = $this->getExportData();
+        $data['title'] = 'Matriks Jadwal Khotib Jumat Kuartal ' . $data['kuartalPilih'] . ' Tahun ' . $data['tahunPilih'];
+        return view('backend/khotib_jumat/export_pdf', $data);
     }
 }

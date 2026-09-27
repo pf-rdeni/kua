@@ -223,6 +223,9 @@ $routes->group('admin', ['filter' => 'login'], function ($routes) {
         $routes->get('/', 'Backend\KhotibJumatController::index');
         $routes->post('save-cell', 'Backend\KhotibJumatController::save_cell');
         $routes->get('search-mubaligh', 'Backend\KhotibJumatController::search_mubaligh');
+        $routes->get('get-wa-mubaligh', 'Backend\KhotibJumatController::get_wa_mubaligh');
+        $routes->get('export-excel', 'Backend\KhotibJumatController::export_excel');
+        $routes->get('export-pdf', 'Backend\KhotibJumatController::export_pdf');
         $routes->get('cetak-mubaligh/(:num)', 'Backend\KhotibJumatController::cetak_mubaligh/$1');
         $routes->get('cetak-masjid/(:num)', 'Backend\KhotibJumatController::cetak_masjid/$1');
     });

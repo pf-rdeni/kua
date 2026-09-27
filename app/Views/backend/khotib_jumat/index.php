@@ -35,6 +35,22 @@
 
                 <div class="row mb-3">
                     <div class="col-12 text-right">
+                        <div class="btn-group mr-2">
+                            <button type="button" class="btn btn-sm btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-file-export"></i> Export Jadwal
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-right">
+                                <a class="dropdown-item" href="<?= base_url('admin/khotib-jumat/export-excel?tahun=' . esc($tahunPilih) . '&kuartal=' . esc($kuartalPilih)) ?>" target="_blank">
+                                    <i class="fas fa-file-excel text-success mr-2"></i> Export Excel
+                                </a>
+                                <a class="dropdown-item" href="<?= base_url('admin/khotib-jumat/export-pdf?tahun=' . esc($tahunPilih) . '&kuartal=' . esc($kuartalPilih)) ?>" target="_blank">
+                                    <i class="fas fa-file-pdf text-danger mr-2"></i> Export PDF
+                                </a>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-success mr-2" data-toggle="modal" data-target="#modalWaMubaligh">
+                            <i class="fab fa-whatsapp"></i> Kirim Jadwal Khotib (WA)
+                        </button>
                         <button type="button" class="btn btn-sm btn-primary mr-2" data-toggle="modal" data-target="#modalCetakMubaligh">
                             <i class="fas fa-user text-white"></i> Cetak Jadwal Khotib
                         </button>
@@ -116,6 +132,59 @@
     </div>
 </div>
 
+<!-- Modal Kirim WA Khotib -->
+<div class="modal fade" id="modalWaMubaligh" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fab fa-whatsapp"></i> Kirim Jadwal Khotib via WhatsApp</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Pilih Khotib</label>
+                    <select class="form-control" id="selectWaMubaligh" style="width: 100%;"></select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" id="btnProsesWaMubaligh"><i class="fas fa-eye"></i> Lihat Jadwal</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Preview WA -->
+<div class="modal fade" id="modalWaPreview" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fab fa-whatsapp"></i> Format Pesan WhatsApp</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>No. WhatsApp Khotib:</label>
+                    <input type="text" class="form-control" id="waNoHpDisplay" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Teks Pesan:</label>
+                    <textarea class="form-control" id="waTextPreview" rows="10" readonly style="font-family: monospace; background-color: #f8f9fa;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+                <button type="button" class="btn btn-info" id="btnCopyWaText"><i class="fas fa-copy"></i> Salin Teks</button>
+                <a href="#" target="_blank" class="btn btn-success" id="btnOpenWaLink"><i class="fab fa-whatsapp"></i> Buka WhatsApp</a>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal Cetak Khotib -->
 <div class="modal fade" id="modalCetakMubaligh" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -175,7 +244,11 @@
 $(document).ready(function() {
     
     function getInitials(name) {
-        var parts = name.split(' ');
+        if (!name) return '';
+        if (name.indexOf(' - ') !== -1) {
+            name = name.split(' - ').slice(1).join(' - ');
+        }
+        var parts = name.trim().split(' ');
         var initials = '';
         if (parts.length > 0) initials += parts[0].charAt(0);
         if (parts.length > 1) initials += parts[1].charAt(0);
@@ -185,16 +258,17 @@ $(document).ready(function() {
     function createAvatarHtml(mubaligh, sizeClass) {
         var size = sizeClass === 'small' ? '20px' : '25px';
         var fontSize = sizeClass === 'small' ? '10px' : '12px';
+        var namaStr = mubaligh.nama || mubaligh.text || '';
         
         // Cek jika fotonya adalah foto default sistem
         if (mubaligh.foto && !mubaligh.foto.includes('default-')) {
             return '<img src="' + mubaligh.foto + '" class="img-circle mr-2" style="width: '+size+'; height: '+size+'; object-fit: cover;" />';
         } else {
             // Buat avatar inisial dengan CSS
-            var initials = getInitials(mubaligh.nama);
+            var initials = getInitials(namaStr);
             // Generate warna random berdasarkan nama agar konsisten
             var colors = ['#007bff', '#28a745', '#17a2b8', '#ffc107', '#dc3545', '#6610f2', '#e83e8c', '#fd7e14'];
-            var colorIndex = mubaligh.nama.length % colors.length;
+            var colorIndex = namaStr.length % colors.length;
             var bgColor = colors[colorIndex];
             
             return '<span class="img-circle mr-2" style="display: inline-block; width: '+size+'; height: '+size+'; background-color: '+bgColor+'; color: white; text-align: center; line-height: '+size+'; font-size: '+fontSize+'; font-weight: bold;">' + initials + '</span>';
@@ -205,9 +279,10 @@ $(document).ready(function() {
         if (!mubaligh.id) {
             return mubaligh.text;
         }
-        var avatarHtml = createAvatarHtml(mubaligh, 'normal');
+        var displayName = mubaligh.nama || mubaligh.text;
+        var avatarHtml = createAvatarHtml({foto: mubaligh.foto, nama: displayName}, 'normal');
         var $mubaligh = $(
-            '<span>' + avatarHtml + ' ' + mubaligh.nama + '</span>'
+            '<span>' + avatarHtml + ' ' + displayName + '</span>'
         );
         return $mubaligh;
     }
@@ -300,13 +375,13 @@ $(document).ready(function() {
         });
     });
 
-    // Inisialisasi Select2 untuk Modal Cetak Khotib
-    $('#selectCetakMubaligh').select2({
+    // Inisialisasi Select2 untuk Modal WA Khotib
+    $('#selectWaMubaligh').select2({
         theme: 'bootstrap4',
-        placeholder: 'Ketik nama Khotib...',
-        dropdownParent: $('#modalCetakMubaligh'),
+        placeholder: 'Ketik NIP / NIA / Nama Khotib...',
+        dropdownParent: $('#modalWaMubaligh'),
         ajax: {
-            url: "<?= base_url('admin/jadwal-ramadhan/search-mubaligh') ?>",
+            url: "<?= base_url('admin/khotib-jumat/search-mubaligh') ?>",
             dataType: 'json',
             delay: 250,
             data: function (params) { return { q: params.term }; },
@@ -314,13 +389,91 @@ $(document).ready(function() {
                 return { results: data.results };
             },
             cache: true
-        }
+        },
+        templateResult: formatMubaligh,
+        templateSelection: formatMubalighSelection
+    });
+
+    // Inisialisasi Select2 untuk Modal Cetak Khotib
+    $('#selectCetakMubaligh').select2({
+        theme: 'bootstrap4',
+        placeholder: 'Ketik NIP / NIA / Nama Khotib...',
+        dropdownParent: $('#modalCetakMubaligh'),
+        ajax: {
+            url: "<?= base_url('admin/khotib-jumat/search-mubaligh') ?>",
+            dataType: 'json',
+            delay: 250,
+            data: function (params) { return { q: params.term }; },
+            processResults: function (data) {
+                return { results: data.results };
+            },
+            cache: true
+        },
+        templateResult: formatMubaligh,
+        templateSelection: formatMubalighSelection
     });
 
     // Inisialisasi Select2 untuk Modal Cetak Masjid
     $('#selectCetakMasjid').select2({
         theme: 'bootstrap4',
         dropdownParent: $('#modalCetakMasjid')
+    });
+
+    // Action Kirim WA Khotib
+    $('#btnProsesWaMubaligh').click(function() {
+        var id = $('#selectWaMubaligh').val();
+        if(!id) { Swal.fire('Peringatan', 'Silakan pilih Khotib terlebih dahulu', 'warning'); return; }
+
+        $.ajax({
+            url: "<?= base_url('admin/khotib-jumat/get-wa-mubaligh') ?>",
+            type: "GET",
+            data: {
+                id_personil: id,
+                tahun: "<?= esc($tahunPilih) ?>",
+                kuartal: "<?= esc($kuartalPilih) ?>"
+            },
+            dataType: "json",
+            success: function(response) {
+                if(response.status === 'success') {
+                    $('#modalWaMubaligh').modal('hide');
+                    $('#waNoHpDisplay').val(response.no_hp).data('hp', response.hp_formatted);
+                    $('#waTextPreview').val(response.pesan);
+                    
+                    var waPhone = response.hp_formatted || '';
+                    var waUrl = 'https://api.whatsapp.com/send?' + (waPhone ? 'phone=' + waPhone + '&' : '') + 'text=' + encodeURIComponent(response.pesan);
+                    $('#btnOpenWaLink').attr('href', waUrl);
+                    $('#modalWaPreview').modal('show');
+                } else {
+                    Swal.fire('Gagal!', response.message, 'error');
+                }
+            },
+            error: function() {
+                Swal.fire('Error!', 'Gagal mengambil data jadwal Khotib', 'error');
+            }
+        });
+    });
+
+    // Dynamic URL update on click Buka WhatsApp
+    $('#btnOpenWaLink').click(function(e) {
+        var text = $('#waTextPreview').val();
+        var phone = $('#waNoHpDisplay').data('hp') || '';
+        var url = 'https://api.whatsapp.com/send?' + (phone ? 'phone=' + phone + '&' : '') + 'text=' + encodeURIComponent(text);
+        $(this).attr('href', url);
+    });
+
+    // Copy Text WA
+    $('#btnCopyWaText').click(function() {
+        var copyText = document.getElementById("waTextPreview");
+        copyText.select();
+        copyText.setSelectionRange(0, 99999);
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(copyText.value).then(function() {
+                Swal.fire({ icon: 'success', title: 'Tersalin!', text: 'Teks pesan WhatsApp berhasil disalin.', timer: 2000, showConfirmButton: false });
+            });
+        } else {
+            document.execCommand("copy");
+            Swal.fire({ icon: 'success', title: 'Tersalin!', text: 'Teks pesan WhatsApp berhasil disalin.', timer: 2000, showConfirmButton: false });
+        }
     });
 
     // Action Cetak
