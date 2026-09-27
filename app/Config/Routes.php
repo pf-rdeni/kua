@@ -56,6 +56,7 @@ $routes->get('display/api_keuangan/(:num)', 'Frontend\DisplayMasjidController::a
 $routes->get('display/check_update/(:num)', 'Frontend\DisplayMasjidController::checkUpdate/$1');
 
 // Jadwal Publik Mubaligh (Pakai URL Bebas Tanpa Filter Login)
+$routes->get('jadwal-mubaligh/search-pengganti', 'Frontend\PublicJadwalController::search_pengganti');
 $routes->get('jadwal-mubaligh/(:any)', 'Frontend\PublicJadwalController::view/$1');
 $routes->post('jadwal-mubaligh/konfirmasi-hadir', 'Frontend\PublicJadwalController::konfirmasi_hadir');
 $routes->post('jadwal-mubaligh/ajukan-pengganti', 'Frontend\PublicJadwalController::ajukan_pengganti');

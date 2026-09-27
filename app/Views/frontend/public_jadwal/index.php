@@ -61,17 +61,30 @@
                 $isMaghribMengaji = ($j['jenis_kegiatan'] == 'maghrib_mengaji');
                 $isJumat = ($j['jenis_kegiatan'] == 'jumat');
 
+                $isTugasPengganti = (!empty($j['id_personil_pengganti']) && $j['id_personil_pengganti'] == $mubaligh['id'] && $j['id_personil_asli'] != $mubaligh['id']);
+
                 $malamKe = intval($j['hari_ke']) + 1;
                 $tglStr  = $j['tanggal'] ? tanggal_indo_panjang($j['tanggal']) : 'Belum Ditentukan';
                 
-                $badgeText = $isRamadhan ? "Malam Ke-" . $malamKe : ($isMaghribMengaji ? "Maghrib Mengaji" : "Khotib Jumat");
-                $temaLabel = $isRamadhan ? "Tema Ceramah:" : "Peran Petugas:";
-                $temaValue = $isRamadhan ? ($j['tema'] ?: 'Menyesuaikan') : strtoupper($j['peran_petugas']);
+                if ($isRamadhan) {
+                    $badgeText = "Malam Ke-" . $malamKe;
+                    $temaLabel = "Tema Ceramah:";
+                    $temaValue = $j['tema'] ?: 'Menyesuaikan';
+                } else if ($isMaghribMengaji) {
+                    $badgeText = "Maghrib Mengaji";
+                    $temaLabel = "Peran / Tugas:";
+                    $temaValue = !empty($j['peran_petugas']) ? strtoupper($j['peran_petugas']) : 'PENGAJAR / IMAM';
+                } else {
+                    $badgeText = "Khotib Jumat";
+                    $temaLabel = "Tugas Keagamaan:";
+                    $temaValue = "Khotib Sholat Jumat";
+                }
+
                 // Styling berdasarkan status
                 if ($j['status_kehadiran'] == 'hadir') {
                     $bgClass = "bg-success text-white";
                 } else if ($j['status_kehadiran'] == 'diganti') {
-                    $bgClass = "bg-warning";
+                    $bgClass = $isTugasPengganti ? "bg-white border-warning" : "bg-warning";
                 } else if ($j['status_kehadiran'] == 'tidak_hadir') {
                     $bgClass = "bg-danger text-white";
                 }
@@ -80,27 +93,54 @@
                 <div class="card jadwal-card <?= $bgClass ?>">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
-                            <span class="badge <?= $isRamadhan ? 'badge-light' : 'badge-warning' ?> text-dark font-weight-bold" style="font-size:14px;"><?= esc($badgeText) ?></span>
+                            <?php if ($isTugasPengganti): ?>
+                                <span class="badge badge-info text-white font-weight-bold" style="font-size:14px;"><i class="fas fa-user-friends"></i> <?= esc($badgeText) ?></span>
+                            <?php else: ?>
+                                <span class="badge <?= $isRamadhan ? 'badge-light' : 'badge-warning' ?> text-dark font-weight-bold" style="font-size:14px;"><?= esc($badgeText) ?></span>
+                            <?php endif; ?>
                             <span class="small font-weight-bold"><i class="far fa-clock"></i> <?= $tglStr ?></span>
                         </div>
                         
                         <h5 class="font-weight-bold mb-1"><i class="fas fa-mosque"></i> <?= esc($j['nama_masjid']) ?></h5>
                         <p class="text-sm mb-2"><i class="fas fa-map-marker-alt"></i> <?= esc($j['alamat_masjid']) ?></p>
                         
-                        <div class="p-2 bg-light text-dark rounded mb-3 text-center">
-                            <small class="d-block text-muted"><?= esc($temaLabel) ?></small>
-                            <strong><?= esc($temaValue) ?></strong>
-                        </div>
+                        <?php if ($isTugasPengganti): ?>
+                            <div class="p-2 bg-light text-dark rounded mb-3 text-center border border-info">
+                                <small class="d-block text-info font-weight-bold"><i class="fas fa-exchange-alt"></i> Menggantikan Petugas Asli:</small>
+                                <strong><?= esc(($j['nia_asli'] ? $j['nia_asli'] . ' - ' : '') . $j['nama_asli']) ?></strong>
+                                <?php if (!empty($j['keterangan_absensi'])): ?>
+                                    <small class="d-block text-muted mt-1 font-weight-normal">Alasan: <?= esc($j['keterangan_absensi']) ?></small>
+                                <?php endif; ?>
+                            </div>
+                        <?php else: ?>
+                            <div class="p-2 bg-light text-dark rounded mb-3 text-center">
+                                <small class="d-block text-muted"><?= esc($temaLabel) ?></small>
+                                <strong><?= esc($temaValue) ?></strong>
+                            </div>
+                        <?php endif; ?>
                         
                         <?php if ($j['status_kehadiran'] == 'hadir'): ?>
                             <div class="text-center font-weight-bold">
                                 <i class="fas fa-check-circle fa-2x"></i><br>Telah Dikonfirmasi Hadir
                             </div>
+                        <?php elseif ($isTugasPengganti): ?>
+                            <!-- Pengganti belum konfirmasi hadir -->
+                            <button class="btn btn-success btn-block btn-hadir font-weight-bold" data-id="<?= $j['id_jadwal'] ?>">
+                                <i class="fas fa-check"></i> Konfirmasi Hadir (Pengganti)
+                            </button>
                         <?php elseif ($j['status_kehadiran'] == 'diganti'): ?>
                             <div class="text-center font-weight-bold text-dark">
                                 <i class="fas fa-exchange-alt fa-2x mb-1"></i><br>
                                 Digantikan (Delegasi)<br>
-                                <small>Keterangan: <?= esc($j['keterangan_absensi']) ?></small>
+                                <?php if (!empty($j['nama_pengganti'])): ?>
+                                    <div class="mt-2 p-2 rounded bg-light border border-warning text-sm">
+                                        <span class="text-muted d-block font-weight-normal"><i class="fas fa-user-check text-success"></i> Pengganti:</span>
+                                        <strong><?= esc(($j['nia_pengganti'] ? $j['nia_pengganti'] . ' - ' : '') . $j['nama_pengganti']) ?></strong>
+                                    </div>
+                                <?php endif; ?>
+                                <?php if (!empty($j['keterangan_absensi'])): ?>
+                                    <small class="d-block mt-1 text-muted font-weight-normal">Keterangan: <?= esc($j['keterangan_absensi']) ?></small>
+                                <?php endif; ?>
                             </div>
                         <?php elseif ($j['status_kehadiran'] == 'tidak_hadir'): ?>
                             <div class="text-center font-weight-bold">
@@ -115,7 +155,7 @@
                                     </button>
                                 </div>
                                 <div class="col-6 pl-1">
-                                    <button class="btn btn-outline-warning text-dark border-warning btn-block btn-delegasi" style="background-color: #fff;" data-id="<?= $j['id_jadwal'] ?>" data-malam="<?= $malamKe ?>" data-masjid="<?= esc($j['nama_masjid']) ?>">
+                                    <button class="btn btn-outline-warning text-dark border-warning btn-block btn-delegasi" style="background-color: #fff;" data-id="<?= $j['id_jadwal'] ?>" data-kegiatan="<?= esc($badgeText) ?>" data-tanggal="<?= esc($tglStr) ?>" data-masjid="<?= esc($j['nama_masjid']) ?>">
                                         <i class="fas fa-user-friends"></i> Delegasikan
                                     </button>
                                 </div>
@@ -134,14 +174,14 @@
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header bg-warning">
-        <h5 class="modal-title font-weight-bold"><i class="fas fa-exchange-alt"></i> Ajukan Penceramah Pengganti</h5>
+        <h5 class="modal-title font-weight-bold"><i class="fas fa-exchange-alt"></i> Ajukan Pengganti</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
         </button>
       </div>
       <div class="modal-body">
         <div class="alert alert-info py-2 text-sm">
-            Status pengajuan ini akan memindahkan jadwal Anda pada <b id="lblMalam"></b> di <b id="lblMasjid"></b> ke Mubaligh pengganti.
+            Status pengajuan ini akan memindahkan jadwal <b id="lblKegiatan"></b> pada <b id="lblTanggal"></b> di <b id="lblMasjid"></b> ke Mubaligh / Khotib pengganti.
         </div>
         
         <form id="formDelegasi">
@@ -149,16 +189,15 @@
             <input type="hidden" name="token" value="<?= esc($token) ?>">
             
             <div class="form-group">
-                <label>Pilih Mubaligh Pengganti <span class="text-danger">*</span></label>
+                <label>Pilih Mubaligh / Khotib Pengganti <span class="text-danger">*</span></label>
                 <select class="form-control select2" id="id_pengganti" name="id_pengganti" style="width: 100%;">
-                    <!-- Diisi via AJAX dari endpoint search mubaligh admin -->
                 </select>
-                <small class="text-muted">Ketik nama untuk mencari. Sistem otomatis mencegah bentrok jadwal.</small>
+                <small class="text-muted">Ketik NIA atau nama untuk mencari. Sistem otomatis mencegah bentrok jadwal.</small>
             </div>
             
             <div class="form-group">
                 <label>Alasan / Keterangan (Opsional)</label>
-                <textarea class="form-control" name="alasan" rows="2" placeholder="Misal: Sedang kurang sehat..."></textarea>
+                <textarea class="form-control" name="alasan" rows="2" placeholder="Misal: Halangan dinas luar / kurang sehat..."></textarea>
             </div>
         </form>
       </div>
@@ -182,34 +221,29 @@
 <script>
 $(document).ready(function() {
     
-    // Inisialisasi Select2 untuk pencarian Mubaligh
+    // Inisialisasi Select2 untuk pencarian Mubaligh Pengganti (Public Endpoint)
     $('.select2').select2({
         theme: 'bootstrap4',
         dropdownParent: $('#modalDelegasi'),
-        placeholder: 'Ketik nama penceramah...',
+        placeholder: 'Pilih / Ketik NIA atau Nama Pengganti...',
+        allowClear: true,
         ajax: {
-            // Kita numpang pakai endpoint pencarian mubaligh yang sudah ada di admin
-            url: "<?= base_url('admin/jadwal-ramadhan/search-mubaligh') ?>", 
+            url: "<?= base_url('jadwal-mubaligh/search-pengganti') ?>?token=<?= esc($token) ?>", 
             dataType: 'json',
             delay: 250,
             data: function (params) {
                 return {
-                    q: params.term, // search term
-                    page: params.page
+                    q: params.term || ''
                 };
             },
-            processResults: function (data, params) {
-                params.page = params.page || 1;
+            processResults: function (data) {
                 return {
-                    results: data.items,
-                    pagination: {
-                        more: (params.page * 10) < data.total_count
-                    }
+                    results: data.results || []
                 };
             },
             cache: true
         },
-        minimumInputLength: 3, // Minimal 3 huruf baru nyari ke server
+        minimumInputLength: 0
     });
 
     // Aksi Konfirmasi Hadir
@@ -254,11 +288,13 @@ $(document).ready(function() {
     // Menampilkan Modal Delegasi
     $('.btn-delegasi').click(function() {
         let idJadwal = $(this).data('id');
-        let malam = $(this).data('malam');
-        let masjid = $(this).data('masjid');
+        let kegiatan = $(this).data('kegiatan');
+        let tanggal  = $(this).data('tanggal');
+        let masjid   = $(this).data('masjid');
         
         $('#del_id_jadwal').val(idJadwal);
-        $('#lblMalam').text('Malam Ke-' + malam);
+        $('#lblKegiatan').text(kegiatan);
+        $('#lblTanggal').text(tanggal);
         $('#lblMasjid').text(masjid);
         
         // Kosongkan form jika bekas dipakai
@@ -272,7 +308,7 @@ $(document).ready(function() {
     $('#btnSubmitDelegasi').click(function() {
         let nullCheck = $('#id_pengganti').val();
         if(!nullCheck) {
-            Swal.fire('Perhatian', 'Harap pilih mubaligh pengganti terlebih dahulu.', 'warning');
+            Swal.fire('Perhatian', 'Harap pilih mubaligh / khotib pengganti terlebih dahulu.', 'warning');
             return;
         }
 
